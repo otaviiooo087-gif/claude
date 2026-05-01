@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viral Video Analyzer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Viral Analyzer</span>
+      </div>
+      <button class="settings-btn" id="settingsBtn" title="Configurações">⚙️</button>
+    </header>
+
+    <!-- IDLE -->
+    <div id="stateIdle" class="state active">
+      <div class="platform-badge" id="platformBadge">Detectando...</div>
+      <div class="video-status" id="videoStatus">
+        <div class="status-icon">🎬</div>
+        <p id="videoStatusText">Nenhum vídeo detectado</p>
+      </div>
+      <div class="duration-control">
+        <label>Duração da gravação</label>
+        <div class="duration-options">
+          <button class="dur-btn active" data-dur="30">30s</button>
+          <button class="dur-btn" data-dur="60">60s</button>
+          <button class="dur-btn" data-dur="90">90s</button>
+          <button class="dur-btn" data-dur="120">120s</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="analyzeBtn" disabled>
+        🔍 Analisar Vídeo
+      </button>
+      <p class="hint">Abra um Reel, TikTok ou YouTube e clique em Analisar</p>
+    </div>
+
+    <!-- RECORDING -->
+    <div id="stateRecording" class="state">
+      <div class="recording-header">
+        <div class="rec-dot"></div>
+        <span>Capturando áudio</span>
+      </div>
+      <div class="waveform">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="recordingProgress"></div>
+      </div>
+      <p class="timer" id="recordingTimer">0s</p>
+      <button class="btn-secondary" id="stopBtn">⏹ Parar e Analisar</button>
+    </div>
+
+    <!-- TRANSCRIBING -->
+    <div id="stateTranscribing" class="state">
+      <div class="spinner"></div>
+      <h3>Transcrevendo...</h3>
+      <p class="sub">Convertendo áudio em texto com Whisper AI</p>
+    </div>
+
+    <!-- ANALYZING -->
+    <div id="stateAnalyzing" class="state">
+      <div class="spinner"></div>
+      <h3>Analisando padrões...</h3>
+      <div class="analysis-steps">
+        <div class="astep" id="astep1">
+          <span class="astep-icon">⏳</span>
+          <span>Raio-X do vídeo</span>
+        </div>
+        <div class="astep" id="astep2">
+          <span class="astep-icon">⏳</span>
+          <span>Engenharia reversa</span>
+        </div>
+        <div class="astep" id="astep3">
+          <span class="astep-icon">⏳</span>
+          <span>Criando 5 roteiros</span>
+        </div>
+        <div class="astep" id="astep4">
+          <span class="astep-icon">⏳</span>
+          <span>Ganchos e extras</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="stateResults" class="state">
+      <div class="results-header">
+        <h3>✅ Análise Completa</h3>
+        <div class="result-actions">
+          <button class="btn-icon" id="copyBtn" title="Copiar tudo">📋</button>
+          <button class="btn-icon" id="newAnalysisBtn" title="Nova análise">🔄</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="transcript">📝 Transcrição</button>
+        <button class="tab" data-tab="raiox">🎯 Raio-X</button>
+        <button class="tab" data-tab="reverse">🔬 Reverso</button>
+        <button class="tab" data-tab="scripts">✍️ Roteiros</button>
+        <button class="tab" data-tab="extras">🚀 Extras</button>
+      </div>
+
+      <div class="tab-content" id="tabContent"></div>
+    </div>
+
+    <!-- ERROR -->
+    <div id="stateError" class="state">
+      <div class="error-icon">⚠️</div>
+      <h3>Erro</h3>
+      <p id="errorMessage">Algo deu errado.</p>
+      <button class="btn-primary" id="retryBtn">Tentar novamente</button>
+      <button class="btn-secondary mt8" id="errorSettingsBtn">Verificar configurações</button>
+    </div>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
