@@ -49,9 +49,10 @@ let mediaRecorder = null;
 let audioChunks = [];
 let recordingTimer = null;
 let currentResults = null;
+let currentDetailId = null;
 let tabId = null;
 
-const states = ['stateIdle', 'stateRecording', 'stateTranscribing', 'stateAnalyzing', 'stateResults', 'stateError'];
+const states = ['stateIdle', 'stateRecording', 'stateTranscribing', 'stateAnalyzing', 'stateResults', 'stateError', 'stateSaved', 'stateSavedDetail'];
 
 function showState(name) {
   states.forEach(s => {
@@ -324,12 +325,160 @@ function renderResults(data) {
   showState('stateResults');
   renderTab('transcript');
 
-  document.querySelectorAll('.tab').forEach(tab => {
+  document.querySelectorAll('#stateResults .tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#stateResults .tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       renderTab(tab.dataset.tab);
     });
+  });
+}
+
+// ── SAVE / LOAD ─────────────────────────────────────────────────────────────
+
+async function getSaved() {
+  return new Promise(r => chrome.storage.local.get(['savedResults'], d => r(d.savedResults || [])));
+}
+
+async function saveCurrentResult() {
+  if (!currentResults) return;
+  const saved = await getSaved();
+  const titulo = (currentResults.extras?.titulos?.[0]) || 'Análise sem título';
+  const entry = {
+    id: Date.now(),
+    date: new Date().toLocaleDateString('pt-BR'),
+    titulo,
+    platform: currentResults.platform || '—',
+    data: currentResults
+  };
+  saved.unshift(entry);
+  await new Promise(r => chrome.storage.local.set({ savedResults: saved }, r));
+  updateSavedCount();
+  const btn = document.getElementById('saveResultBtn');
+  btn.textContent = '✅';
+  setTimeout(() => (btn.textContent = '💾'), 2000);
+}
+
+async function deleteSaved(id) {
+  const saved = await getSaved();
+  const filtered = saved.filter(s => s.id !== id);
+  await new Promise(r => chrome.storage.local.set({ savedResults: filtered }, r));
+  updateSavedCount();
+}
+
+async function updateSavedCount() {
+  const saved = await getSaved();
+  const el = document.getElementById('savedCount');
+  el.textContent = saved.length > 0 ? saved.length : '';
+}
+
+async function openSavedList() {
+  const saved = await getSaved();
+  showState('stateSaved');
+  const list = document.getElementById('savedList');
+  const hint = document.getElementById('savedHint');
+
+  if (saved.length === 0) {
+    list.innerHTML = '';
+    hint.style.display = 'block';
+    return;
+  }
+  hint.style.display = 'none';
+  list.innerHTML = saved.map(s => `
+    <div class="saved-item" data-id="${s.id}">
+      <div class="saved-item-title">${escHtml(s.titulo)}</div>
+      <div class="saved-item-meta">
+        <span>📅 ${s.date}</span>
+        <span>📱 ${escHtml(s.platform)}</span>
+        <span>✍️ ${(s.data.roteiros || []).length} roteiros</span>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.saved-item').forEach(el => {
+    el.addEventListener('click', () => openDetail(parseInt(el.dataset.id)));
+  });
+}
+
+async function openDetail(id) {
+  const saved = await getSaved();
+  const entry = saved.find(s => s.id === id);
+  if (!entry) return;
+  currentDetailId = id;
+  showState('stateSavedDetail');
+  document.getElementById('detailTitle').textContent = entry.titulo;
+
+  renderDetailTab('scripts', entry.data);
+
+  document.querySelectorAll('#stateSavedDetail .tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#stateSavedDetail .tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderDetailTab(tab.dataset.stab, entry.data);
+    });
+  });
+}
+
+function renderDetailTab(name, data) {
+  const c = document.getElementById('detailContent');
+
+  if (name === 'scripts') {
+    const roteiros = data.roteiros || [];
+    c.innerHTML = roteiros.map((r, i) => `
+      <div class="roteiro-block">
+        <h5>Roteiro ${i + 1} — ${escHtml(r.nome || '')}</h5>
+        <div class="roteiro-label">Gancho</div>
+        <div class="roteiro-text">${escHtml(r.gancho || '')}</div>
+        <div class="roteiro-label">Desenvolvimento</div>
+        <div class="roteiro-text">${escHtml(r.desenvolvimento || '')}</div>
+        <div class="roteiro-label">Clímax</div>
+        <div class="roteiro-text">${escHtml(r.climax || '')}</div>
+        <div class="roteiro-label">CTA</div>
+        <div class="roteiro-text">${escHtml(r.cta || '')}</div>
+      </div>
+    `).join('');
+  }
+
+  else if (name === 'extras') {
+    const ex = data.extras || {};
+    const variacoes = ex.variacoes_gancho || {};
+    const varHtml = Object.entries(variacoes).map(([rot, vars]) => `
+      <h4>Variações — ${escHtml(rot)}</h4>
+      ${vars.map((v, i) => `<p>${i + 1}. ${escHtml(v)}</p>`).join('')}
+    `).join('');
+    const titulos = (ex.titulos || []).map((t, i) => `<p>${i + 1}. ${escHtml(t)}</p>`).join('');
+    c.innerHTML = `${varHtml}<h4>Títulos Chamativos</h4>${titulos}<h4>Cenário e Linguagem Corporal</h4><p>${escHtml(ex.cenario_linguagem || '—')}</p>`;
+  }
+
+  else if (name === 'raiox') {
+    const r = data.raiox || {};
+    c.innerHTML = `
+      <h4>Gancho</h4><p>${escHtml(r.gancho || '—')}</p>
+      <h4>Promessa</h4><p>${escHtml(r.promessa || '—')}</p>
+      <h4>Dor</h4><p>${escHtml(r.dor || '—')}</p>
+      <h4>Desejo</h4><p>${escHtml(r.desejo || '—')}</p>
+      <h4>Estrutura</h4><p>${escHtml(r.estrutura || '—')}</p>
+      <h4>Padrões Emocionais</h4><p>${(r.padroes_emocionais || []).map(p => `<span class="tag">${escHtml(p)}</span>`).join(' ')}</p>
+      <h4>CTA</h4><p>${escHtml(r.cta || '—')}</p>
+    `;
+  }
+}
+
+function copyDetailResult(data) {
+  const lines = [];
+  (data.roteiros || []).forEach((r, i) => {
+    lines.push(`=== ROTEIRO ${i + 1} — ${r.nome} ===`);
+    lines.push(`GANCHO: ${r.gancho}`);
+    lines.push(`DESENVOLVIMENTO: ${r.desenvolvimento}`);
+    lines.push(`CLÍMAX: ${r.climax}`);
+    lines.push(`CTA: ${r.cta}\n`);
+  });
+  const ex = data.extras || {};
+  lines.push(`TÍTULOS: ${(ex.titulos || []).join(' | ')}`);
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('detailCopyBtn');
+    btn.textContent = '✅';
+    setTimeout(() => (btn.textContent = '📋'), 2000);
   });
 }
 
@@ -464,6 +613,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const videoInfo = await detectVideo();
   updateIdleState(videoInfo);
+  updateSavedCount();
 
   document.querySelectorAll('.dur-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -476,26 +626,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('analyzeBtn').addEventListener('click', startRecording);
   document.getElementById('stopBtn').addEventListener('click', stopRecording);
 
-  document.getElementById('settingsBtn').addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
+  document.getElementById('settingsBtn').addEventListener('click', () => chrome.runtime.openOptionsPage());
+  document.getElementById('copyBtn').addEventListener('click', copyAllResults);
+  document.getElementById('saveResultBtn').addEventListener('click', saveCurrentResult);
+  document.getElementById('savedBtn').addEventListener('click', openSavedList);
+
+  document.getElementById('backBtn').addEventListener('click', async () => {
+    showState('stateIdle');
+    updateIdleState(await detectVideo());
   });
 
-  document.getElementById('copyBtn').addEventListener('click', copyAllResults);
+  document.getElementById('detailBackBtn').addEventListener('click', openSavedList);
+
+  document.getElementById('detailDeleteBtn').addEventListener('click', async () => {
+    if (!currentDetailId) return;
+    await deleteSaved(currentDetailId);
+    currentDetailId = null;
+    openSavedList();
+  });
+
+  document.getElementById('detailCopyBtn').addEventListener('click', async () => {
+    if (!currentDetailId) return;
+    const saved = await getSaved();
+    const entry = saved.find(s => s.id === currentDetailId);
+    if (entry) copyDetailResult(entry.data);
+  });
 
   document.getElementById('newAnalysisBtn').addEventListener('click', async () => {
     currentResults = null;
     showState('stateIdle');
-    const info = await detectVideo();
-    updateIdleState(info);
+    updateIdleState(await detectVideo());
   });
 
   document.getElementById('retryBtn').addEventListener('click', async () => {
     showState('stateIdle');
-    const info = await detectVideo();
-    updateIdleState(info);
+    updateIdleState(await detectVideo());
   });
 
-  document.getElementById('errorSettingsBtn').addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
-  });
+  document.getElementById('errorSettingsBtn').addEventListener('click', () => chrome.runtime.openOptionsPage());
 });

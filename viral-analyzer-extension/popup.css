@@ -48,6 +48,46 @@ header {
   background-clip: text;
 }
 
+.header-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.header-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  position: relative;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.header-btn:hover {
+  opacity: 1;
+  background: #1e1e1e;
+}
+
+.saved-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff6b35;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
 .settings-btn {
   background: none;
   border: none;
@@ -55,10 +95,64 @@ header {
   font-size: 16px;
   opacity: 0.6;
   transition: opacity 0.2s;
+  padding: 4px 6px;
+  border-radius: 6px;
 }
 
 .settings-btn:hover {
   opacity: 1;
+  background: #1e1e1e;
+}
+
+/* SAVED LIST */
+.saved-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.saved-list::-webkit-scrollbar { width: 4px; }
+.saved-list::-webkit-scrollbar-track { background: #111; }
+.saved-list::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.saved-item {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saved-item:hover {
+  border-color: #ff6b35;
+  background: #1a0f0a;
+}
+
+.saved-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0f0f0;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-item-meta {
+  font-size: 11px;
+  color: #555;
+  display: flex;
+  gap: 10px;
+}
+
+.saved-item-meta span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 /* STATES */

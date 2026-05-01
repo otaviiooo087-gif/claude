@@ -14,7 +14,12 @@
         <span class="logo-icon">⚡</span>
         <span class="logo-text">Viral Analyzer</span>
       </div>
-      <button class="settings-btn" id="settingsBtn" title="Configurações">⚙️</button>
+      <div class="header-actions">
+        <button class="header-btn" id="savedBtn" title="Roteiros Salvos">
+          📁 <span class="saved-count" id="savedCount"></span>
+        </button>
+        <button class="header-btn" id="settingsBtn" title="Configurações">⚙️</button>
+      </div>
     </header>
 
     <!-- IDLE -->
@@ -68,22 +73,10 @@
       <div class="spinner"></div>
       <h3>Analisando padrões...</h3>
       <div class="analysis-steps">
-        <div class="astep" id="astep1">
-          <span class="astep-icon">⏳</span>
-          <span>Raio-X do vídeo</span>
-        </div>
-        <div class="astep" id="astep2">
-          <span class="astep-icon">⏳</span>
-          <span>Engenharia reversa</span>
-        </div>
-        <div class="astep" id="astep3">
-          <span class="astep-icon">⏳</span>
-          <span>Criando 5 roteiros</span>
-        </div>
-        <div class="astep" id="astep4">
-          <span class="astep-icon">⏳</span>
-          <span>Ganchos e extras</span>
-        </div>
+        <div class="astep" id="astep1"><span class="astep-icon">⏳</span><span>Raio-X do vídeo</span></div>
+        <div class="astep" id="astep2"><span class="astep-icon">⏳</span><span>Engenharia reversa</span></div>
+        <div class="astep" id="astep3"><span class="astep-icon">⏳</span><span>Criando 5 roteiros</span></div>
+        <div class="astep" id="astep4"><span class="astep-icon">⏳</span><span>Ganchos e extras</span></div>
       </div>
     </div>
 
@@ -92,6 +85,7 @@
       <div class="results-header">
         <h3>✅ Análise Completa</h3>
         <div class="result-actions">
+          <button class="btn-icon" id="saveResultBtn" title="Salvar roteiros">💾</button>
           <button class="btn-icon" id="copyBtn" title="Copiar tudo">📋</button>
           <button class="btn-icon" id="newAnalysisBtn" title="Nova análise">🔄</button>
         </div>
@@ -106,6 +100,34 @@
       </div>
 
       <div class="tab-content" id="tabContent"></div>
+    </div>
+
+    <!-- SAVED -->
+    <div id="stateSaved" class="state">
+      <div class="results-header">
+        <h3>📁 Roteiros Salvos</h3>
+        <button class="btn-icon" id="backBtn" title="Voltar">✕</button>
+      </div>
+      <div id="savedList" class="saved-list"></div>
+      <p class="hint" id="savedHint" style="display:none">Nenhum roteiro salvo ainda.<br>Analise um vídeo e clique em 💾</p>
+    </div>
+
+    <!-- SAVED DETAIL -->
+    <div id="stateSavedDetail" class="state">
+      <div class="results-header">
+        <h3 id="detailTitle" style="font-size:13px;flex:1;margin-right:8px"></h3>
+        <div class="result-actions">
+          <button class="btn-icon" id="detailCopyBtn" title="Copiar">📋</button>
+          <button class="btn-icon" id="detailDeleteBtn" title="Apagar">🗑️</button>
+          <button class="btn-icon" id="detailBackBtn" title="Voltar">✕</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-stab="scripts">✍️ Roteiros</button>
+        <button class="tab" data-stab="extras">🚀 Extras</button>
+        <button class="tab" data-stab="raiox">🎯 Raio-X</button>
+      </div>
+      <div class="tab-content" id="detailContent"></div>
     </div>
 
     <!-- ERROR -->
