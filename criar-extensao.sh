@@ -416,7 +416,7 @@ async function analyzeWithClaude(transcript, key, model) {
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({model, max_tokens:4096, system:CLAUDE_SYSTEM_PROMPT,
         messages:[{role:'user',content:`Transcrição do vídeo viral:\n\n"${transcript}"\n\nAnalise e retorne o JSON completo.`}]})
     });
