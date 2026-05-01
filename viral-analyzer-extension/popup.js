@@ -50,6 +50,7 @@ let audioChunks = [];
 let recordingTimer = null;
 let currentResults = null;
 let currentDetailId = null;
+let currentPlatform = '—';
 let tabId = null;
 
 const states = ['stateIdle', 'stateRecording', 'stateTranscribing', 'stateAnalyzing', 'stateResults', 'stateError', 'stateSaved', 'stateSavedDetail'];
@@ -109,6 +110,7 @@ function updateIdleState(videoInfo) {
   const videoStatus = document.getElementById('videoStatus');
 
   if (videoInfo) {
+    currentPlatform = videoInfo.platform || '—';
     badge.textContent = videoInfo.platform;
     badge.classList.add('detected');
     statusIcon.textContent = '✅';
@@ -316,7 +318,7 @@ async function analyzeWithClaude(transcript, apiKey) {
     el.querySelector('.astep-icon').textContent = '✅';
   });
 
-  currentResults = { transcript: transcript, ...result };
+  currentResults = { transcript: transcript, platform: currentPlatform, ...result };
 
   setTimeout(() => renderResults(currentResults), 500);
 }
@@ -342,21 +344,43 @@ async function getSaved() {
 
 async function saveCurrentResult() {
   if (!currentResults) return;
-  const saved = await getSaved();
-  const titulo = (currentResults.extras?.titulos?.[0]) || 'Análise sem título';
-  const entry = {
-    id: Date.now(),
-    date: new Date().toLocaleDateString('pt-BR'),
-    titulo,
-    platform: currentResults.platform || '—',
-    data: currentResults
-  };
-  saved.unshift(entry);
-  await new Promise(r => chrome.storage.local.set({ savedResults: saved }, r));
-  updateSavedCount();
+
   const btn = document.getElementById('saveResultBtn');
-  btn.textContent = '✅';
-  setTimeout(() => (btn.textContent = '💾'), 2000);
+
+  try {
+    const saved = await getSaved();
+    const titulo = (currentResults.extras?.titulos?.[0]) || 'Análise sem título';
+
+    const entry = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('pt-BR'),
+      titulo,
+      platform: currentResults.platform || '—',
+      data: {
+        raiox: currentResults.raiox,
+        engenharia_reversa: currentResults.engenharia_reversa,
+        roteiros: currentResults.roteiros,
+        extras: currentResults.extras
+      }
+    };
+
+    saved.unshift(entry);
+
+    await new Promise((resolve, reject) => {
+      chrome.storage.local.set({ savedResults: saved }, () => {
+        if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+        else resolve();
+      });
+    });
+
+    updateSavedCount();
+    btn.textContent = '✅';
+    setTimeout(() => (btn.textContent = '💾'), 2000);
+  } catch (err) {
+    btn.textContent = '❌';
+    setTimeout(() => (btn.textContent = '💾'), 2000);
+    console.error('Erro ao salvar:', err);
+  }
 }
 
 async function deleteSaved(id) {
