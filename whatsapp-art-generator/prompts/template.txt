@@ -1,10 +1,15 @@
-Crie um anúncio publicitário profissional e moderno para o mercado brasileiro.
-Serviço ou produto: {TEMA}.
-Exiba o número de WhatsApp {TELEFONE} de forma grande, destacada e bem legível na imagem.
-Estilo: poster publicitário de alta qualidade, cores vibrantes, design limpo e chamativo,
-adequado para divulgação em redes sociais e WhatsApp.
-Sem texto extra além do número de contato e elementos visuais do serviço.
+Create a professional marketing advertisement image for the Brazilian financial consulting market, in the premium style of Grupo ITT RDZ Consultoria.
 
---- INSTRUÇÕES ---
-Substitua {TEMA} pelo serviço/produto e {TELEFONE} pelo número do vendedor.
-Cole aqui o seu prompt personalizado do ChatGPT para substituir este padrão.
+Visual style:
+- Very dark/black background (#080808), similar to luxury financial brands
+- Large bold headline text in metallic GOLD color (like the text: {TEMA})
+- Photorealistic Brazilian professional man or woman holding a smartphone, occupying the right side of the image
+- Subtle golden decorative circular rings in the background
+- Thin gold horizontal lines as accents/borders
+- White subtitle text below the headline
+- Green pill-shaped CTA button (WhatsApp green #25D366) with text in white
+- The phone number {TELEFONE} displayed prominently at the bottom with a green WhatsApp circle icon next to it
+- Top-left corner: reserved space for company logo (leave it clean/dark)
+- Overall mood: premium, luxury, trustworthy, Brazilian financial services
+
+Do NOT include any actual text in the generated image (no typed words) — only the visual elements, background, person, and decorative elements. The text will be added separately.
