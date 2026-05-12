@@ -4,9 +4,9 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const { TEMPLATES } = require('./templates');
+const { applyLogo, hasLogo } = require('./logoOverlay');
 
 const SIZE = 1080;
-const LOGO_PATH = path.join(__dirname, '..', 'assets', 'logo.png');
 
 function formatPhone(raw) {
   const digits = raw.replace(/\D/g, '');
@@ -24,17 +24,17 @@ function formatPhone(raw) {
 }
 
 function buildLogoSection() {
-  if (fs.existsSync(LOGO_PATH)) {
-    const b64 = fs.readFileSync(LOGO_PATH).toString('base64');
-    return `<image xlink:href="data:image/png;base64,${b64}"
-      x="40" y="32" width="130" height="66"
-      preserveAspectRatio="xMidYMid meet"/>`;
+  if (hasLogo()) {
+    // Área reservada — o logo real é sobreposto depois pelo logoOverlay
+    return `<rect x="30" y="30" width="218" height="123" rx="14"
+      fill="rgba(255,255,255,0.15)"/>`;
   }
+  // Sem logo: exibe nome da empresa em texto
   const company = process.env.COMPANY_NAME || 'SUA EMPRESA';
   return `
-    <rect x="36" y="32" width="160" height="66" rx="14"
-      fill="rgba(255,255,255,0.18)"/>
-    <text x="116" y="72" text-anchor="middle"
+    <rect x="30" y="30" width="218" height="80" rx="14"
+      fill="rgba(255,255,255,0.20)"/>
+    <text x="139" y="78" text-anchor="middle"
       font-family="Arial Black, Arial, sans-serif"
       font-size="17" font-weight="900" fill="white">${company}</text>
   `;
@@ -159,13 +159,17 @@ async function generateArt(templateKey, phone) {
   fs.mkdirSync(outputDir, { recursive: true });
 
   const svg = buildSVG(templateKey, phone);
-  const filename = `arte_${templateKey}_${Date.now()}.png`;
-  const outputPath = path.join(outputDir, filename);
 
-  await sharp(Buffer.from(svg))
+  // 1. SVG → PNG buffer
+  let buf = await sharp(Buffer.from(svg))
     .png({ compressionLevel: 8 })
-    .toFile(outputPath);
+    .toBuffer();
 
+  // 2. Aplica logo fixo no canto superior esquerdo (mesmo padrão em todas as artes)
+  buf = await applyLogo(buf);
+
+  const outputPath = path.join(outputDir, `arte_${templateKey}_${Date.now()}.png`);
+  await fs.promises.writeFile(outputPath, buf);
   return outputPath;
 }
 

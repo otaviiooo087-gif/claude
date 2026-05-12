@@ -3,6 +3,7 @@
 const OpenAI = require('openai');
 const fs = require('fs');
 const path = require('path');
+const { applyLogo } = require('./logoOverlay');
 
 const TEMPLATE_FILE = path.join(__dirname, '..', 'prompts', 'template.txt');
 
@@ -53,7 +54,9 @@ async function generateAdImage(tema, telefone) {
     response_format: 'b64_json',
   });
 
-  return Buffer.from(response.data[0].b64_json, 'base64');
+  // Aplica logo fixo no canto superior esquerdo (mesmo padrão das artes template)
+  const raw = Buffer.from(response.data[0].b64_json, 'base64');
+  return applyLogo(raw);
 }
 
 module.exports = { generateAdImage };
