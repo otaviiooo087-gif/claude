@@ -33,20 +33,23 @@ function parseArtCommand(text) {
 
 const HELP_TEXT = `*🎨 Bot de Artes — Comandos disponíveis*
 
+━━━━━━━━━━━━━━━━━━━━
+*🖼️ ARTES PRONTAS (templates)*
+━━━━━━━━━━━━━━━━━━━━
 *!arte limpa nome [número]*
+*!arte score [número]*
+*!arte parcelas [número]*
+*!arte rating [número]*
 _Ex: !arte limpa nome 11999999999_
 
-*!arte score [número]*
-_Ex: !arte score 21988887777_
+━━━━━━━━━━━━━━━━━━━━
+*🤖 ANÚNCIO COM IA (DALL-E 3)*
+━━━━━━━━━━━━━━━━━━━━
+*!anuncio* — inicia o gerador de anúncios com IA
+O bot vai pedir: senha → número → tema do anúncio
 
-*!arte parcelas [número]*
-_Ex: !arte parcelas 31977776666_
-
-*!arte rating [número]*
-_Ex: !arte rating 85966665555_
-
-O número deve conter o DDD (com ou sem código do país).
-
-*!ajuda* — exibe esta mensagem novamente`;
+━━━━━━━━━━━━━━━━━━━━
+*!cancelar* — cancela o que estiver em andamento
+*!ajuda* — exibe esta mensagem`;
 
 module.exports = { parseArtCommand, HELP_TEXT };

@@ -1,0 +1,10 @@
+Crie um anúncio publicitário profissional e moderno para o mercado brasileiro.
+Serviço ou produto: {TEMA}.
+Exiba o número de WhatsApp {TELEFONE} de forma grande, destacada e bem legível na imagem.
+Estilo: poster publicitário de alta qualidade, cores vibrantes, design limpo e chamativo,
+adequado para divulgação em redes sociais e WhatsApp.
+Sem texto extra além do número de contato e elementos visuais do serviço.
+
+--- INSTRUÇÕES ---
+Substitua {TEMA} pelo serviço/produto e {TELEFONE} pelo número do vendedor.
+Cole aqui o seu prompt personalizado do ChatGPT para substituir este padrão.
