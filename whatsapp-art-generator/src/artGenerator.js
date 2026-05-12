@@ -25,16 +25,16 @@ function formatPhone(raw) {
 
 function buildLogoSection() {
   if (hasLogo()) {
-    // Área reservada — o logo real é sobreposto depois pelo logoOverlay
-    return `<rect x="30" y="30" width="218" height="123" rx="14"
-      fill="rgba(255,255,255,0.15)"/>`;
+    // Área reservada 160×160 px — logo sobreposto depois pelo logoOverlay
+    return `<rect x="25" y="25" width="160" height="160" rx="8"
+      fill="rgba(0,0,0,0.0)"/>`;
   }
   // Sem logo: exibe nome da empresa em texto
   const company = process.env.COMPANY_NAME || 'SUA EMPRESA';
   return `
-    <rect x="30" y="30" width="218" height="80" rx="14"
+    <rect x="25" y="25" width="210" height="72" rx="14"
       fill="rgba(255,255,255,0.20)"/>
-    <text x="139" y="78" text-anchor="middle"
+    <text x="130" y="69" text-anchor="middle"
       font-family="Arial Black, Arial, sans-serif"
       font-size="17" font-weight="900" fill="white">${company}</text>
   `;
