@@ -4,6 +4,7 @@ const {
   default: makeWASocket,
   DisconnectReason,
   useMultiFileAuthState,
+  fetchLatestBaileysVersion,
 } = require('@whiskeysockets/baileys');
 const pino    = require('pino');
 const qrcode  = require('qrcode-terminal');
@@ -214,10 +215,15 @@ async function startBot() {
   fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 
   const { state, saveCreds } = await useMultiFileAuthState(SESSIONS_DIR);
+  const { version } = await fetchLatestBaileysVersion();
+
+  console.log(`[Bot] Versão WhatsApp: ${version.join('.')}`);
 
   const sock = makeWASocket({
-    auth: state,
+    version,
+    auth:   state,
     logger: pino({ level: 'silent' }),
+    browser: ['Grupo ITT Bot', 'Chrome', '124.0.0'],
   });
 
   sock.ev.on('creds.update', saveCreds);
@@ -225,10 +231,11 @@ async function startBot() {
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
-      console.clear();
-      console.log('📱 Escaneie o QR Code abaixo com seu WhatsApp:\n');
+      console.log('\n========================================');
+      console.log('📱 ESCANEIE O QR CODE COM SEU WHATSAPP:');
+      console.log('========================================\n');
       qrcode.generate(qr, { small: true });
-      console.log('\nWhatsApp → 3 pontinhos → Dispositivos conectados → Conectar dispositivo\n');
+      console.log('\nWhatsApp → ⋮ → Dispositivos conectados → Conectar dispositivo\n');
     }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
