@@ -5,9 +5,10 @@ const {
   DisconnectReason,
   useMultiFileAuthState,
 } = require('@whiskeysockets/baileys');
-const pino = require('pino');
-const fs = require('fs');
-const path = require('path');
+const pino    = require('pino');
+const qrcode  = require('qrcode-terminal');
+const fs      = require('fs');
+const path    = require('path');
 
 const { generateArt } = require('./artGenerator');
 const { parseArtCommand, HELP_TEXT } = require('./commands');
@@ -216,7 +217,6 @@ async function startBot() {
 
   const sock = makeWASocket({
     auth: state,
-    printQRInTerminal: true,
     logger: pino({ level: 'silent' }),
   });
 
@@ -224,7 +224,12 @@ async function startBot() {
 
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
-    if (qr) console.log('\n📱 Escaneie o QR code acima com seu WhatsApp.\n');
+    if (qr) {
+      console.clear();
+      console.log('📱 Escaneie o QR Code abaixo com seu WhatsApp:\n');
+      qrcode.generate(qr, { small: true });
+      console.log('\nWhatsApp → 3 pontinhos → Dispositivos conectados → Conectar dispositivo\n');
+    }
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = code !== DisconnectReason.loggedOut;
