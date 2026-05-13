@@ -43,7 +43,7 @@ const HELP_TEXT = `*🎨 Bot de Artes — Comandos disponíveis*
 _Ex: !arte limpa nome 11999999999_
 
 ━━━━━━━━━━━━━━━━━━━━
-*🤖 ANÚNCIO COM IA (DALL-E 3)*
+*🤖 ANÚNCIO COM IA (Pollinations)*
 ━━━━━━━━━━━━━━━━━━━━
 *!anuncio* — inicia o gerador de anúncios com IA
 O bot vai pedir: senha → número → tema do anúncio

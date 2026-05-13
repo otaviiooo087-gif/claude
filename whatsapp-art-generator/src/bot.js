@@ -175,7 +175,7 @@ async function handleMessage(sock, jid, text) {
 
     await sock.sendMessage(jid, {
       text:
-        '⏳ *Gerando seu anúncio com IA (DALL-E 3)...*\n' +
+        '⏳ *Gerando seu anúncio com IA...*\n' +
         'Isso pode levar até 30 segundos. Aguarde!',
     });
 
@@ -193,9 +193,7 @@ async function handleMessage(sock, jid, text) {
       console.log(`[IA] Enviado com sucesso para ${jid}`);
     } catch (err) {
       console.error('[IA] Erro ao gerar:', err.message);
-      const msg = err.message.includes('OPENAI_API_KEY')
-        ? '⚠️ Chave da OpenAI não configurada. Verifique o arquivo .env'
-        : '❌ Erro ao gerar o anúncio. Verifique sua chave da API e tente novamente.\n\nEnvie *!anuncio* para tentar de novo.';
+      const msg = '❌ Erro ao gerar o anúncio. Tente novamente.\n\nEnvie *!anuncio* para recomeçar.';
       await sock.sendMessage(jid, { text: msg });
     }
     return;
