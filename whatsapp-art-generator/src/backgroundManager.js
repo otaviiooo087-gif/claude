@@ -1,82 +1,74 @@
 'use strict';
 
 /**
- * Gera e armazena as fotos de fundo de cada template usando DALL-E.
+ * Gera fotos de fundo usando Pollinations.ai — GRATUITO, sem API key.
  * As fotos são geradas UMA VEZ e salvas em assets/backgrounds/.
- * Nas próximas chamadas, usa o arquivo salvo (sem custo adicional).
+ * Nas próximas chamadas usa o arquivo salvo (sem custo e sem espera).
  */
 
-const sharp  = require('sharp');
-const OpenAI = require('openai');
-const fs     = require('fs');
-const path   = require('path');
+const sharp = require('sharp');
+const fs    = require('fs');
+const path  = require('path');
 
 const BG_DIR = path.join(__dirname, '..', 'assets', 'backgrounds');
 
 const BG_PROMPTS = {
-  'limpa-nome':
-    'Professional Brazilian man in his 30s, business casual clothes, smiling while holding a smartphone showing "APPROVED" on screen, luxury car dealership in background, very dark background with dramatic gold lighting, photorealistic high quality advertising photography, cinematic lighting, premium mood',
-
-  'score':
-    'Confident professional Brazilian businessman in dark suit, working with laptop and smartphone, dark modern office background, subtle gold accent lighting, focused expression, photorealistic corporate advertising photography, premium atmosphere',
-
-  'parcelas':
-    'Brazilian professional couple looking happy and relieved, holding documents and smartphone, dark modern apartment background, warm subtle lighting, photorealistic lifestyle advertising photography, aspirational mood',
-
-  'rating':
-    'Confident professional Brazilian man in premium suit, holding smartphone, dark luxury background with subtle gold accents, bank or corporate building blurred behind, photorealistic executive advertising photography, powerful atmosphere',
+  'limpa-nome': {
+    prompt: 'professional Brazilian man 30s business casual smiling holding smartphone showing approved screen, luxury car dealership dark background dramatic gold lighting, photorealistic advertising photography, cinematic premium mood',
+    seed: 42,
+  },
+  'score': {
+    prompt: 'confident professional Brazilian businessman dark suit laptop smartphone dark modern office background subtle gold accent lighting focused expression, photorealistic corporate advertising photography premium atmosphere',
+    seed: 123,
+  },
+  'parcelas': {
+    prompt: 'Brazilian professional man happy relieved holding documents smartphone dark modern apartment background warm subtle lighting, photorealistic lifestyle advertising photography aspirational mood',
+    seed: 456,
+  },
+  'rating': {
+    prompt: 'confident professional Brazilian man premium suit holding smartphone dark luxury background subtle gold accents bank corporate building blurred, photorealistic executive advertising photography powerful atmosphere',
+    seed: 789,
+  },
 };
 
-let _client = null;
-function getClient() {
-  if (!_client) _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  return _client;
+async function generateWithPollinations(prompt, seed) {
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux-realism&nologo=true&seed=${seed}`;
+  console.log(`[Background] Conectando ao Pollinations.ai...`);
+
+  const response = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+  if (!response.ok) throw new Error(`Pollinations retornou ${response.status}`);
+
+  const buf = Buffer.from(await response.arrayBuffer());
+  console.log(`[Background] Imagem recebida (${(buf.length / 1024).toFixed(0)}KB)`);
+  return buf;
 }
 
 async function ensureBackground(templateKey) {
   fs.mkdirSync(BG_DIR, { recursive: true });
 
   const bgPath = path.join(BG_DIR, `${templateKey}.jpg`);
-  if (fs.existsSync(bgPath)) return bgPath; // já existe — usa direto
+  if (fs.existsSync(bgPath)) return bgPath;
 
-  if (!process.env.OPENAI_API_KEY) return null;
+  const cfg = BG_PROMPTS[templateKey];
+  if (!cfg) return null;
 
-  console.log(`[Background] Gerando fundo "${templateKey}" com IA... (1x, ~20s)`);
+  console.log(`[Background] Gerando fundo "${templateKey}" com IA gratuita... (~30s)`);
 
-  let response;
-  try {
-    // Tenta DALL-E 3 primeiro (melhor qualidade)
-    response = await getClient().images.generate({
-      model:           'dall-e-3',
-      prompt:          BG_PROMPTS[templateKey],
-      n:               1,
-      size:            '1024x1024',
-      quality:         'standard',
-      response_format: 'b64_json',
-    });
-    console.log(`[Background] Gerado com DALL-E 3`);
-  } catch (err) {
-    if (err.status === 400 || err.status === 404) {
-      // Fallback para DALL-E 2 (conta sem acesso ao DALL-E 3)
-      console.log(`[Background] DALL-E 3 indisponível, usando DALL-E 2...`);
-      response = await getClient().images.generate({
-        model:           'dall-e-2',
-        prompt:          BG_PROMPTS[templateKey].slice(0, 1000),
-        n:               1,
-        size:            '1024x1024',
-        response_format: 'b64_json',
-      });
-      console.log(`[Background] Gerado com DALL-E 2`);
-    } else {
-      throw err;
-    }
-  }
-
-  const buf = Buffer.from(response.data[0].b64_json, 'base64');
-  await sharp(buf).jpeg({ quality: 92 }).toFile(bgPath);
+  const buf = await generateWithPollinations(cfg.prompt, cfg.seed);
+  await sharp(buf).resize(1024, 1024, { fit: 'cover' }).jpeg({ quality: 92 }).toFile(bgPath);
   console.log(`[Background] Salvo em ${bgPath}`);
 
   return bgPath;
 }
 
-module.exports = { ensureBackground };
+/**
+ * Gera fundo personalizado para o !anuncio, baseado no tema do vendedor.
+ * Retorna um Buffer PNG (não salva em disco — cada anúncio é único).
+ */
+async function generateCustomBackground(tema) {
+  const prompt = `professional Brazilian financial services advertisement background, dark luxury setting, subtle gold lighting, person holding smartphone, theme: ${tema}, photorealistic, high quality, dark mood, no text, no words`;
+  const seed   = Math.floor(Math.random() * 9999);
+  return generateWithPollinations(prompt, seed);
+}
+
+module.exports = { ensureBackground, generateCustomBackground };
