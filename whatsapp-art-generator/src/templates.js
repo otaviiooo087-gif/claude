@@ -2,24 +2,37 @@
 
 const TEMPLATES = {
   'limpa-nome': {
-    headlineLines:    ['NOME', 'SUJO?'],
-    headlineFontSize: 132,
+    headlineLines:    ['O NOME SUJO', 'CUSTA MAIS', 'DO QUE VOCÊ', 'IMAGINA'],
+    headlineFontSize: 84,
     subtitle: [
-      'Volte a ter acesso a crédito,',
-      'cartão e financiamento.',
+      'Financiamentos, cartões e crédito',
+      'podem ser afetados.',
     ],
     cta:      'Chame agora e resolva',
     category: 'CONSULTORIA FINANCEIRA',
+    icons: [
+      { type: 'lock',       labels: ['CRÉDITO',       'BLOQUEADO']        },
+      { type: 'chart-down', labels: ['DIFICULDADE EM', 'FINANCIAMENTOS']   },
+      { type: 'card',       labels: ['CARTÕES COM',    'LIMITES BAIXOS']   },
+      { type: 'percent',    labels: ['JUROS MAIS',     'ALTOS']            },
+    ],
   },
 
   'score': {
     headlineLines:    ['SCORE NÃO', 'SOBE POR', 'ACASO.'],
     headlineFontSize: 92,
     subtitle: [
-      'É resultado de estratégia.',
+      'É resultado de estratégia',
+      'e conhecimento financeiro.',
     ],
     cta:      'Me chama agora',
     category: 'SCORE DE CRÉDITO',
+    icons: [
+      { type: 'arrow-up', labels: ['SCORE',         'AUMENTADO']    },
+      { type: 'check',    labels: ['APROVAÇÃO',     'FACILITADA']   },
+      { type: 'card',     labels: ['MAIS',          'CRÉDITO']      },
+      { type: 'bank',     labels: ['FINANCIAMENTO', 'LIBERADO']     },
+    ],
   },
 
   'parcelas': {
@@ -31,6 +44,12 @@ const TEMPLATES = {
     ],
     cta:      'Chame agora e resolva',
     category: 'FINANCIAMENTO',
+    icons: [
+      { type: 'money',    labels: ['MENOS POR',  'MÊS']          },
+      { type: 'calendar', labels: ['PRAZO',       'MAIOR']        },
+      { type: 'percent',  labels: ['TAXA',        'MENOR']        },
+      { type: 'check',    labels: ['ALÍVIO',      'FINANCEIRO']   },
+    ],
   },
 
   'rating': {
@@ -42,6 +61,12 @@ const TEMPLATES = {
     ],
     cta:      'Fale com nossa equipe',
     category: 'RATING BANCÁRIO',
+    icons: [
+      { type: 'star',     labels: ['RATING',      'AUMENTADO']    },
+      { type: 'bank',     labels: ['CRÉDITO',      'BANCÁRIO']     },
+      { type: 'check',    labels: ['APROVAÇÃO',    'RÁPIDA']       },
+      { type: 'arrow-up', labels: ['CRESCIMENTO',  'FINANCEIRO']   },
+    ],
   },
 };
 
