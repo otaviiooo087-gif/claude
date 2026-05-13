@@ -43,14 +43,34 @@ async function ensureBackground(templateKey) {
 
   console.log(`[Background] Gerando fundo "${templateKey}" com IA... (1x, ~20s)`);
 
-  const response = await getClient().images.generate({
-    model:           'dall-e-3',
-    prompt:          BG_PROMPTS[templateKey],
-    n:               1,
-    size:            '1024x1024',
-    quality:         'standard',
-    response_format: 'b64_json',
-  });
+  let response;
+  try {
+    // Tenta DALL-E 3 primeiro (melhor qualidade)
+    response = await getClient().images.generate({
+      model:           'dall-e-3',
+      prompt:          BG_PROMPTS[templateKey],
+      n:               1,
+      size:            '1024x1024',
+      quality:         'standard',
+      response_format: 'b64_json',
+    });
+    console.log(`[Background] Gerado com DALL-E 3`);
+  } catch (err) {
+    if (err.status === 400 || err.status === 404) {
+      // Fallback para DALL-E 2 (conta sem acesso ao DALL-E 3)
+      console.log(`[Background] DALL-E 3 indisponível, usando DALL-E 2...`);
+      response = await getClient().images.generate({
+        model:           'dall-e-2',
+        prompt:          BG_PROMPTS[templateKey].slice(0, 1000),
+        n:               1,
+        size:            '1024x1024',
+        response_format: 'b64_json',
+      });
+      console.log(`[Background] Gerado com DALL-E 2`);
+    } else {
+      throw err;
+    }
+  }
 
   const buf = Buffer.from(response.data[0].b64_json, 'base64');
   await sharp(buf).jpeg({ quality: 92 }).toFile(bgPath);
