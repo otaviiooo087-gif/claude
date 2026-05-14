@@ -7,7 +7,8 @@ const { TEMPLATES }          = require('./templates');
 const { applyLogo, hasLogo } = require('./logoOverlay');
 const { ensureBackground }   = require('./backgroundManager');
 
-const SIZE = 1080;
+const W = 1080;
+const H = 1350;
 
 function formatPhone(raw) {
   const digits = raw.replace(/\D/g, '');
@@ -69,26 +70,26 @@ function drawIconShape(type, cx, cy) {
 function buildIconsSVG(icons, centerY) {
   if (!icons || icons.length === 0) return '';
 
-  const sectionW = SIZE / icons.length;
-  const ICON_R   = 42;
+  const sectionW = W / icons.length;
+  const ICON_R   = 44;
 
   return icons.map((icon, i) => {
     const cx = Math.round(sectionW * i + sectionW / 2);
 
-    const circle  = `<circle cx="${cx}" cy="${centerY}" r="${ICON_R}" fill="rgba(160,115,5,0.13)" stroke="#B08010" stroke-width="1.5"/>`;
+    const circle  = `<circle cx="${cx}" cy="${centerY}" r="${ICON_R}" fill="rgba(160,115,5,0.15)" stroke="rgba(200,155,20,0.50)" stroke-width="1.5"/>`;
     const shape   = drawIconShape(icon.type, cx, centerY);
-    const label1  = `<text x="${cx}" y="${centerY + ICON_R + 22}" text-anchor="middle"
-      font-family="Arial,sans-serif" font-size="18" font-weight="bold"
-      fill="rgba(255,255,255,0.82)">${icon.labels[0]}</text>`;
+    const label1  = `<text x="${cx}" y="${centerY + ICON_R + 24}" text-anchor="middle"
+      font-family="Arial,sans-serif" font-size="19" font-weight="bold" letter-spacing="0.5"
+      fill="rgba(255,255,255,0.85)">${icon.labels[0]}</text>`;
     const label2  = icon.labels[1]
-      ? `<text x="${cx}" y="${centerY + ICON_R + 42}" text-anchor="middle"
-        font-family="Arial,sans-serif" font-size="18" font-weight="bold"
-        fill="rgba(255,255,255,0.82)">${icon.labels[1]}</text>`
+      ? `<text x="${cx}" y="${centerY + ICON_R + 46}" text-anchor="middle"
+        font-family="Arial,sans-serif" font-size="19" font-weight="bold" letter-spacing="0.5"
+        fill="rgba(255,255,255,0.85)">${icon.labels[1]}</text>`
       : '';
     const divider = i < icons.length - 1
-      ? `<line x1="${cx + Math.round(sectionW/2)}" y1="${centerY - ICON_R + 8}"
-          x2="${cx + Math.round(sectionW/2)}" y2="${centerY + ICON_R - 8}"
-          stroke="rgba(180,130,10,0.35)" stroke-width="1"/>`
+      ? `<line x1="${cx + Math.round(sectionW/2)}" y1="${centerY - ICON_R + 10}"
+          x2="${cx + Math.round(sectionW/2)}" y2="${centerY + ICON_R - 10}"
+          stroke="rgba(200,155,20,0.30)" stroke-width="1"/>`
       : '';
 
     return circle + shape + label1 + label2 + divider;
@@ -102,111 +103,125 @@ function buildOverlaySVG(templateKey, phone) {
   const { headlineLines, headlineFontSize, subtitle, cta, category, icons } = tmpl;
   const formattedPhone = formatPhone(phone);
 
-  const FS             = headlineFontSize;
-  const LINE_H         = Math.round(FS * 1.15);
-  const HL_START       = 185;
-  const lastHLY        = HL_START + (headlineLines.length - 1) * LINE_H;
+  const FS        = headlineFontSize;
+  const LINE_H    = Math.round(FS * 1.18);
+  const HL_START  = 240;
+  const lastHLY   = HL_START + (headlineLines.length - 1) * LINE_H;
 
-  const goldBarY       = lastHLY + 44;
-  const subStart       = goldBarY + 52;
-  const SUBTITLE_LH    = 48;
-  const lastSubY       = subStart + (subtitle.length - 1) * SUBTITLE_LH;
-  const subBarH        = (subtitle.length - 1) * SUBTITLE_LH + 42;
+  const goldBarY    = lastHLY + 50;
+  const subStart    = goldBarY + 58;
+  const SUBTITLE_LH = 50;
+  const lastSubY    = subStart + (subtitle.length - 1) * SUBTITLE_LH;
+  const subBarH     = (subtitle.length - 1) * SUBTITLE_LH + 46;
 
-  const ICON_R         = 42;
-  const iconCenterY    = Math.max(lastSubY + 95, 680);
-  const dividerY       = iconCenterY + ICON_R + 58;
-  const ctaTop         = dividerY + 18;
-  const ctaH           = 112;
-  const ctaCenterY     = ctaTop + Math.round(ctaH / 2);
+  const ICON_R      = 44;
+  const iconCenterY = Math.max(lastSubY + 110, 950);
+  const dividerY    = iconCenterY + ICON_R + 62;
+  const ctaTop      = dividerY + 22;
+  const ctaH        = 150;
+  const ctaCenterY  = ctaTop + Math.round(ctaH / 2);
 
   const headlineSVG = headlineLines.map((line, i) => `
   <text x="55" y="${HL_START + i * LINE_H}"
     font-family="Arial Black, Arial, sans-serif"
-    font-size="${FS}" font-weight="900"
+    font-size="${FS}" font-weight="900" letter-spacing="-0.5"
     fill="url(#goldText)">${line}</text>`).join('');
 
   const subtitleSVG = subtitle.map((line, i) => `
-  <text x="78" y="${subStart + 8 + i * SUBTITLE_LH}"
-    font-family="Arial, sans-serif" font-size="33"
-    fill="rgba(255,255,255,0.90)">${line}</text>`).join('');
+  <text x="80" y="${subStart + 10 + i * SUBTITLE_LH}"
+    font-family="Arial, sans-serif" font-size="34" letter-spacing="0.3"
+    fill="rgba(255,255,255,0.88)">${line}</text>`).join('');
 
   const iconsSVG = buildIconsSVG(icons, iconCenterY);
 
   const logoPlaceholder = hasLogo()
     ? `<rect x="25" y="25" width="160" height="100" rx="6" fill="rgba(0,0,0,0)"/>`
-    : `<rect x="25" y="25" width="210" height="68" rx="10" fill="rgba(0,0,0,0.60)"/>
-       <text x="130" y="66" text-anchor="middle"
+    : `<rect x="25" y="25" width="220" height="72" rx="10" fill="rgba(0,0,0,0.65)"/>
+       <text x="135" y="68" text-anchor="middle"
          font-family="Arial Black, Arial, sans-serif"
-         font-size="16" font-weight="900" fill="rgba(245,208,70,0.92)">GRUPO ITT RDZ</text>`;
+         font-size="17" font-weight="900" fill="rgba(245,208,70,0.92)">GRUPO ITT RDZ</text>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}"
+<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"
   xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#7A5400"/>
-      <stop offset="25%"  stop-color="#D4A017"/>
-      <stop offset="55%"  stop-color="#F5D060"/>
+      <stop offset="0%"   stop-color="#6A4800"/>
+      <stop offset="20%"  stop-color="#C9940A"/>
+      <stop offset="50%"  stop-color="#F5D060"/>
       <stop offset="75%"  stop-color="#C8900E"/>
-      <stop offset="100%" stop-color="#7A5400"/>
+      <stop offset="100%" stop-color="#6A4800"/>
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#C9940A"/>
+      <stop offset="50%"  stop-color="#F0C030"/>
+      <stop offset="100%" stop-color="#C9940A"/>
     </linearGradient>
     <linearGradient id="darkLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="rgba(4,4,4,0.97)"/>
-      <stop offset="45%"  stop-color="rgba(4,4,4,0.85)"/>
-      <stop offset="68%"  stop-color="rgba(4,4,4,0.52)"/>
-      <stop offset="100%" stop-color="rgba(4,4,4,0.10)"/>
+      <stop offset="0%"   stop-color="rgba(3,3,3,0.98)"/>
+      <stop offset="40%"  stop-color="rgba(3,3,3,0.90)"/>
+      <stop offset="65%"  stop-color="rgba(3,3,3,0.58)"/>
+      <stop offset="100%" stop-color="rgba(3,3,3,0.12)"/>
     </linearGradient>
     <linearGradient id="darkBottom" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%"   stop-color="rgba(4,4,4,0.0)"/>
-      <stop offset="45%"  stop-color="rgba(4,4,4,0.88)"/>
-      <stop offset="100%" stop-color="rgba(4,4,4,0.98)"/>
+      <stop offset="0%"   stop-color="rgba(3,3,3,0.0)"/>
+      <stop offset="35%"  stop-color="rgba(3,3,3,0.82)"/>
+      <stop offset="100%" stop-color="rgba(3,3,3,0.99)"/>
     </linearGradient>
     <linearGradient id="goldBorderH" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%"   stop-color="rgba(120,84,0,0)"/>
-      <stop offset="20%"  stop-color="#C9940A"/>
+      <stop offset="15%"  stop-color="#C9940A"/>
       <stop offset="50%"  stop-color="#F0C030"/>
-      <stop offset="80%"  stop-color="#C9940A"/>
+      <stop offset="85%"  stop-color="#C9940A"/>
       <stop offset="100%" stop-color="rgba(120,84,0,0)"/>
     </linearGradient>
     <linearGradient id="goldBorderV" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%"   stop-color="rgba(120,84,0,0)"/>
-      <stop offset="20%"  stop-color="#C9940A"/>
+      <stop offset="15%"  stop-color="#C9940A"/>
       <stop offset="50%"  stop-color="#F0C030"/>
-      <stop offset="80%"  stop-color="#C9940A"/>
+      <stop offset="85%"  stop-color="#C9940A"/>
       <stop offset="100%" stop-color="rgba(120,84,0,0)"/>
+    </linearGradient>
+    <linearGradient id="ctaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="rgba(10,10,10,0.97)"/>
+      <stop offset="100%" stop-color="rgba(5,5,5,0.99)"/>
     </linearGradient>
   </defs>
 
   <!-- Overlay lateral escuro -->
-  <rect width="${SIZE}" height="${SIZE}" fill="url(#darkLeft)"/>
+  <rect width="${W}" height="${H}" fill="url(#darkLeft)"/>
 
   <!-- Overlay escuro inferior -->
-  <rect y="${iconCenterY - ICON_R - 60}" width="${SIZE}"
-    height="${SIZE - (iconCenterY - ICON_R - 60)}" fill="url(#darkBottom)"/>
+  <rect y="${iconCenterY - ICON_R - 70}" width="${W}"
+    height="${H - (iconCenterY - ICON_R - 70)}" fill="url(#darkBottom)"/>
 
-  <!-- Bordas douradas -->
-  <rect x="0" y="0" width="${SIZE}" height="5" fill="url(#goldBorderH)"/>
-  <rect x="0" y="${SIZE-5}" width="${SIZE}" height="5" fill="url(#goldBorderH)"/>
-  <rect x="0" y="0" width="4" height="${SIZE}" fill="url(#goldBorderV)"/>
+  <!-- Bordas douradas (4 lados) -->
+  <rect x="0" y="0" width="${W}" height="5" fill="url(#goldBorderH)"/>
+  <rect x="0" y="${H-5}" width="${W}" height="5" fill="url(#goldBorderH)"/>
+  <rect x="0" y="0" width="4" height="${H}" fill="url(#goldBorderV)"/>
+  <rect x="${W-4}" y="0" width="4" height="${H}" fill="url(#goldBorderV)"/>
 
   <!-- Logo -->
   ${logoPlaceholder}
 
   <!-- Categoria -->
-  <text x="${SIZE-30}" y="50" text-anchor="end"
-    font-family="Arial, sans-serif" font-size="14" letter-spacing="2.5"
-    fill="rgba(197,164,20,0.72)">${category}</text>
+  <text x="${W-35}" y="52" text-anchor="end"
+    font-family="Arial, sans-serif" font-size="15" letter-spacing="3"
+    fill="rgba(200,164,22,0.75)">${category}</text>
+
+  <!-- Linha decorativa sob categoria -->
+  <rect x="${W-220}" y="62" width="185" height="1" rx="0.5"
+    fill="rgba(200,164,22,0.25)"/>
 
   <!-- Headline dourado -->
   ${headlineSVG}
 
   <!-- Barra dourada separadora -->
-  <rect x="55" y="${goldBarY}" width="130" height="4" rx="2" fill="url(#goldText)"/>
+  <rect x="55" y="${goldBarY}" width="150" height="4" rx="2" fill="url(#goldAccent)"/>
 
   <!-- Barra lateral subtítulo -->
   <rect x="55" y="${subStart - 6}" width="3" height="${subBarH}" rx="1.5"
-    fill="url(#goldText)" opacity="0.7"/>
+    fill="url(#goldAccent)" opacity="0.75"/>
 
   <!-- Subtítulo -->
   ${subtitleSVG}
@@ -215,27 +230,33 @@ function buildOverlaySVG(templateKey, phone) {
   ${iconsSVG}
 
   <!-- Linha divisória dourada -->
-  <rect x="0" y="${dividerY}" width="${SIZE}" height="1.5"
-    fill="url(#goldBorderH)" opacity="0.5"/>
+  <rect x="0" y="${dividerY}" width="${W}" height="1.5"
+    fill="url(#goldBorderH)" opacity="0.55"/>
 
-  <!-- CTA: fundo escuro premium com número -->
-  <rect x="38" y="${ctaTop}" width="${SIZE - 76}" height="${ctaH}" rx="20"
-    fill="rgba(8,8,8,0.94)" stroke="rgba(180,130,10,0.30)" stroke-width="1"/>
+  <!-- CTA: fundo escuro premium -->
+  <rect x="32" y="${ctaTop}" width="${W - 64}" height="${ctaH}" rx="22"
+    fill="url(#ctaGrad)" stroke="rgba(200,155,20,0.35)" stroke-width="1.5"/>
 
   <!-- WhatsApp circle -->
-  <circle cx="106" cy="${ctaCenterY}" r="36" fill="#25D366"/>
-  <text x="106" y="${ctaCenterY + 13}" text-anchor="middle"
-    font-family="Arial, sans-serif" font-size="30" fill="white">&#10003;</text>
+  <circle cx="112" cy="${ctaCenterY}" r="42" fill="#1DA851"/>
+  <circle cx="112" cy="${ctaCenterY}" r="38" fill="#25D366"/>
+  <text x="112" y="${ctaCenterY + 14}" text-anchor="middle"
+    font-family="Arial, sans-serif" font-size="34" fill="white">&#10003;</text>
+
+  <!-- Separador vertical interno -->
+  <rect x="172" y="${ctaTop + 28}" width="1.5" height="${ctaH - 56}" rx="0.75"
+    fill="rgba(200,155,20,0.30)"/>
 
   <!-- Label CTA -->
-  <text x="165" y="${ctaCenterY - 14}"
-    font-family="Arial, sans-serif" font-size="22"
-    fill="rgba(255,255,255,0.60)">${cta}</text>
+  <text x="196" y="${ctaCenterY - 18}"
+    font-family="Arial, sans-serif" font-size="22" letter-spacing="0.5"
+    fill="rgba(255,255,255,0.55)">${cta}</text>
 
   <!-- Número de telefone -->
-  <text x="165" y="${ctaCenterY + 34}"
+  <text x="196" y="${ctaCenterY + 38}"
     font-family="Arial Black, Arial, sans-serif"
-    font-size="48" font-weight="900" fill="white">${formattedPhone}</text>
+    font-size="50" font-weight="900" letter-spacing="-1"
+    fill="white">${formattedPhone}</text>
 </svg>`;
 }
 
@@ -248,12 +269,12 @@ async function generateArt(templateKey, phone) {
   let baseBuffer;
   if (bgPath) {
     baseBuffer = await sharp(bgPath)
-      .resize(SIZE, SIZE, { fit: 'cover', position: 'right' })
+      .resize(W, H, { fit: 'cover', position: 'right' })
       .png()
       .toBuffer();
   } else {
-    const fallback = `<svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${SIZE}" height="${SIZE}" fill="#080808"/>
+    const fallback = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${W}" height="${H}" fill="#060606"/>
     </svg>`;
     baseBuffer = await sharp(Buffer.from(fallback)).png().toBuffer();
   }
