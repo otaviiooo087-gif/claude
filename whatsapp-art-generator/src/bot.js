@@ -18,6 +18,26 @@ const session = require('./session');
 
 const SESSIONS_DIR = path.join(__dirname, '..', 'sessions');
 
+// ── Whitelist de números autorizados ─────────────────────────────────────────
+// Lê ALLOWED_NUMBERS do .env — lista separada por vírgulas, apenas dígitos
+// Exemplo no .env: ALLOWED_NUMBERS=5511999999999,5511888888888
+function buildWhitelist() {
+  const raw = process.env.ALLOWED_NUMBERS || '';
+  return new Set(
+    raw.split(',')
+       .map(n => n.replace(/\D/g, '').trim())
+       .filter(Boolean)
+  );
+}
+
+function isAuthorized(jid) {
+  const whitelist = buildWhitelist();
+  if (whitelist.size === 0) return false; // nenhum número cadastrado = ninguém entra
+  const phone = jid.replace('@s.whatsapp.net', '').replace(/\D/g, '');
+  return whitelist.has(phone);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function formatPhone(raw) {
   const digits = raw.replace(/\D/g, '');
   const local = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
@@ -27,6 +47,9 @@ function formatPhone(raw) {
 }
 
 async function handleMessage(sock, jid, text) {
+  // Bloqueia silenciosamente quem não está na whitelist
+  if (!isAuthorized(jid)) return;
+
   const lower = text.toLowerCase().trim();
 
   // ── Cancelar qualquer fluxo ──────────────────────────────────────
@@ -72,70 +95,21 @@ async function handleMessage(sock, jid, text) {
     return;
   }
 
-  // ── Iniciar gerador de anúncio com IA ────────────────────────────
+  // ── Gerador de anúncio com IA ─────────────────────────────────────
   if (lower === '!anuncio' || lower === '!anúncio' || lower === '!gerar') {
-    if (session.isLockedOut(jid)) {
-      await sock.sendMessage(jid, {
-        text: '🚫 Acesso bloqueado por tentativas incorretas. Aguarde 5 minutos e tente novamente.',
-      });
-      return;
-    }
-    if (!session.isAuthenticated(jid)) {
-      session.setFlowState(jid, 'WAITING_PASSWORD');
-      await sock.sendMessage(jid, {
-        text:
-          '🔐 *Gerador de Anúncios com IA*\n\n' +
-          'Para continuar, digite a senha de acesso:',
-      });
-    } else {
-      session.setFlowState(jid, 'WAITING_PHONE', { phone: null });
-      await sock.sendMessage(jid, {
-        text:
-          '📱 *Gerador de Anúncios com IA*\n\n' +
-          'Qual é o número de WhatsApp para aparecer no anúncio?\n' +
-          '_Informe com DDD, ex: 11999999999_\n\n' +
-          '_Digite !cancelar para sair._',
-      });
-    }
+    session.setFlowState(jid, 'WAITING_PHONE', { phone: null });
+    await sock.sendMessage(jid, {
+      text:
+        '📱 *Gerador de Anúncios com IA*\n\n' +
+        'Qual é o número de WhatsApp para aparecer no anúncio?\n' +
+        '_Informe com DDD, ex: 11999999999_\n\n' +
+        '_Digite !cancelar para sair._',
+    });
     return;
   }
 
   // ── Fluxo conversacional do gerador de anúncios ───────────────────
   const flowState = session.getFlowState(jid);
-
-  if (flowState === 'WAITING_PASSWORD') {
-    if (session.isLockedOut(jid)) {
-      await sock.sendMessage(jid, { text: '🚫 Acesso bloqueado. Aguarde 5 minutos.' });
-      return;
-    }
-    const BOT_PASSWORD = process.env.BOT_PASSWORD;
-    if (!BOT_PASSWORD) {
-      await sock.sendMessage(jid, { text: '⚠️ Senha não configurada no servidor. Configure BOT_PASSWORD no arquivo .env' });
-      return;
-    }
-    if (text.trim() === BOT_PASSWORD) {
-      session.authenticate(jid); // já muda state para WAITING_PHONE
-      await sock.sendMessage(jid, {
-        text:
-          '✅ *Acesso liberado!*\n\n' +
-          '📱 Qual é o número de WhatsApp para aparecer no anúncio?\n' +
-          '_Informe com DDD, ex: 11999999999_\n\n' +
-          '_Digite !cancelar para sair._',
-      });
-    } else {
-      const result = session.recordWrongPassword(jid);
-      if (result === 'LOCKED') {
-        await sock.sendMessage(jid, {
-          text: `🚫 Senha incorreta ${session.MAX_ATTEMPTS}x seguidas. Acesso bloqueado por 5 minutos.`,
-        });
-      } else {
-        await sock.sendMessage(jid, {
-          text: `❌ Senha incorreta (tentativa ${result}/${session.MAX_ATTEMPTS}). Tente novamente:`,
-        });
-      }
-    }
-    return;
-  }
 
   if (flowState === 'WAITING_PHONE') {
     const phone = text.replace(/\D/g, '');
@@ -154,7 +128,7 @@ async function handleMessage(sock, jid, text) {
         '🎨 Agora me diga o *tema* do anúncio:\n\n' +
         '_Exemplos:_\n' +
         '• _Limpa nome com juros a partir de 1,5%_\n' +
-        '• _Apartamentos de 2 quartos em São Paulo_\n' +
+        '• _Score de crédito — aumento garantido_\n' +
         '• _Empréstimo pessoal sem consulta ao SPC_\n\n' +
         '_Quanto mais detalhar, melhor fica o resultado!_\n' +
         '_Digite !cancelar para sair._',
@@ -193,8 +167,7 @@ async function handleMessage(sock, jid, text) {
       console.log(`[IA] Enviado com sucesso para ${jid}`);
     } catch (err) {
       console.error('[IA] Erro ao gerar:', err.message);
-      const msg = '❌ Erro ao gerar o anúncio. Tente novamente.\n\nEnvie *!anuncio* para recomeçar.';
-      await sock.sendMessage(jid, { text: msg });
+      await sock.sendMessage(jid, { text: '❌ Erro ao gerar o anúncio. Tente novamente.\n\nEnvie *!anuncio* para recomeçar.' });
     }
     return;
   }
@@ -211,6 +184,14 @@ async function handleMessage(sock, jid, text) {
 
 async function startBot() {
   fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+
+  const whitelist = buildWhitelist();
+  if (whitelist.size === 0) {
+    console.warn('[Bot] ⚠️  ALLOWED_NUMBERS não configurado! Nenhum número terá acesso.');
+    console.warn('[Bot]     Configure no .env: ALLOWED_NUMBERS=5511999999999,5511888888888');
+  } else {
+    console.log(`[Bot] ✅ Whitelist: ${whitelist.size} número(s) autorizado(s)`);
+  }
 
   const { state, saveCreds } = await useMultiFileAuthState(SESSIONS_DIR);
   const { version } = await fetchLatestBaileysVersion();
