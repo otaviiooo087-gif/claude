@@ -256,6 +256,8 @@ async function startBot() {
         '';
       if (!text.trim()) continue;
       const jid = msg.key.remoteJid;
+      // Nunca responder em grupos — apenas conversas individuais
+      if (!jid || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) continue;
       try {
         await handleMessage(sock, jid, text);
       } catch (err) {
