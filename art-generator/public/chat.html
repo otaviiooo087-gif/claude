@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat IA</title>
+  <link rel="stylesheet" href="chat.css" />
+</head>
+<body>
+  <div class="chat-app">
+    <aside class="sidebar">
+      <button id="new-chat-btn" class="sidebar__new-btn">+ Nova conversa</button>
+      <nav id="conversation-list" class="conversation-list"></nav>
+      <a class="sidebar__link" href="index.html">🎨 Gerador de Artes</a>
+    </aside>
+
+    <main class="chat-main">
+      <div id="messages" class="messages">
+        <div class="empty-state">
+          <h1>Como posso ajudar?</h1>
+          <p>Digite uma mensagem abaixo para começar a conversar.</p>
+        </div>
+      </div>
+
+      <form id="chat-form" class="chat-form">
+        <p id="chat-error" class="chat-error" hidden></p>
+        <div class="chat-input-wrap">
+          <textarea
+            id="chat-input"
+            placeholder="Envie uma mensagem..."
+            rows="1"
+            required
+          ></textarea>
+          <button type="submit" id="send-btn" aria-label="Enviar">➤</button>
+        </div>
+        <p class="chat-hint">Enter para enviar · Shift+Enter para quebrar linha</p>
+      </form>
+    </main>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>
