@@ -63,6 +63,65 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
+app.post('/api/chat', async (req, res) => {
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'OPENAI_API_KEY não configurada no servidor. Veja o arquivo .env.example.' });
+  }
+
+  const { messages } = req.body ?? {};
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: 'Envie ao menos uma mensagem.' });
+  }
+  const validMessages = messages.every(
+    (m) => m && typeof m.content === 'string' && ['system', 'user', 'assistant'].includes(m.role)
+  );
+  if (!validMessages) {
+    return res.status(400).json({ error: 'Formato de mensagens inválido.' });
+  }
+
+  try {
+    const upstream = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages,
+        stream: true,
+      }),
+    });
+
+    if (!upstream.ok || !upstream.body) {
+      const data = await upstream.json().catch(() => ({}));
+      const message = data?.error?.message || 'Falha ao conversar com a IA.';
+      return res.status(upstream.status || 502).json({ error: message });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders?.();
+
+    const reader = upstream.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(value);
+    }
+    res.end();
+  } catch (err) {
+    console.error('Erro ao chamar a API da OpenAI (chat):', err);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'Não foi possível conectar à API da OpenAI.' });
+    } else {
+      res.end();
+    }
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Gerador de artes rodando em http://localhost:${PORT}`);
 });
