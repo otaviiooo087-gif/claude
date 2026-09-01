@@ -41,10 +41,27 @@ pip install -r requirements.txt
 cp .env.example .env   # preencha SMTP_* (usado nas notificações por e-mail)
 
 python sync_djen.py       # roda a sincronização (agende via cron)
-uvicorn api:app --reload  # sobe a API do portal
+uvicorn api:app --reload  # sobe a API + o frontend, em http://localhost:8000
 ```
 
-Fluxo de teste rápido:
+### Frontend
+
+`uvicorn api:app` já serve o frontend estático em `frontend/` na raiz — abra
+`http://localhost:8000` no navegador:
+
+- `index.html` — escolha "Sou advogado" ou "Sou cliente".
+- `advogado.html` — login por OAB + UF (cadastra na hora se ainda não
+  existir), botão **"Buscar processos agora"** (chama a sincronização com o
+  DJEN na hora, sem esperar o cron) e, para cada processo sem CPF vinculado,
+  um campo para vincular o CPF do cliente e gerar o código de acesso.
+- `cliente.html` — CPF + código de acesso, mostra os processos vinculados e
+  o histórico de movimentações.
+
+É HTML/CSS/JS puro (sem build step), pensado para rodar junto com a API sem
+infraestrutura extra. Não tem autenticação de verdade ainda — ver
+"Próximos passos".
+
+Fluxo de teste rápido (via curl, sem o frontend):
 
 ```bash
 curl -X POST localhost:8000/advogados \

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Área do Advogado</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header><a href="index.html">&larr; voltar</a></header>
+  <main>
+    <h1>Área do Advogado</h1>
+    <p class="subtitulo">Cadastre sua OAB para acompanhar seus processos automaticamente.</p>
+
+    <section id="secao-login" class="card">
+      <label for="login-oab">Número da OAB</label>
+      <input id="login-oab" placeholder="123456" />
+
+      <label for="login-uf">UF da OAB</label>
+      <select id="login-uf">
+        <option value="">Selecione o estado</option>
+        <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+        <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+        <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+        <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+        <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+        <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+        <option>SP</option><option>SE</option><option>TO</option>
+      </select>
+
+      <button id="botao-entrar">Entrar</button>
+      <div id="mensagem-login"></div>
+    </section>
+
+    <section id="secao-cadastro" class="card oculto">
+      <p>Não encontramos essa OAB. Preencha para se cadastrar:</p>
+      <label for="cadastro-nome">Nome</label>
+      <input id="cadastro-nome" placeholder="Seu nome" />
+
+      <label for="cadastro-email">E-mail</label>
+      <input id="cadastro-email" type="email" placeholder="voce@exemplo.com" />
+
+      <button id="botao-cadastrar">Cadastrar</button>
+      <div id="mensagem-cadastro"></div>
+    </section>
+
+    <section id="secao-dashboard" class="oculto">
+      <div class="card">
+        <div class="rodape-acoes">
+          <span class="identificacao" id="identificacao-advogado"></span>
+          <button class="secundario pequeno" id="botao-sair">Sair</button>
+        </div>
+        <div class="rodape-acoes" style="margin-top: 0.8rem;">
+          <button id="botao-sincronizar">Buscar processos agora (DJEN)</button>
+          <button class="secundario" id="botao-atualizar-lista">Atualizar lista</button>
+        </div>
+        <div id="mensagem-dashboard"></div>
+      </div>
+
+      <div id="lista-processos"></div>
+    </section>
+  </main>
+
+  <script>
+    const API = "";
+    const secaoLogin = document.getElementById("secao-login");
+    const secaoCadastro = document.getElementById("secao-cadastro");
+    const secaoDashboard = document.getElementById("secao-dashboard");
+
+    function mostrarMensagem(elId, texto, tipo) {
+      const el = document.getElementById(elId);
+      el.className = "mensagem " + tipo;
+      el.textContent = texto;
+    }
+
+    function limparMensagem(elId) {
+      const el = document.getElementById(elId);
+      el.textContent = "";
+      el.className = "";
+    }
+
+    async function entrarComOab(oab, uf) {
+      const resp = await fetch(`${API}/advogados/buscar?oab=${encodeURIComponent(oab)}&uf=${encodeURIComponent(uf)}`);
+      if (resp.status === 404) {
+        return null;
+      }
+      if (!resp.ok) {
+        throw new Error("Erro ao buscar advogado.");
+      }
+      return resp.json();
+    }
+
+    document.getElementById("botao-entrar").addEventListener("click", async () => {
+      limparMensagem("mensagem-login");
+      const oab = document.getElementById("login-oab").value.trim();
+      const uf = document.getElementById("login-uf").value;
+
+      if (!oab || !uf) {
+        mostrarMensagem("mensagem-login", "Preencha OAB e UF.", "erro");
+        return;
+      }
+
+      try {
+        const advogado = await entrarComOab(oab, uf);
+        if (advogado) {
+          entrarNoPainel(advogado);
+        } else {
+          secaoLogin.classList.add("oculto");
+          secaoCadastro.classList.remove("oculto");
+          secaoCadastro.dataset.oab = oab;
+          secaoCadastro.dataset.uf = uf;
+        }
+      } catch (erro) {
+        mostrarMensagem("mensagem-login", erro.message, "erro");
+      }
+    });
+
+    document.getElementById("botao-cadastrar").addEventListener("click", async () => {
+      limparMensagem("mensagem-cadastro");
+      const nome = document.getElementById("cadastro-nome").value.trim();
+      const email = document.getElementById("cadastro-email").value.trim();
+      const oab = secaoCadastro.dataset.oab;
+      const uf = secaoCadastro.dataset.uf;
+
+      if (!nome || !email) {
+        mostrarMensagem("mensagem-cadastro", "Preencha nome e e-mail.", "erro");
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API}/advogados`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oab, uf, nome, email }),
+        });
+        if (!resp.ok) {
+          const corpo = await resp.json();
+          throw new Error(corpo.detail || "Erro ao cadastrar.");
+        }
+        const { id } = await resp.json();
+        entrarNoPainel({ id, oab, uf, nome, email });
+      } catch (erro) {
+        mostrarMensagem("mensagem-cadastro", erro.message, "erro");
+      }
+    });
+
+    function entrarNoPainel(advogado) {
+      localStorage.setItem("advogado", JSON.stringify(advogado));
+      secaoLogin.classList.add("oculto");
+      secaoCadastro.classList.add("oculto");
+      secaoDashboard.classList.remove("oculto");
+      document.getElementById("identificacao-advogado").textContent =
+        `${advogado.nome || ""} — OAB ${advogado.oab}/${advogado.uf}`;
+      carregarProcessos(advogado.id);
+    }
+
+    document.getElementById("botao-sair").addEventListener("click", () => {
+      localStorage.removeItem("advogado");
+      location.reload();
+    });
+
+    document.getElementById("botao-sincronizar").addEventListener("click", async () => {
+      const advogado = JSON.parse(localStorage.getItem("advogado"));
+      limparMensagem("mensagem-dashboard");
+      mostrarMensagem("mensagem-dashboard", "Buscando novas comunicações no DJEN...", "sucesso");
+      try {
+        const resp = await fetch(`${API}/advogados/${advogado.id}/sincronizar`, { method: "POST" });
+        if (!resp.ok) throw new Error("Falha ao sincronizar.");
+        mostrarMensagem("mensagem-dashboard", "Sincronização concluída.", "sucesso");
+        carregarProcessos(advogado.id);
+      } catch (erro) {
+        mostrarMensagem("mensagem-dashboard", erro.message, "erro");
+      }
+    });
+
+    document.getElementById("botao-atualizar-lista").addEventListener("click", () => {
+      const advogado = JSON.parse(localStorage.getItem("advogado"));
+      carregarProcessos(advogado.id);
+    });
+
+    async function carregarProcessos(advogadoId) {
+      const lista = document.getElementById("lista-processos");
+      lista.innerHTML = "Carregando...";
+      const resp = await fetch(`${API}/advogados/${advogadoId}/processos`);
+      const processos = await resp.json();
+
+      if (processos.length === 0) {
+        lista.innerHTML = '<div class="card">Nenhum processo encontrado ainda. Clique em "Buscar processos agora".</div>';
+        return;
+      }
+
+      lista.innerHTML = "";
+      processos.forEach((processo) => {
+        const div = document.createElement("div");
+        div.className = "processo";
+        div.innerHTML = `
+          <div class="processo-cabecalho">
+            <span class="numero-processo">${processo.numero}</span>
+            <span class="tag">${processo.status || "sem status"}</span>
+          </div>
+          <p class="orgao">${processo.orgao || ""}</p>
+          ${processo.cliente_cpf
+            ? `<p class="orgao">Vinculado ao CPF ${processo.cliente_cpf}</p>`
+            : `<div class="vincular">
+                 <input placeholder="CPF do cliente" data-processo="${processo.id}" class="input-cpf-vincular" />
+                 <button class="secundario pequeno botao-vincular" data-processo="${processo.id}">Vincular</button>
+               </div>
+               <div class="codigo-gerado" data-resultado="${processo.id}"></div>`}
+        `;
+        lista.appendChild(div);
+      });
+
+      document.querySelectorAll(".botao-vincular").forEach((botao) => {
+        botao.addEventListener("click", async () => {
+          const processoId = botao.dataset.processo;
+          const input = document.querySelector(`.input-cpf-vincular[data-processo="${processoId}"]`);
+          const resultado = document.querySelector(`[data-resultado="${processoId}"]`);
+          const cpf = input.value.trim();
+          if (!cpf) return;
+
+          try {
+            const resp = await fetch(`${API}/processos/${processoId}/vincular-cliente`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cpf }),
+            });
+            if (!resp.ok) {
+              const corpo = await resp.json();
+              throw new Error(corpo.detail || "Erro ao vincular.");
+            }
+            const { codigo_acesso } = await resp.json();
+            resultado.textContent = `Código de acesso do cliente: ${codigo_acesso} (repasse a ele)`;
+          } catch (erro) {
+            resultado.textContent = erro.message;
+            resultado.style.color = "var(--danger)";
+          }
+        });
+      });
+    }
+
+    (function inicializar() {
+      const advogadoSalvo = localStorage.getItem("advogado");
+      if (advogadoSalvo) {
+        entrarNoPainel(JSON.parse(advogadoSalvo));
+      }
+    })();
+  </script>
+</body>
+</html>

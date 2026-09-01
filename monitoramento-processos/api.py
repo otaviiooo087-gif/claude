@@ -12,12 +12,14 @@ Rodar localmente:
 """
 
 import re
-import sqlite3
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 
 from db import conectar, gerar_codigo_acesso, iniciar_banco
+from sync_djen import sincronizar_advogado
 
 iniciar_banco()
 
@@ -48,11 +50,35 @@ def cadastrar_advogado(dados: AdvogadoEntrada):
         return {"id": cursor.lastrowid}
 
 
+@app.get("/advogados/buscar")
+def buscar_advogado(oab: str, uf: str):
+    with conectar() as conexao:
+        linha = conexao.execute(
+            "SELECT id, oab, uf, nome, email FROM advogados WHERE oab = ? AND uf = ?",
+            (oab, uf.upper()),
+        ).fetchone()
+        if not linha:
+            raise HTTPException(404, "Advogado não encontrado.")
+        return dict(linha)
+
+
+@app.post("/advogados/{advogado_id}/sincronizar")
+def sincronizar_agora(advogado_id: int):
+    with conectar() as conexao:
+        advogado = conexao.execute(
+            "SELECT * FROM advogados WHERE id = ?", (advogado_id,)
+        ).fetchone()
+        if not advogado:
+            raise HTTPException(404, "Advogado não encontrado.")
+        sincronizar_advogado(conexao, dict(advogado))
+    return {"ok": True}
+
+
 @app.get("/advogados/{advogado_id}/processos")
 def listar_processos(advogado_id: int):
     with conectar() as conexao:
         linhas = conexao.execute(
-            "SELECT id, numero, orgao, cliente_cpf FROM processos WHERE advogado_id = ?",
+            "SELECT id, numero, orgao, status, cliente_cpf FROM processos WHERE advogado_id = ?",
             (advogado_id,),
         ).fetchall()
         return [dict(linha) for linha in linhas]
@@ -119,3 +145,7 @@ def consultar_processos_do_cliente(dados: ConsultaEntrada):
             )
 
         return resultado
+
+
+FRONTEND_DIR = Path(__file__).parent / "frontend"
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

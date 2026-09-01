@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Consultar meu processo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header><a href="index.html">&larr; voltar</a></header>
+  <main>
+    <h1>Consultar meu processo</h1>
+    <p class="subtitulo">Digite seu CPF e o código de acesso que seu advogado te passou.</p>
+
+    <section class="card">
+      <label for="cpf">CPF</label>
+      <input id="cpf" placeholder="000.000.000-00" />
+
+      <label for="codigo">Código de acesso</label>
+      <input id="codigo" placeholder="Ex.: 7BE9ACB2" />
+
+      <button id="botao-consultar">Consultar</button>
+      <div id="mensagem"></div>
+    </section>
+
+    <div id="resultado"></div>
+  </main>
+
+  <script>
+    const API = "";
+
+    function mostrarMensagem(texto, tipo) {
+      const el = document.getElementById("mensagem");
+      el.className = "mensagem " + tipo;
+      el.textContent = texto;
+    }
+
+    document.getElementById("botao-consultar").addEventListener("click", async () => {
+      const cpf = document.getElementById("cpf").value.trim();
+      const codigo = document.getElementById("codigo").value.trim();
+      const resultadoEl = document.getElementById("resultado");
+      resultadoEl.innerHTML = "";
+      document.getElementById("mensagem").textContent = "";
+
+      if (!cpf || !codigo) {
+        mostrarMensagem("Preencha CPF e código de acesso.", "erro");
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API}/consulta`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cpf, codigo_acesso: codigo }),
+        });
+
+        if (resp.status === 404) {
+          mostrarMensagem(
+            "Nenhum processo encontrado para esse CPF/código. Confira os dados ou fale com seu advogado.",
+            "erro"
+          );
+          return;
+        }
+        if (!resp.ok) {
+          throw new Error("Erro ao consultar.");
+        }
+
+        const processos = await resp.json();
+        renderizarProcessos(processos);
+      } catch (erro) {
+        mostrarMensagem(erro.message, "erro");
+      }
+    });
+
+    function renderizarProcessos(processos) {
+      const resultadoEl = document.getElementById("resultado");
+      processos.forEach((processo) => {
+        const div = document.createElement("div");
+        div.className = "processo";
+
+        const movimentacoesHtml = processo.movimentacoes.length
+          ? processo.movimentacoes
+              .map(
+                (m) => `
+              <div class="movimentacao">
+                <div class="data">${m.data || ""} — ${m.tipo || ""}</div>
+                <div>${m.texto || ""}</div>
+              </div>`
+              )
+              .join("")
+          : '<p class="orgao">Nenhuma movimentação registrada ainda.</p>';
+
+        div.innerHTML = `
+          <div class="processo-cabecalho">
+            <span class="numero-processo">${processo.numero}</span>
+          </div>
+          <p class="orgao">${processo.orgao || ""}</p>
+          ${movimentacoesHtml}
+        `;
+        resultadoEl.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>

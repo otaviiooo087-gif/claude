@@ -1,0 +1,243 @@
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --accent-dark: #16a34a;
+  --danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  padding: 1.5rem 1.5rem 0;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+header a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 0.25rem;
+}
+
+p.subtitulo {
+  color: var(--muted);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.opcoes {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 480px) {
+  .opcoes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.opcao {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.opcao .card {
+  text-align: center;
+  transition: border-color 0.15s;
+}
+
+.opcao:hover .card {
+  border-color: var(--accent);
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+  margin-top: 0.9rem;
+}
+
+label:first-child {
+  margin-top: 0;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid var(--accent);
+}
+
+button {
+  margin-top: 1.1rem;
+  padding: 0.65rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #06210f;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+button:hover {
+  background: var(--accent-dark);
+}
+
+button.secundario {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+button.pequeno {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.mensagem {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.mensagem.erro {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.mensagem.sucesso {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.processo {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+.processo-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.numero-processo {
+  font-weight: 600;
+  font-family: monospace;
+  font-size: 0.95rem;
+}
+
+.tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.orgao {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0.2rem 0 0;
+}
+
+.vincular {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.vincular input {
+  flex: 1;
+  min-width: 160px;
+}
+
+.codigo-gerado {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.movimentacao {
+  border-left: 2px solid var(--border);
+  padding-left: 0.8rem;
+  margin: 0.6rem 0;
+  font-size: 0.9rem;
+}
+
+.movimentacao .data {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.oculto {
+  display: none;
+}
+
+.rodape-acoes {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.identificacao {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
