@@ -1,3 +1,4 @@
 .env
 estado.json
+dados.db
 __pycache__/

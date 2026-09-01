@@ -11,13 +11,12 @@ Uso:
 import json
 import os
 import re
-import smtplib
-from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
 
+from notificacoes import enviar_email
 from tribunais import endpoint_url
 
 BASE_DIR = Path(__file__).parent
@@ -27,12 +26,6 @@ ESTADO_FILE = BASE_DIR / "estado.json"
 load_dotenv(BASE_DIR / ".env")
 
 DATAJUD_API_KEY = os.environ["DATAJUD_API_KEY"]
-
-SMTP_HOST = os.environ["SMTP_HOST"]
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ["SMTP_USER"]
-SMTP_PASS = os.environ["SMTP_PASS"]
-EMAIL_FROM = os.environ.get("EMAIL_FROM", SMTP_USER)
 EMAIL_TO = os.environ["EMAIL_TO"]
 
 
@@ -65,18 +58,6 @@ def consultar_movimentos(numero: str, tribunal: str) -> list[dict]:
         return []
     movimentos = hits[0]["_source"].get("movimentos", [])
     return sorted(movimentos, key=lambda m: m.get("dataHora", ""))
-
-
-def enviar_email(assunto: str, corpo: str):
-    msg = MIMEText(corpo, "plain", "utf-8")
-    msg["Subject"] = assunto
-    msg["From"] = EMAIL_FROM
-    msg["To"] = EMAIL_TO
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as servidor:
-        servidor.starttls()
-        servidor.login(SMTP_USER, SMTP_PASS)
-        servidor.sendmail(EMAIL_FROM, [EMAIL_TO], msg.as_string())
 
 
 def main():
@@ -114,7 +95,7 @@ def main():
                 f"Novo(s) movimento(s) no processo {numero} ({descricao}):\n\n{linhas}"
             )
             try:
-                enviar_email(f"Movimentação em processo: {descricao}", corpo)
+                enviar_email(EMAIL_TO, f"Movimentação em processo: {descricao}", corpo)
                 print(f"[{numero}] {len(novos)} movimento(s) novo(s) — e-mail enviado.")
             except Exception as erro:
                 print(f"[{numero}] movimento novo encontrado, mas falha ao enviar e-mail: {erro}")

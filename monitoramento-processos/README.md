@@ -1,82 +1,109 @@
 # Monitoramento de Processos Judiciais (MVP)
 
-Script que consulta a API pública do **DataJud (CNJ)** para uma lista de
-processos, compara com a última movimentação conhecida e envia um e-mail
-quando encontra novidade. Inspirado na funcionalidade de "ativar
-monitoramento" de plataformas de gestão jurídica.
+Dois modos de uso, que podem rodar juntos:
 
-## Como funciona
+- **Modo A — por número de processo (`monitor.py`)**: você já sabe o número
+  de cada processo e quer ser avisado de novas movimentações. Usa a API
+  pública do DataJud (CNJ).
+- **Modo B — por OAB + portal do cliente (`sync_djen.py` + `api.py`)**: o
+  advogado cadastra a **OAB dele** e o sistema descobre sozinho os
+  processos novos, via DJEN (Diário de Justiça Eletrônico Nacional). O
+  cliente final consulta pelo **próprio CPF** e vê só os processos dele.
 
-1. Você cadastra os processos em `processos.json` (número + tribunal).
-2. Ao rodar `monitor.py`, o script consulta o DataJud para cada processo.
-3. Compara a movimentação mais recente com o que está salvo em
-   `estado.json` (criado automaticamente).
-4. Se houver movimento novo, envia um e-mail com o resumo.
-5. Atualiza `estado.json` para não notificar de novo o mesmo movimento.
+O Modo B é o mais próximo do fluxo real de plataformas como a SabioAdv:
+tela de "ativar monitoramento" pede **número da OAB + UF** (não CPF nem
+número de processo) — é assim que eles descobrem a carteira de processos
+do advogado automaticamente.
 
-## Setup
+## Modo B — como funciona, passo a passo
+
+1. **Advogado se cadastra pela OAB** (`POST /advogados`): número + UF + nome
+   + e-mail. Não precisa informar nenhum processo manualmente.
+2. **`sync_djen.py` roda periodicamente** (cron) e, para cada advogado
+   cadastrado, consulta a API pública do DJEN filtrando por OAB + UF. Cada
+   processo novo encontrado é criado automaticamente; cada comunicação nova
+   vira uma movimentação. Se houver novidade, o advogado recebe e-mail.
+3. **Advogado vincula um processo ao CPF do cliente**
+   (`POST /processos/{id}/vincular-cliente`): isso **não dá para
+   automatizar** — nenhuma fonte pública liga processo a CPF de forma
+   confiável — é o escritório que já sabe isso pela procuração. Essa chamada
+   gera um `codigo_acesso` que o advogado repassa ao cliente (WhatsApp,
+   e-mail etc.).
+4. **Cliente consulta** (`POST /consulta` com `cpf` + `codigo_acesso`) e vê
+   os processos vinculados a ele, com histórico de movimentações. Exigir
+   CPF **e** o código evita que alguém encontre o processo de outra pessoa
+   só adivinhando/testando CPFs.
+
+### Rodando o Modo B
 
 ```bash
-cd monitoramento-processos
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env   # preencha SMTP_* (usado nas notificações por e-mail)
+
+python sync_djen.py       # roda a sincronização (agende via cron)
+uvicorn api:app --reload  # sobe a API do portal
 ```
 
-Edite o `.env`:
-
-- `DATAJUD_API_KEY`: chave pública do DataJud, disponível em
-  https://datajud-wiki.cnj.jus.br/api-publica/acesso
-- `SMTP_*` / `EMAIL_*`: credenciais de um e-mail para envio das notificações
-  (com Gmail, use uma [senha de app](https://myaccount.google.com/apppasswords),
-  não a senha normal da conta).
-
-Edite `processos.json` com os processos reais, por exemplo:
-
-```json
-[
-  {
-    "numero": "1234567-89.2024.8.26.0100",
-    "tribunal": "tjsp",
-    "descricao": "Cliente X vs Empresa Y"
-  }
-]
-```
-
-O campo `tribunal` precisa estar mapeado em `tribunais.py` (já cobre os
-tribunais mais comuns — TJs de SP/RJ/MG/RS/PR/BA/SC/DF, TRFs 1-6, STJ, TST,
-TSE; adicione outros conforme a necessidade, seguindo a lista de aliases da
-wiki do DataJud).
-
-## Rodando
+Fluxo de teste rápido:
 
 ```bash
-python monitor.py
+curl -X POST localhost:8000/advogados \
+  -H "Content-Type: application/json" \
+  -d '{"oab":"123456","uf":"SP","nome":"Dra. Exemplo","email":"dra@exemplo.com"}'
+
+# depois de rodar sync_djen.py e existir algum processo:
+curl -X POST localhost:8000/processos/1/vincular-cliente \
+  -H "Content-Type: application/json" -d '{"cpf":"123.456.789-09"}'
+
+curl -X POST localhost:8000/consulta \
+  -H "Content-Type: application/json" \
+  -d '{"cpf":"12345678909","codigo_acesso":"<codigo retornado acima>"}'
 ```
 
-## Agendando execução periódica
+### Limitações do Modo B
 
-Como é um MVP simples, a forma mais direta é rodar via `cron` numa máquina
-sempre ligada (servidor, Raspberry Pi, VPS):
+- **DJEN só traz publicações/intimações**, não o andamento processual
+  completo nem um "status do processo" (em tramitação, arquivado, suspenso
+  etc. — como a SabioAdv mostra na tela deles). Pra ter isso, precisaria
+  trocar/complementar o DJEN por uma API paga com esse dado já classificado
+  (Escavador ou Judit.io têm "monitoramento por OAB" com status incluído).
+  A coluna `status` já existe na tabela `processos` esperando por isso.
+- **Processos em segredo de justiça aparecem parcialmente**: a lei exige que
+  a intimação ao advogado saia mesmo em segredo de justiça (com nome dele
+  completo e número do processo), mas dados da outra parte vêm mascarados.
+- **Vínculo processo → CPF é manual.** Não existe fonte pública confiável
+  para automatizar isso — é dado que só o próprio escritório tem.
 
-```cron
-0 8,14,20 * * * cd /caminho/monitoramento-processos && /usr/bin/python3 monitor.py >> monitor.log 2>&1
+## Modo A — por número de processo (DataJud)
+
+Ver comentários em `monitor.py`/`tribunais.py`. Resumo: você cadastra
+processos em `processos.json` (número + tribunal), roda `python monitor.py`
+periodicamente (cron) e recebe e-mail quando há movimentação nova. Usa a
+API pública do DataJud, que cobre bem tribunais grandes mas tem cobertura
+desigual e não é boa em busca por CPF (por isso o Modo B existe).
+
+Setup: `DATAJUD_API_KEY` no `.env` (chave pública, obtida em
+https://datajud-wiki.cnj.jus.br/api-publica/acesso) e `EMAIL_TO`.
+
+## Configuração comum (`.env`)
+
+```
+DATAJUD_API_KEY=       # Modo A
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+EMAIL_FROM=
+EMAIL_TO=               # Modo A (destinatário fixo)
 ```
 
-Isso consulta os processos 3x por dia. `estado.json` precisa persistir
-entre execuções (não vai para o git — está no `.gitignore`).
+No Modo B, o e-mail vai para o endereço cadastrado de cada advogado, não
+para `EMAIL_TO`.
 
-## Limitações conhecidas / próximos passos
+## Próximos passos possíveis
 
-- **Cobertura do DataJud**: nem todo tribunal/vara publica dados completos
-  na API pública, e pode haver atraso de horas/dias na indexação. Para
-  monitoramento mais confiável e em tempo real, considerar migrar para uma
-  API paga (Escavador, Judit.io, Codilo) — a estrutura do projeto
-  (`consultar_movimentos`) foi pensada para trocar a fonte sem afetar o
-  resto do fluxo.
-- **Sem painel web**: hoje é só script + e-mail. Se quiser evoluir para um
-  produto completo (like a SabioAdv), os próximos passos naturais seriam:
-  um banco de dados (Postgres) no lugar dos JSONs, uma API/backend (ex.:
-  FastAPI) para cadastro de processos, um worker separado para as
-  consultas periódicas, e um frontend para visualizar histórico e status.
-- **Um único destinatário de e-mail**: para múltiplos usuários/escritórios,
-  seria necessário associar processos a usuários e implantar autenticação.
+- Trocar/complementar DJEN por Escavador ou Judit.io para ter status do
+  processo e histórico completo de movimentação (não só publicações).
+- Autenticação de verdade no cadastro do advogado (hoje qualquer um pode
+  chamar `POST /advogados`).
+- Interface web em vez de chamadas de API cruas.
