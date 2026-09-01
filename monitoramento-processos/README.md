@@ -18,18 +18,27 @@ do advogado automaticamente.
 ## Modo B — como funciona, passo a passo
 
 1. **Advogado se cadastra pela OAB** (`POST /advogados`): número + UF + nome
-   + e-mail. Não precisa informar nenhum processo manualmente.
-2. **`sync_djen.py` roda periodicamente** (cron) e, para cada advogado
-   cadastrado, consulta a API pública do DJEN filtrando por OAB + UF. Cada
-   processo novo encontrado é criado automaticamente; cada comunicação nova
-   vira uma movimentação. Se houver novidade, o advogado recebe e-mail.
-3. **Advogado vincula um processo ao CPF do cliente**
-   (`POST /processos/{id}/vincular-cliente`): isso **não dá para
-   automatizar** — nenhuma fonte pública liga processo a CPF de forma
+   + e-mail + **senha** (hash com scrypt, nunca salva em texto puro). O
+   cadastro já devolve um token de sessão (login automático). Não precisa
+   informar nenhum processo manualmente.
+2. **Login** (`POST /login` com OAB + UF + senha) devolve um novo token.
+   Todas as rotas do advogado exigem esse token no header
+   `Authorization: Bearer <token>` e só enxergam os processos do **próprio**
+   advogado dono do token — não dá para ver/mexer no processo de outro
+   advogado trocando um ID na URL.
+3. **`sync_djen.py` roda periodicamente** (cron) — ou o próprio advogado
+   dispara na hora pelo botão "Buscar processos agora" (`POST
+   /sincronizar`, autenticado) — e, para cada advogado, consulta a API
+   pública do DJEN filtrando por OAB + UF. Cada processo novo encontrado é
+   criado automaticamente; cada comunicação nova vira uma movimentação. Se
+   houver novidade, o advogado recebe e-mail.
+4. **Advogado vincula um processo ao CPF do cliente**
+   (`POST /processos/{id}/vincular-cliente`, autenticado): isso **não dá
+   para automatizar** — nenhuma fonte pública liga processo a CPF de forma
    confiável — é o escritório que já sabe isso pela procuração. Essa chamada
    gera um `codigo_acesso` que o advogado repassa ao cliente (WhatsApp,
    e-mail etc.).
-4. **Cliente consulta** (`POST /consulta` com `cpf` + `codigo_acesso`) e vê
+5. **Cliente consulta** (`POST /consulta` com `cpf` + `codigo_acesso`) e vê
    os processos vinculados a ele, com histórico de movimentações. Exigir
    CPF **e** o código evita que alguém encontre o processo de outra pessoa
    só adivinhando/testando CPFs.
@@ -58,19 +67,26 @@ uvicorn api:app --reload  # sobe a API + o frontend, em http://localhost:8000
   o histórico de movimentações.
 
 É HTML/CSS/JS puro (sem build step), pensado para rodar junto com a API sem
-infraestrutura extra. Não tem autenticação de verdade ainda — ver
-"Próximos passos".
+infraestrutura extra.
 
 Fluxo de teste rápido (via curl, sem o frontend):
 
 ```bash
 curl -X POST localhost:8000/advogados \
   -H "Content-Type: application/json" \
-  -d '{"oab":"123456","uf":"SP","nome":"Dra. Exemplo","email":"dra@exemplo.com"}'
+  -d '{"oab":"123456","uf":"SP","nome":"Dra. Exemplo","email":"dra@exemplo.com","senha":"senha123"}'
+# -> {"id":1,"nome":"Dra. Exemplo","token":"..."}
 
-# depois de rodar sync_djen.py e existir algum processo:
+TOKEN="<token retornado acima>"
+
+curl -X POST localhost:8000/sincronizar -H "Authorization: Bearer $TOKEN"
+
+curl localhost:8000/processos -H "Authorization: Bearer $TOKEN"
+
 curl -X POST localhost:8000/processos/1/vincular-cliente \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" -d '{"cpf":"123.456.789-09"}'
+# -> {"codigo_acesso": "..."}
 
 curl -X POST localhost:8000/consulta \
   -H "Content-Type: application/json" \
@@ -121,6 +137,6 @@ para `EMAIL_TO`.
 
 - Trocar/complementar DJEN por Escavador ou Judit.io para ter status do
   processo e histórico completo de movimentação (não só publicações).
-- Autenticação de verdade no cadastro do advogado (hoje qualquer um pode
-  chamar `POST /advogados`).
-- Interface web em vez de chamadas de API cruas.
+- Expirar sessões antigas (hoje o token de `sessoes` não tem validade —
+  fica valendo até logout manual).
+- Recuperação de senha (hoje não existe "esqueci minha senha").

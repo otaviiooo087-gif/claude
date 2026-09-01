@@ -22,8 +22,15 @@ CREATE TABLE IF NOT EXISTS advogados (
     uf TEXT NOT NULL,
     nome TEXT NOT NULL,
     email TEXT,
+    senha_hash TEXT NOT NULL,
     ultima_sincronizacao TEXT,
     UNIQUE(oab, uf)
+);
+
+CREATE TABLE IF NOT EXISTS sessoes (
+    token TEXT PRIMARY KEY,
+    advogado_id INTEGER NOT NULL REFERENCES advogados(id),
+    criado_em TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS processos (

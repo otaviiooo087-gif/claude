@@ -12,12 +12,12 @@
     <h1>Área do Advogado</h1>
     <p class="subtitulo">Cadastre sua OAB para acompanhar seus processos automaticamente.</p>
 
-    <section id="secao-login" class="card">
-      <label for="login-oab">Número da OAB</label>
-      <input id="login-oab" placeholder="123456" />
+    <section id="secao-oab" class="card">
+      <label for="oab">Número da OAB</label>
+      <input id="oab" placeholder="123456" />
 
-      <label for="login-uf">UF da OAB</label>
-      <select id="login-uf">
+      <label for="uf">UF da OAB</label>
+      <select id="uf">
         <option value="">Selecione o estado</option>
         <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
         <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
@@ -28,6 +28,14 @@
         <option>SP</option><option>SE</option><option>TO</option>
       </select>
 
+      <button id="botao-continuar">Continuar</button>
+      <div id="mensagem-oab"></div>
+    </section>
+
+    <section id="secao-login" class="card oculto">
+      <p>Bem-vindo(a) de volta. Digite sua senha:</p>
+      <label for="login-senha">Senha</label>
+      <input id="login-senha" type="password" />
       <button id="botao-entrar">Entrar</button>
       <div id="mensagem-login"></div>
     </section>
@@ -39,6 +47,9 @@
 
       <label for="cadastro-email">E-mail</label>
       <input id="cadastro-email" type="email" placeholder="voce@exemplo.com" />
+
+      <label for="cadastro-senha">Senha (mín. 6 caracteres)</label>
+      <input id="cadastro-senha" type="password" />
 
       <button id="botao-cadastrar">Cadastrar</button>
       <div id="mensagem-cadastro"></div>
@@ -63,6 +74,7 @@
 
   <script>
     const API = "";
+    const secaoOab = document.getElementById("secao-oab");
     const secaoLogin = document.getElementById("secao-login");
     const secaoCadastro = document.getElementById("secao-cadastro");
     const secaoDashboard = document.getElementById("secao-dashboard");
@@ -79,37 +91,72 @@
       el.className = "";
     }
 
-    async function entrarComOab(oab, uf) {
-      const resp = await fetch(`${API}/advogados/buscar?oab=${encodeURIComponent(oab)}&uf=${encodeURIComponent(uf)}`);
-      if (resp.status === 404) {
-        return null;
-      }
-      if (!resp.ok) {
-        throw new Error("Erro ao buscar advogado.");
-      }
-      return resp.json();
+    function sessaoAtual() {
+      const bruto = localStorage.getItem("sessao");
+      return bruto ? JSON.parse(bruto) : null;
     }
 
-    document.getElementById("botao-entrar").addEventListener("click", async () => {
-      limparMensagem("mensagem-login");
-      const oab = document.getElementById("login-oab").value.trim();
-      const uf = document.getElementById("login-uf").value;
+    async function chamarAutenticado(caminho, opcoes = {}) {
+      const sessao = sessaoAtual();
+      const resp = await fetch(`${API}${caminho}`, {
+        ...opcoes,
+        headers: {
+          ...(opcoes.headers || {}),
+          Authorization: `Bearer ${sessao.token}`,
+        },
+      });
+      if (resp.status === 401) {
+        localStorage.removeItem("sessao");
+        location.reload();
+        throw new Error("Sessão expirada.");
+      }
+      return resp;
+    }
+
+    document.getElementById("botao-continuar").addEventListener("click", async () => {
+      limparMensagem("mensagem-oab");
+      const oab = document.getElementById("oab").value.trim();
+      const uf = document.getElementById("uf").value;
 
       if (!oab || !uf) {
-        mostrarMensagem("mensagem-login", "Preencha OAB e UF.", "erro");
+        mostrarMensagem("mensagem-oab", "Preencha OAB e UF.", "erro");
         return;
       }
 
       try {
-        const advogado = await entrarComOab(oab, uf);
-        if (advogado) {
-          entrarNoPainel(advogado);
-        } else {
-          secaoLogin.classList.add("oculto");
+        const resp = await fetch(`${API}/advogados/buscar?oab=${encodeURIComponent(oab)}&uf=${encodeURIComponent(uf)}`);
+        secaoOab.classList.add("oculto");
+        if (resp.status === 404) {
           secaoCadastro.classList.remove("oculto");
-          secaoCadastro.dataset.oab = oab;
-          secaoCadastro.dataset.uf = uf;
+        } else if (resp.ok) {
+          secaoLogin.classList.remove("oculto");
+        } else {
+          throw new Error("Erro ao verificar OAB.");
         }
+      } catch (erro) {
+        secaoOab.classList.remove("oculto");
+        mostrarMensagem("mensagem-oab", erro.message, "erro");
+      }
+    });
+
+    document.getElementById("botao-entrar").addEventListener("click", async () => {
+      limparMensagem("mensagem-login");
+      const oab = document.getElementById("oab").value.trim();
+      const uf = document.getElementById("uf").value;
+      const senha = document.getElementById("login-senha").value;
+
+      try {
+        const resp = await fetch(`${API}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ oab, uf, senha }),
+        });
+        if (!resp.ok) {
+          const corpo = await resp.json();
+          throw new Error(corpo.detail || "Erro ao entrar.");
+        }
+        const sessao = await resp.json();
+        entrarNoPainel({ ...sessao, oab, uf });
       } catch (erro) {
         mostrarMensagem("mensagem-login", erro.message, "erro");
       }
@@ -117,13 +164,14 @@
 
     document.getElementById("botao-cadastrar").addEventListener("click", async () => {
       limparMensagem("mensagem-cadastro");
+      const oab = document.getElementById("oab").value.trim();
+      const uf = document.getElementById("uf").value;
       const nome = document.getElementById("cadastro-nome").value.trim();
       const email = document.getElementById("cadastro-email").value.trim();
-      const oab = secaoCadastro.dataset.oab;
-      const uf = secaoCadastro.dataset.uf;
+      const senha = document.getElementById("cadastro-senha").value;
 
-      if (!nome || !email) {
-        mostrarMensagem("mensagem-cadastro", "Preencha nome e e-mail.", "erro");
+      if (!nome || !email || !senha) {
+        mostrarMensagem("mensagem-cadastro", "Preencha todos os campos.", "erro");
         return;
       }
 
@@ -131,57 +179,62 @@
         const resp = await fetch(`${API}/advogados`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ oab, uf, nome, email }),
+          body: JSON.stringify({ oab, uf, nome, email, senha }),
         });
         if (!resp.ok) {
           const corpo = await resp.json();
-          throw new Error(corpo.detail || "Erro ao cadastrar.");
+          const detalhe = Array.isArray(corpo.detail)
+            ? corpo.detail.map((d) => d.msg).join(", ")
+            : corpo.detail;
+          throw new Error(detalhe || "Erro ao cadastrar.");
         }
-        const { id } = await resp.json();
-        entrarNoPainel({ id, oab, uf, nome, email });
+        const sessao = await resp.json();
+        entrarNoPainel({ ...sessao, oab, uf });
       } catch (erro) {
         mostrarMensagem("mensagem-cadastro", erro.message, "erro");
       }
     });
 
-    function entrarNoPainel(advogado) {
-      localStorage.setItem("advogado", JSON.stringify(advogado));
+    function entrarNoPainel(sessao) {
+      localStorage.setItem("sessao", JSON.stringify(sessao));
+      secaoOab.classList.add("oculto");
       secaoLogin.classList.add("oculto");
       secaoCadastro.classList.add("oculto");
       secaoDashboard.classList.remove("oculto");
       document.getElementById("identificacao-advogado").textContent =
-        `${advogado.nome || ""} — OAB ${advogado.oab}/${advogado.uf}`;
-      carregarProcessos(advogado.id);
+        `${sessao.nome || ""} — OAB ${sessao.oab}/${sessao.uf}`;
+      carregarProcessos();
     }
 
-    document.getElementById("botao-sair").addEventListener("click", () => {
-      localStorage.removeItem("advogado");
+    document.getElementById("botao-sair").addEventListener("click", async () => {
+      try {
+        await chamarAutenticado("/logout", { method: "POST" });
+      } catch {
+        // sessão já pode ter expirado — segue o logout local mesmo assim
+      }
+      localStorage.removeItem("sessao");
       location.reload();
     });
 
     document.getElementById("botao-sincronizar").addEventListener("click", async () => {
-      const advogado = JSON.parse(localStorage.getItem("advogado"));
       limparMensagem("mensagem-dashboard");
       mostrarMensagem("mensagem-dashboard", "Buscando novas comunicações no DJEN...", "sucesso");
       try {
-        const resp = await fetch(`${API}/advogados/${advogado.id}/sincronizar`, { method: "POST" });
+        const resp = await chamarAutenticado("/sincronizar", { method: "POST" });
         if (!resp.ok) throw new Error("Falha ao sincronizar.");
         mostrarMensagem("mensagem-dashboard", "Sincronização concluída.", "sucesso");
-        carregarProcessos(advogado.id);
+        carregarProcessos();
       } catch (erro) {
         mostrarMensagem("mensagem-dashboard", erro.message, "erro");
       }
     });
 
-    document.getElementById("botao-atualizar-lista").addEventListener("click", () => {
-      const advogado = JSON.parse(localStorage.getItem("advogado"));
-      carregarProcessos(advogado.id);
-    });
+    document.getElementById("botao-atualizar-lista").addEventListener("click", carregarProcessos);
 
-    async function carregarProcessos(advogadoId) {
+    async function carregarProcessos() {
       const lista = document.getElementById("lista-processos");
       lista.innerHTML = "Carregando...";
-      const resp = await fetch(`${API}/advogados/${advogadoId}/processos`);
+      const resp = await chamarAutenticado("/processos");
       const processos = await resp.json();
 
       if (processos.length === 0) {
@@ -219,7 +272,7 @@
           if (!cpf) return;
 
           try {
-            const resp = await fetch(`${API}/processos/${processoId}/vincular-cliente`, {
+            const resp = await chamarAutenticado(`/processos/${processoId}/vincular-cliente`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ cpf }),
@@ -239,9 +292,9 @@
     }
 
     (function inicializar() {
-      const advogadoSalvo = localStorage.getItem("advogado");
-      if (advogadoSalvo) {
-        entrarNoPainel(JSON.parse(advogadoSalvo));
+      const sessao = sessaoAtual();
+      if (sessao) {
+        entrarNoPainel(sessao);
       }
     })();
   </script>

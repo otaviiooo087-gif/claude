@@ -1,7 +1,10 @@
 """API do portal:
 
-- O advogado se cadastra pela OAB (os processos são descobertos sozinhos via
-  sync_djen.py, que roda separado/periodicamente).
+- O advogado se cadastra pela OAB + senha (os processos são descobertos
+  sozinhos via sync_djen.py, que roda separado/periodicamente).
+- Login gera um token de sessão; as rotas do advogado exigem esse token
+  (header "Authorization: Bearer <token>") e só enxergam os próprios dados —
+  não dá pra ver processo de outro advogado trocando um ID na URL.
 - O advogado vincula um processo já descoberto ao CPF do cliente (isso não dá
   pra automatizar: só o escritório sabe qual CPF corresponde a qual processo).
   Esse vínculo gera um código de acesso que o advogado repassa ao cliente.
@@ -14,10 +17,11 @@ Rodar localmente:
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, field_validator
 
+from auth import advogado_atual, criar_sessao, extrair_token, gerar_hash_senha, verificar_senha
 from db import conectar, gerar_codigo_acesso, iniciar_banco
 from sync_djen import sincronizar_advogado
 
@@ -35,6 +39,14 @@ class AdvogadoEntrada(BaseModel):
     uf: str
     nome: str
     email: str
+    senha: str
+
+    @field_validator("senha")
+    @classmethod
+    def validar_senha(cls, valor):
+        if len(valor) < 6:
+            raise ValueError("Senha precisa ter pelo menos 6 caracteres.")
+        return valor
 
 
 @app.post("/advogados")
@@ -42,44 +54,72 @@ def cadastrar_advogado(dados: AdvogadoEntrada):
     with conectar() as conexao:
         try:
             cursor = conexao.execute(
-                "INSERT INTO advogados (oab, uf, nome, email) VALUES (?, ?, ?, ?)",
-                (dados.oab, dados.uf.upper(), dados.nome, dados.email),
+                "INSERT INTO advogados (oab, uf, nome, email, senha_hash) VALUES (?, ?, ?, ?, ?)",
+                (dados.oab, dados.uf.upper(), dados.nome, dados.email, gerar_hash_senha(dados.senha)),
             )
         except Exception:
             raise HTTPException(409, "Advogado já cadastrado com essa OAB/UF.")
-        return {"id": cursor.lastrowid}
+
+        token = criar_sessao(conexao, cursor.lastrowid)
+        return {"id": cursor.lastrowid, "nome": dados.nome, "token": token}
 
 
 @app.get("/advogados/buscar")
-def buscar_advogado(oab: str, uf: str):
+def existe_advogado(oab: str, uf: str):
     with conectar() as conexao:
         linha = conexao.execute(
-            "SELECT id, oab, uf, nome, email FROM advogados WHERE oab = ? AND uf = ?",
+            "SELECT id FROM advogados WHERE oab = ? AND uf = ?",
             (oab, uf.upper()),
         ).fetchone()
         if not linha:
             raise HTTPException(404, "Advogado não encontrado.")
-        return dict(linha)
+        return {"existe": True}
 
 
-@app.post("/advogados/{advogado_id}/sincronizar")
-def sincronizar_agora(advogado_id: int):
+class LoginEntrada(BaseModel):
+    oab: str
+    uf: str
+    senha: str
+
+
+@app.post("/login")
+def login(dados: LoginEntrada):
     with conectar() as conexao:
         advogado = conexao.execute(
-            "SELECT * FROM advogados WHERE id = ?", (advogado_id,)
+            "SELECT * FROM advogados WHERE oab = ? AND uf = ?",
+            (dados.oab, dados.uf.upper()),
         ).fetchone()
-        if not advogado:
-            raise HTTPException(404, "Advogado não encontrado.")
-        sincronizar_advogado(conexao, dict(advogado))
+        if not advogado or not verificar_senha(dados.senha, advogado["senha_hash"]):
+            raise HTTPException(401, "OAB, UF ou senha incorretos.")
+
+        token = criar_sessao(conexao, advogado["id"])
+        return {"id": advogado["id"], "nome": advogado["nome"], "token": token}
+
+
+@app.post("/logout")
+def logout(authorization: str = Header(default="")):
+    token = extrair_token(authorization)
+    with conectar() as conexao:
+        conexao.execute("DELETE FROM sessoes WHERE token = ?", (token,))
     return {"ok": True}
 
 
-@app.get("/advogados/{advogado_id}/processos")
-def listar_processos(advogado_id: int):
+@app.post("/sincronizar")
+def sincronizar_agora(advogado: dict = Depends(advogado_atual)):
+    with conectar() as conexao:
+        advogado_linha = conexao.execute(
+            "SELECT * FROM advogados WHERE id = ?", (advogado["id"],)
+        ).fetchone()
+        sincronizar_advogado(conexao, dict(advogado_linha))
+    return {"ok": True}
+
+
+@app.get("/processos")
+def listar_processos(advogado: dict = Depends(advogado_atual)):
     with conectar() as conexao:
         linhas = conexao.execute(
             "SELECT id, numero, orgao, status, cliente_cpf FROM processos WHERE advogado_id = ?",
-            (advogado_id,),
+            (advogado["id"],),
         ).fetchall()
         return [dict(linha) for linha in linhas]
 
@@ -97,10 +137,13 @@ class VincularClienteEntrada(BaseModel):
 
 
 @app.post("/processos/{processo_id}/vincular-cliente")
-def vincular_cliente(processo_id: int, dados: VincularClienteEntrada):
+def vincular_cliente(
+    processo_id: int, dados: VincularClienteEntrada, advogado: dict = Depends(advogado_atual)
+):
     with conectar() as conexao:
         processo = conexao.execute(
-            "SELECT id FROM processos WHERE id = ?", (processo_id,)
+            "SELECT id FROM processos WHERE id = ? AND advogado_id = ?",
+            (processo_id, advogado["id"]),
         ).fetchone()
         if not processo:
             raise HTTPException(404, "Processo não encontrado.")
