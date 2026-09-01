@@ -31,26 +31,64 @@
           <p class="field-hint">Usada para transcrever o áudio com Whisper-1. <a href="https://platform.openai.com/api-keys" target="_blank">Obter chave →</a></p>
         </div>
 
-        <div class="field">
-          <label for="claudeKey">
-            Anthropic API Key
-            <span class="badge">Claude — Análise</span>
-          </label>
-          <div class="input-row">
-            <input type="password" id="claudeKey" placeholder="sk-ant-..." autocomplete="off">
-            <button class="toggle-btn" data-target="claudeKey">👁</button>
-          </div>
-          <p class="field-hint">Usada para análise e geração de roteiros com Claude. <a href="https://console.anthropic.com/settings/keys" target="_blank">Obter chave →</a></p>
-        </div>
       </div>
 
       <div class="section">
-        <h2>Modelo Claude</h2>
-        <select id="claudeModel">
-          <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recomendado)</option>
-          <option value="claude-opus-4-7">claude-opus-4-7 (Mais poderoso)</option>
-          <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001 (Mais rápido)</option>
-        </select>
+        <h2>Provedor de IA (Análise)</h2>
+        <p class="desc">Anthropic direto é pago por uso. OpenRouter permite usar modelos gratuitos na análise (a transcrição continua usando a chave OpenAI acima).</p>
+
+        <div class="field">
+          <label for="aiProvider">Provedor</label>
+          <select id="aiProvider">
+            <option value="anthropic">Anthropic (Claude direto)</option>
+            <option value="openrouter">OpenRouter (inclui modelos gratuitos)</option>
+          </select>
+        </div>
+
+        <div id="anthropicFields">
+          <div class="field">
+            <label for="claudeKey">
+              Anthropic API Key
+              <span class="badge">Claude — Análise</span>
+            </label>
+            <div class="input-row">
+              <input type="password" id="claudeKey" placeholder="sk-ant-..." autocomplete="off">
+              <button class="toggle-btn" data-target="claudeKey">👁</button>
+            </div>
+            <p class="field-hint">Usada para análise e geração de roteiros com Claude. <a href="https://console.anthropic.com/settings/keys" target="_blank">Obter chave →</a></p>
+          </div>
+
+          <div class="field">
+            <label for="claudeModel">Modelo Claude</label>
+            <select id="claudeModel">
+              <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recomendado)</option>
+              <option value="claude-opus-4-7">claude-opus-4-7 (Mais poderoso)</option>
+              <option value="claude-haiku-4-5-20251001">claude-haiku-4-5-20251001 (Mais rápido)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="openrouterFields">
+          <div class="field">
+            <label for="openrouterKey">
+              OpenRouter API Key
+              <span class="badge">Grátis disponível</span>
+            </label>
+            <div class="input-row">
+              <input type="password" id="openrouterKey" placeholder="sk-or-..." autocomplete="off">
+              <button class="toggle-btn" data-target="openrouterKey">👁</button>
+            </div>
+            <p class="field-hint">Crie a chave em <a href="https://openrouter.ai/settings/keys" target="_blank">openrouter.ai/settings/keys →</a></p>
+          </div>
+
+          <div class="field">
+            <label for="openrouterModel">Modelo</label>
+            <div class="input-row">
+              <input type="text" id="openrouterModel" placeholder="openrouter/free" autocomplete="off">
+            </div>
+            <p class="field-hint">Deixe <code>openrouter/free</code> para o roteador automático gratuito, ou cole o ID de um modelo específico da <a href="https://openrouter.ai/collections/free-models" target="_blank">lista de modelos gratuitos →</a> (ex: <code>deepseek/deepseek-chat-v3.1:free</code>).</p>
+          </div>
+        </div>
       </div>
 
       <div class="actions">

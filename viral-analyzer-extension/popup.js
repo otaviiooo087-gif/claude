@@ -73,7 +73,10 @@ function showError(msg) {
 
 async function getSettings() {
   return new Promise(resolve => {
-    chrome.storage.sync.get(['openaiKey', 'claudeKey'], resolve);
+    chrome.storage.sync.get(
+      ['openaiKey', 'claudeKey', 'claudeModel', 'aiProvider', 'openrouterKey', 'openrouterModel'],
+      resolve
+    );
   });
 }
 
@@ -127,8 +130,10 @@ function updateIdleState(videoInfo) {
 
 async function startRecording() {
   const settings = await getSettings();
+  const provider = settings.aiProvider || 'anthropic';
+  const hasAnalysisKey = provider === 'openrouter' ? !!settings.openrouterKey : !!settings.claudeKey;
 
-  if (!settings.openaiKey || !settings.claudeKey) {
+  if (!settings.openaiKey || !hasAnalysisKey) {
     showError('Configure suas chaves de API nas configurações (⚙️) antes de continuar.');
     return;
   }
@@ -226,7 +231,7 @@ async function processAudio() {
     return;
   }
 
-  await analyzeWithClaude(transcript, settings.claudeKey);
+  await analyzeTranscript(transcript, settings);
 }
 
 async function transcribeWithWhisper(audioBlob, apiKey) {
@@ -250,7 +255,62 @@ async function transcribeWithWhisper(audioBlob, apiKey) {
   return await res.text();
 }
 
-async function analyzeWithClaude(transcript, apiKey) {
+async function callAnthropic(userPrompt, apiKey, model) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: model || 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: CLAUDE_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userPrompt }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return data.content[0].text;
+}
+
+async function callOpenRouter(userPrompt, apiKey, model) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': 'https://viral-video-analyzer.extension',
+      'X-Title': 'Viral Video Analyzer'
+    },
+    body: JSON.stringify({
+      model: model || 'openrouter/free',
+      messages: [
+        { role: 'system', content: CLAUDE_SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  const choice = data.choices?.[0]?.message?.content;
+  if (!choice) throw new Error('Resposta vazia do OpenRouter');
+  return choice;
+}
+
+async function analyzeTranscript(transcript, settings) {
   showState('stateAnalyzing');
 
   const steps = ['astep1', 'astep2', 'astep3', 'astep4'];
@@ -271,36 +331,15 @@ async function analyzeWithClaude(transcript, apiKey) {
     }
   }, 2000);
 
+  const userPrompt = `Aqui está a transcrição do vídeo viral:\n\n"${transcript}"\n\nAnalise e retorne o JSON completo.`;
+  const provider = settings.aiProvider || 'anthropic';
+
   let result;
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: CLAUDE_SYSTEM_PROMPT,
-        messages: [
-          {
-            role: 'user',
-            content: `Aqui está a transcrição do vídeo viral:\n\n"${transcript}"\n\nAnalise e retorne o JSON completo.`
-          }
-        ]
-      })
-    });
+    const text = provider === 'openrouter'
+      ? await callOpenRouter(userPrompt, settings.openrouterKey, settings.openrouterModel)
+      : await callAnthropic(userPrompt, settings.claudeKey, settings.claudeModel);
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    const text = data.content[0].text;
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('Resposta inválida da IA');
     result = JSON.parse(jsonMatch[0]);
