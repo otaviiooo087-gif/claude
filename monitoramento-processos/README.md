@@ -25,7 +25,9 @@ do advogado automaticamente.
    Todas as rotas do advogado exigem esse token no header
    `Authorization: Bearer <token>` e só enxergam os processos do **próprio**
    advogado dono do token — não dá para ver/mexer no processo de outro
-   advogado trocando um ID na URL.
+   advogado trocando um ID na URL. Cada token expira sozinho depois de
+   `SESSAO_TTL_DIAS` (7 dias por padrão, em `auth.py`); depois disso, a rota
+   protegida devolve 401 e o front pede login de novo.
 3. **`sync_djen.py` roda periodicamente** (cron) — ou o próprio advogado
    dispara na hora pelo botão "Buscar processos agora" (`POST
    /sincronizar`, autenticado) — e, para cada advogado, consulta a API
@@ -137,6 +139,4 @@ para `EMAIL_TO`.
 
 - Trocar/complementar DJEN por Escavador ou Judit.io para ter status do
   processo e histórico completo de movimentação (não só publicações).
-- Expirar sessões antigas (hoje o token de `sessoes` não tem validade —
-  fica valendo até logout manual).
 - Recuperação de senha (hoje não existe "esqueci minha senha").

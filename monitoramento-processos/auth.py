@@ -11,6 +11,7 @@ from fastapi import Header, HTTPException
 from db import conectar
 
 _SCRYPT_PARAMS = {"n": 16384, "r": 8, "p": 1, "dklen": 32}
+SESSAO_TTL_DIAS = 7
 
 
 def gerar_hash_senha(senha: str) -> str:
@@ -27,6 +28,10 @@ def verificar_senha(senha: str, hash_armazenado: str) -> bool:
 
 
 def criar_sessao(conexao, advogado_id: int) -> str:
+    conexao.execute(
+        "DELETE FROM sessoes WHERE criado_em <= datetime('now', ?)",
+        (f"-{SESSAO_TTL_DIAS} days",),
+    )
     token = secrets.token_urlsafe(32)
     conexao.execute(
         "INSERT INTO sessoes (token, advogado_id) VALUES (?, ?)", (token, advogado_id)
@@ -49,8 +54,9 @@ def advogado_atual(authorization: str = Header(default="")) -> dict:
             SELECT advogados.* FROM sessoes
             JOIN advogados ON advogados.id = sessoes.advogado_id
             WHERE sessoes.token = ?
+              AND sessoes.criado_em > datetime('now', ?)
             """,
-            (token,),
+            (token, f"-{SESSAO_TTL_DIAS} days"),
         ).fetchone()
 
     if not linha:
