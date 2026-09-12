@@ -20,21 +20,28 @@ export function useTasks() {
 
   useEffect(() => {
     (async () => {
-      const existing = await reload();
-      if (existing.length === 0) {
-        const seeded: Task[] = INITIAL_TASKS.map((t) => ({
-          ...t,
-          status: 'PENDENTE' as TaskStatus,
-          createdAt: Date.now(),
-        }));
-        await putManyTasks(seeded);
-        await reload();
+      try {
+        const existing = await reload();
+        if (existing.length === 0) {
+          const seeded: Task[] = INITIAL_TASKS.map((t) => ({
+            ...t,
+            status: 'PENDENTE' as TaskStatus,
+            createdAt: Date.now(),
+          }));
+          await putManyTasks(seeded);
+          await reload();
+        }
+
+        const savedDate = await getState<string>('selectedDate');
+        if (savedDate) setSelectedDateState(savedDate);
+      } catch (err) {
+        // Nunca deixar a tela travada em "Carregando..." por um erro de
+        // inicialização do IndexedDB: melhor mostrar o painel vazio do que
+        // um spinner infinito.
+        console.error('Falha ao inicializar dados locais:', err);
+      } finally {
+        setLoading(false);
       }
-
-      const savedDate = await getState<string>('selectedDate');
-      if (savedDate) setSelectedDateState(savedDate);
-
-      setLoading(false);
     })();
   }, [reload]);
 

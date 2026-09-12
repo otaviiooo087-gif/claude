@@ -1,6 +1,11 @@
 import { Task } from './types';
 
-const DB_NAME = 'painel-operacional';
+// Nome novo de propósito: a versão anterior do app já criava um banco
+// "painel-operacional" na v1 sem a tabela appState. Reabrir com o mesmo
+// nome faz o navegador pular onupgradeneeded (mesma versão) e a tabela
+// nova nunca é criada, travando o app para sempre em "Carregando...".
+// Um nome de banco isolado evita qualquer colisão de schema.
+const DB_NAME = 'painel-operacional-v2';
 const DB_VERSION = 1;
 const TASKS_STORE = 'tasks';
 const STATE_STORE = 'appState';
