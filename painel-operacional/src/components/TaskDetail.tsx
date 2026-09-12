@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { Task, TYPE_LABELS, STATUS_LABELS, STATUS_ORDER } from '@/lib/types';
-import { formatCurrency, isAtrasada } from '@/lib/format';
+import { formatCurrency, isAtrasada, whatsappUrl, mensagemEstouIndo, MENSAGEM_CUIDADOS_POS_MONTAGEM } from '@/lib/format';
 import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
+import PromptMinutosDialog from './PromptMinutosDialog';
 
 interface Props {
   task: Task;
@@ -28,6 +29,7 @@ export default function TaskDetail({
   const [observacao, setObservacao] = useState(task.observacaoAdicional ?? '');
   const [confirmando, setConfirmando] = useState(false);
   const [statusAberto, setStatusAberto] = useState(false);
+  const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
 
@@ -65,6 +67,28 @@ export default function TaskDetail({
         )}
 
         <NavButtons task={task} />
+
+        {task.telefone && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Mensagens rápidas</span>
+            <button
+              onClick={() => setPerguntandoMinutos(true)}
+              className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white"
+            >
+              {task.tipo === 'RETIRADA' ? 'AVISAR QUE ESTOU INDO RETIRAR' : 'AVISAR QUE ESTOU INDO'}
+            </button>
+            {task.tipo === 'MONTAGEM' && (
+              <a
+                href={whatsappUrl(task.telefone, MENSAGEM_CUIDADOS_POS_MONTAGEM)}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl bg-emerald-700 px-4 py-3 text-center text-sm font-semibold text-white"
+              >
+                ENVIAR CUIDADOS PÓS-MONTAGEM
+              </a>
+            )}
+          </div>
+        )}
 
         {task.observacoes && (
           <div>
@@ -160,6 +184,18 @@ export default function TaskDetail({
           onConfirm={() => {
             onComplete();
             setConfirmando(false);
+          }}
+        />
+      )}
+
+      {perguntandoMinutos && task.telefone && (
+        <PromptMinutosDialog
+          titulo="Em quantos minutos você chega?"
+          onCancel={() => setPerguntandoMinutos(false)}
+          onConfirm={(minutos) => {
+            const url = whatsappUrl(task.telefone!, mensagemEstouIndo(task.tipo, minutos));
+            window.open(url, '_blank', 'noreferrer');
+            setPerguntandoMinutos(false);
           }}
         />
       )}

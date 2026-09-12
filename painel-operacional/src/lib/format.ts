@@ -74,12 +74,40 @@ export function telUrl(phone: string): string {
 export function whatsappUrl(phone: string, mensagem?: string): string {
   const digits = phone.replace(/\D/g, '');
   const comCodigoPais = digits.startsWith('55') ? digits : `55${digits}`;
-  const texto = mensagem ? `?text=${encodeURIComponent(mensagem)}` : '';
-  return `https://wa.me/${comCodigoPais}${texto}`;
+  const texto = mensagem ? encodeURIComponent(mensagem) : '';
+
+  // No Android, se o WhatsApp Business estiver configurado como app
+  // padrão pra esses links, um wa.me comum sempre abre nele — mesmo tendo
+  // o WhatsApp normal instalado. O esquema intent:// com package explícito
+  // (com.whatsapp) força abrir sempre o WhatsApp normal, ignorando qual
+  // app está definido como padrão no aparelho.
+  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    const params = texto ? `&text=${texto}` : '';
+    return `intent://send/?phone=${comCodigoPais}${params}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+  }
+
+  const query = texto ? `?text=${texto}` : '';
+  return `https://wa.me/${comCodigoPais}${query}`;
 }
 
 export const MENSAGEM_ATRASO =
   'Oi! Passando pra avisar que estou com um pequeno atraso, já estou a caminho. Obrigado pela paciência!';
+
+export function mensagemEstouIndo(tipo: Task['tipo'], minutos: string): string {
+  const acao = tipo === 'RETIRADA' ? 'fazer a retirada do brinquedo' : 'realizar a montagem';
+  return `Oi! Estou a caminho para ${acao}. Devo chegar em aproximadamente ${minutos} minutos!`;
+}
+
+export const MENSAGEM_CUIDADOS_POS_MONTAGEM = `Prontinho! O brinquedo já está montado e liberado para uso 🎉
+
+Algumas orientações importantes:
+- Nunca desligue o motor durante o uso
+- Mantenha a entrada de ar sempre livre, sem cobrir ou tampar
+- Se der pane no motor: confira se a tomada/extensão está bem encaixada e se o disjuntor não caiu; se o problema continuar, é só nos chamar que resolvemos rapidinho
+- Em caso de vento forte ou chuva, desligue o motor e aguarde melhorar
+
+Qualquer imprevisto é só chamar por aqui. Desejamos uma festa incrível! 🎈`;
 
 export function isAtrasada(task: Task): boolean {
   if (task.status === 'CONCLUIDA') return false;
