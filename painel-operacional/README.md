@@ -1,5 +1,7 @@
 # Painel Operacional
 
+🔗 **App publicado:** https://otaviiooo087-gif.github.io/claude/
+
 Ferramenta pessoal, offline-first, para quem monta e retira brinquedos infláveis.
 Abrir o app → ver a próxima tarefa → navegar até o endereço → concluir → ver a próxima.
 
@@ -22,7 +24,7 @@ npx serve out       # ou qualquer servidor estático / hospedagem (Vercel, Netli
 
 ## Instalar como app no celular
 
-1. Abra o site publicado no navegador do celular (com internet, pelo menos uma vez).
+1. Abra https://otaviiooo087-gif.github.io/claude/ no navegador do celular (com internet, pelo menos uma vez).
 2. Use "Adicionar à tela de início" (Android/Chrome) ou "Adicionar à Tela de Início" (iOS/Safari).
 3. A partir daí, o app abre em tela cheia e funciona sem internet.
 
