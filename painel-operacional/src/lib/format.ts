@@ -1,15 +1,37 @@
 import { Task } from './types';
 
+// A operação é toda no interior de SP, então a hora "agora" usada para
+// calcular atraso é sempre a de Brasília — não importa o fuso horário
+// configurado no aparelho (evita erro se o celular estiver com fuso
+// errado ou mudar de região).
+const FUSO_OPERACAO = 'America/Sao_Paulo';
+
+function agoraEmBrasilia(): { data: string; hora: string } {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: FUSO_OPERACAO,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const valor = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? '00';
+  const hora = valor('hour') === '24' ? '00' : valor('hour');
+
+  return {
+    data: `${valor('year')}-${valor('month')}-${valor('day')}`,
+    hora: `${hora}:${valor('minute')}`,
+  };
+}
+
 export function todayISO(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 10);
+  return agoraEmBrasilia().data;
 }
 
 export function nowHHMM(): string {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  return agoraEmBrasilia().hora;
 }
 
 export function formatDateChip(iso: string): string {
