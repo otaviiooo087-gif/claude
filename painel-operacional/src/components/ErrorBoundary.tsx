@@ -18,7 +18,7 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: unknown) {
-    console.error('Erro não tratado no Painel Operacional:', error);
+    console.error('Erro não tratado no Zimba Festa:', error);
   }
 
   handleReload = () => {

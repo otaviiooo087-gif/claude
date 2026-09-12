@@ -4,7 +4,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Painel Operacional',
+  title: 'Zimba Festa',
   description: 'Painel offline para controle de montagens e retiradas.',
   manifest: 'manifest.json',
   icons: {
