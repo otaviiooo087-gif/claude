@@ -1,7 +1,7 @@
 'use client';
 
 import { Task, TYPE_LABELS } from '@/lib/types';
-import { wazeUrl, telUrl, isAtrasada } from '@/lib/format';
+import { wazeUrl, whatsappUrl, isAtrasada } from '@/lib/format';
 
 interface Props {
   task: Task;
@@ -49,10 +49,12 @@ export default function AgoraCard({ task, onOpen, onIniciar }: Props) {
         <div className="flex gap-2">
           {task.telefone && (
             <a
-              href={telUrl(task.telefone)}
-              className="flex-1 rounded-xl bg-slate-700 px-4 py-3 text-center text-sm font-semibold text-slate-100"
+              href={whatsappUrl(task.telefone)}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white"
             >
-              LIGAR
+              WHATSAPP
             </a>
           )}
           {!jaIniciada && (

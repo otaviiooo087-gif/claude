@@ -49,6 +49,12 @@ export function telUrl(phone: string): string {
   return `tel:${phone.replace(/[^0-9+]/g, '')}`;
 }
 
+export function whatsappUrl(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const comCodigoPais = digits.startsWith('55') ? digits : `55${digits}`;
+  return `https://wa.me/${comCodigoPais}`;
+}
+
 export function isAtrasada(task: Task): boolean {
   if (task.status === 'CONCLUIDA') return false;
   if (task.data !== todayISO()) return false;

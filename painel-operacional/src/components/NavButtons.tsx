@@ -1,7 +1,7 @@
 'use client';
 
 import { Task } from '@/lib/types';
-import { wazeUrl, googleMapsUrl, telUrl } from '@/lib/format';
+import { wazeUrl, googleMapsUrl, whatsappUrl } from '@/lib/format';
 
 interface Props {
   task: Task;
@@ -40,10 +40,12 @@ export default function NavButtons({ task, showCall = true }: Props) {
 
       {showCall && task.telefone && (
         <a
-          href={telUrl(task.telefone)}
-          className="rounded-xl bg-slate-700 px-4 py-3 text-center text-sm font-semibold text-slate-100"
+          href={whatsappUrl(task.telefone)}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-xl bg-emerald-600 px-4 py-3 text-center text-sm font-semibold text-white"
         >
-          LIGAR · {task.telefone}
+          WHATSAPP · {task.telefone}
         </a>
       )}
     </div>
