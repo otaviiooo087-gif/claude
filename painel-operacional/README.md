@@ -30,12 +30,25 @@ npx serve out       # ou qualquer servidor estático / hospedagem (Vercel, Netli
 
 ## Funcionalidades do MVP
 
-- Tela **Agora**: mostra a próxima tarefa pendente (cliente, endereço, horário), com botão
-  para abrir a navegação no Google Maps, ligar/WhatsApp e marcar como concluída.
-- Tela **Agenda**: todas as tarefas agrupadas por data.
-- Cadastro/edição de tarefa: cliente, endereço, telefone, tipo (montagem/retirada), data, hora e observações.
+- **Dashboard "HOJE"**: data do dia, contadores (total/concluídas/em andamento/pendentes) e
+  seletor rápido entre as datas com tarefas cadastradas.
+- **Bloco AGORA**: destaque grande para a tarefa prioritária do dia, com botão
+  **NAVEGAR COM WAZE** em primeiro lugar, LIGAR e INICIAR.
+- **Bloco PRÓXIMA TAREFA**: prévia da tarefa seguinte.
+- **Linha do tempo**: todas as tarefas do dia em ordem, com ícone de status
+  (✓ concluída, ● em andamento, ○ pendente) e aviso **ATRASADA** quando o horário já passou.
+- **Tela de serviço**: cliente, brinquedo, endereço completo (sempre visível, nunca só atrás
+  do botão), telefone clicável (`tel:`), valor, observações completas e checklist próprio de
+  cada tarefa — cada item marcado é salvo na hora no IndexedDB.
+- **Navegação**: Waze é sempre a opção principal
+  (`https://waze.com/ul?q=ENDEREÇO&navigate=yes`), com Google Maps como alternativa.
+  Só a abertura do app de mapas depende de internet — o resto do painel continua 100% offline.
+- **Observação adicional editável** por tarefa, e **status** (Pendente → Em deslocamento →
+  Cheguei → Em execução → Concluída) com confirmação antes de concluir.
+- **BASE / EMPRESA**: ponto de partida da operação cadastrado como referência (não é uma tarefa).
 - Tudo funciona 100% offline após o primeiro carregamento: os dados ficam no IndexedDB
-  do navegador e o app (HTML/CSS/JS) fica em cache via Service Worker.
+  do navegador e o app (HTML/CSS/JS) fica em cache via Service Worker. Nada é apagado
+  automaticamente — fechar e reabrir o app recupera checklist, status e observações.
 
 ## Fora de escopo (de propósito)
 

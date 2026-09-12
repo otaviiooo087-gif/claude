@@ -1,80 +1,127 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { deleteTask, getAllTasks, putTask } from './db';
-import { Task, TaskInput } from './types';
-
-function makeId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+import { getAllTasks, putManyTasks, putTask, getState, setState } from './db';
+import { INITIAL_TASKS } from './seedData';
+import { Task, TaskStatus, STATUS_ORDER } from './types';
+import { todayISO } from './format';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDateState] = useState<string>(todayISO());
 
   const reload = useCallback(async () => {
     const all = await getAllTasks();
-    all.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    all.sort((a, b) => a.ordem - b.ordem);
     setTasks(all);
+    return all;
   }, []);
 
   useEffect(() => {
-    reload().finally(() => setLoading(false));
+    (async () => {
+      const existing = await reload();
+      if (existing.length === 0) {
+        const seeded: Task[] = INITIAL_TASKS.map((t) => ({
+          ...t,
+          status: 'PENDENTE' as TaskStatus,
+          createdAt: Date.now(),
+        }));
+        await putManyTasks(seeded);
+        await reload();
+      }
+
+      const savedDate = await getState<string>('selectedDate');
+      if (savedDate) setSelectedDateState(savedDate);
+
+      setLoading(false);
+    })();
   }, [reload]);
 
-  const addTask = useCallback(
-    async (input: TaskInput) => {
-      const task: Task = {
-        ...input,
-        id: makeId(),
-        status: 'pendente',
-        createdAt: Date.now(),
-      };
-      await putTask(task);
-      await reload();
-      return task;
-    },
-    [reload]
-  );
+  const selectDate = useCallback((iso: string) => {
+    setSelectedDateState(iso);
+    setState('selectedDate', iso);
+  }, []);
 
-  const editTask = useCallback(
-    async (id: string, input: TaskInput) => {
-      const existing = tasks.find((t) => t.id === id);
-      if (!existing) return;
-      await putTask({ ...existing, ...input });
+  const toggleChecklistItem = useCallback(
+    async (taskId: string, itemId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      const checklist = task.checklist.map((item) =>
+        item.id === itemId ? { ...item, marcado: !item.marcado } : item
+      );
+      const updated = { ...task, checklist };
+      await putTask(updated);
       await reload();
     },
     [tasks, reload]
+  );
+
+  const saveObservacaoAdicional = useCallback(
+    async (taskId: string, texto: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      await putTask({ ...task, observacaoAdicional: texto });
+      await reload();
+    },
+    [tasks, reload]
+  );
+
+  const setStatus = useCallback(
+    async (taskId: string, status: TaskStatus) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      const updated: Task = {
+        ...task,
+        status,
+        completedAt: status === 'CONCLUIDA' ? Date.now() : task.completedAt,
+      };
+      await putTask(updated);
+      await reload();
+    },
+    [tasks, reload]
+  );
+
+  const advanceStatus = useCallback(
+    async (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      const idx = STATUS_ORDER.indexOf(task.status);
+      const next = STATUS_ORDER[Math.min(idx + 1, STATUS_ORDER.length - 1)];
+      await setStatus(taskId, next);
+    },
+    [tasks, setStatus]
   );
 
   const completeTask = useCallback(
-    async (id: string) => {
-      const existing = tasks.find((t) => t.id === id);
-      if (!existing) return;
-      await putTask({ ...existing, status: 'concluido', completedAt: Date.now() });
-      await reload();
+    async (taskId: string) => {
+      await setStatus(taskId, 'CONCLUIDA');
     },
-    [tasks, reload]
+    [setStatus]
   );
 
   const reopenTask = useCallback(
-    async (id: string) => {
-      const existing = tasks.find((t) => t.id === id);
-      if (!existing) return;
-      const { completedAt, ...rest } = existing;
-      await putTask({ ...rest, status: 'pendente' });
-      await reload();
+    async (taskId: string) => {
+      await setStatus(taskId, 'PENDENTE');
     },
-    [tasks, reload]
+    [setStatus]
   );
 
-  const removeTask = useCallback(
-    async (id: string) => {
-      await deleteTask(id);
-      await reload();
-    },
-    [reload]
-  );
+  const tasksForDate = tasks.filter((t) => t.data === selectedDate);
+  const availableDates = Array.from(new Set(tasks.map((t) => t.data))).sort();
 
-  return { tasks, loading, addTask, editTask, completeTask, reopenTask, removeTask };
+  return {
+    tasks,
+    tasksForDate,
+    availableDates,
+    loading,
+    selectedDate,
+    selectDate,
+    toggleChecklistItem,
+    saveObservacaoAdicional,
+    setStatus,
+    advanceStatus,
+    completeTask,
+    reopenTask,
+  };
 }

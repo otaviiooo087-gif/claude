@@ -1,7 +1,7 @@
 {
   "name": "Painel Operacional",
   "short_name": "Painel",
-  "description": "Painel operacional para montagem e retirada de infláveis",
+  "description": "Painel offline para controle de montagens e retiradas.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

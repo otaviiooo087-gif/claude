@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Painel Operacional',
-  description: 'Ferramenta pessoal de operação para montagem e retirada de infláveis',
+  description: 'Painel offline para controle de montagens e retiradas.',
   manifest: 'manifest.json',
   icons: {
     icon: 'icons/icon-192.png',

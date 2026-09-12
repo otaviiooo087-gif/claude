@@ -1,183 +1,123 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTasks } from '@/lib/useTasks';
-import { Task, TaskInput } from '@/lib/types';
-import { formatDateLabel, todayISO } from '@/lib/format';
-import TaskCard from '@/components/TaskCard';
-import TaskForm from '@/components/TaskForm';
-import BottomNav from '@/components/BottomNav';
-
-type View = 'home' | 'agenda';
+import { formatDateFull } from '@/lib/format';
+import { getState, setState } from '@/lib/db';
+import DateSelector from '@/components/DateSelector';
+import AgoraCard from '@/components/AgoraCard';
+import ProximaCard from '@/components/ProximaCard';
+import TimelineItem from '@/components/TimelineItem';
+import TaskDetail from '@/components/TaskDetail';
+import BaseIndicator from '@/components/BaseIndicator';
 
 export default function Home() {
-  const { tasks, loading, addTask, editTask, completeTask, reopenTask, removeTask } = useTasks();
-  const [view, setView] = useState<View>('home');
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const {
+    tasksForDate,
+    availableDates,
+    loading,
+    selectedDate,
+    selectDate,
+    toggleChecklistItem,
+    saveObservacaoAdicional,
+    setStatus,
+    advanceStatus,
+    completeTask,
+    reopenTask,
+  } = useTasks();
 
-  const pending = useMemo(() => tasks.filter((t) => t.status === 'pendente'), [tasks]);
-  const nextTask = pending[0];
-  const upcoming = pending.slice(1);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
-  const today = todayISO();
-  const doneToday = useMemo(
-    () => tasks.filter((t) => t.status === 'concluido' && t.date === today),
-    [tasks, today]
-  );
+  useEffect(() => {
+    if (loading) return;
+    getState<string>('lastOpenedTaskId').then((id) => {
+      if (id) setOpenTaskId(id);
+    });
+  }, [loading]);
 
-  const byDate = useMemo(() => {
-    const groups = new Map<string, Task[]>();
-    for (const t of tasks) {
-      const list = groups.get(t.date) ?? [];
-      list.push(t);
-      groups.set(t.date, list);
-    }
-    return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [tasks]);
-
-  function openNew() {
-    setEditingTask(null);
-    setShowForm(true);
+  function openTask(id: string) {
+    setOpenTaskId(id);
+    setState('lastOpenedTaskId', id);
   }
 
-  function openEdit(task: Task) {
-    setEditingTask(task);
-    setShowForm(true);
+  function closeTask() {
+    setOpenTaskId(null);
+    setState('lastOpenedTaskId', null);
   }
 
-  async function handleSave(input: TaskInput) {
-    if (editingTask) {
-      await editTask(editingTask.id, input);
-    } else {
-      await addTask(input);
-    }
-    setShowForm(false);
-    setEditingTask(null);
-  }
+  const pendentes = useMemo(() => tasksForDate.filter((t) => t.status !== 'CONCLUIDA'), [tasksForDate]);
+  const agora = pendentes[0];
+  const proxima = pendentes[1];
+  const concluidasCount = tasksForDate.filter((t) => t.status === 'CONCLUIDA').length;
+  const emAndamentoCount = tasksForDate.filter(
+    (t) => t.status !== 'PENDENTE' && t.status !== 'CONCLUIDA'
+  ).length;
+  const pendentesCount = tasksForDate.filter((t) => t.status === 'PENDENTE').length;
 
-  async function handleDelete() {
-    if (editingTask) {
-      await removeTask(editingTask.id);
-    }
-    setShowForm(false);
-    setEditingTask(null);
-  }
+  const openTask_ = openTaskId ? tasksForDate.find((t) => t.id === openTaskId) : undefined;
 
-  if (showForm) {
+  if (loading) {
     return (
-      <main className="min-h-screen bg-slate-900">
-        <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900 p-4">
-          <h1 className="text-xl font-bold">{editingTask ? 'Editar tarefa' : 'Nova tarefa'}</h1>
-        </header>
-        <TaskForm
-          initial={editingTask ?? undefined}
-          onSave={handleSave}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingTask(null);
-          }}
-          onDelete={editingTask ? handleDelete : undefined}
-        />
+      <main className="flex min-h-screen items-center justify-center bg-slate-900">
+        <p className="text-slate-400">Carregando...</p>
       </main>
     );
   }
 
+  if (openTask_) {
+    return (
+      <TaskDetail
+        task={openTask_}
+        onBack={closeTask}
+        onToggleChecklistItem={(itemId) => toggleChecklistItem(openTask_.id, itemId)}
+        onSaveObservacao={(texto) => saveObservacaoAdicional(openTask_.id, texto)}
+        onSetStatus={(status) => setStatus(openTask_.id, status)}
+        onComplete={() => completeTask(openTask_.id)}
+        onReopen={() => reopenTask(openTask_.id)}
+      />
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-slate-900 pb-24">
-      <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
-        <h1 className="text-xl font-bold">Painel Operacional</h1>
-        <p className="text-sm text-slate-400">
-          {view === 'home' ? 'O que fazer agora' : 'Agenda completa'}
-        </p>
+    <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-10">
+      <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
+        <div>
+          <h1 className="text-lg font-bold text-slate-50">Painel Operacional</h1>
+          <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+        </div>
+        <DateSelector dates={availableDates} selected={selectedDate} onSelect={selectDate} />
+        <div className="flex gap-4 text-xs text-slate-400">
+          <span>{tasksForDate.length} tarefas</span>
+          <span className="text-emerald-400">{concluidasCount} concluídas</span>
+          <span className="text-brand-500">{emAndamentoCount} em andamento</span>
+          <span>{pendentesCount} pendentes</span>
+        </div>
       </header>
 
-      {loading && <p className="p-4 text-slate-400">Carregando...</p>}
+      <div className="flex flex-col gap-4 p-4">
+        {!agora && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 text-center text-slate-300">
+            Todas as tarefas do dia foram concluídas.
+          </div>
+        )}
 
-      {!loading && view === 'home' && (
-        <div className="flex flex-col gap-4 p-4">
-          {!nextTask && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 text-center text-slate-300">
-              Nenhuma tarefa pendente. Toque em + para adicionar.
-            </div>
-          )}
+        {agora && (
+          <AgoraCard task={agora} onOpen={() => openTask(agora.id)} onIniciar={() => advanceStatus(agora.id)} />
+        )}
 
-          {nextTask && (
-            <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-500">
-                Próxima tarefa
-              </h2>
-              <TaskCard
-                task={nextTask}
-                highlighted
-                onComplete={() => completeTask(nextTask.id)}
-                onEdit={() => openEdit(nextTask)}
-              />
-            </section>
-          )}
+        {proxima && <ProximaCard task={proxima} onOpen={() => openTask(proxima.id)} />}
 
-          {upcoming.length > 0 && (
-            <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-                Depois
-              </h2>
-              <div className="flex flex-col gap-3">
-                {upcoming.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    onComplete={() => completeTask(t.id)}
-                    onEdit={() => openEdit(t)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+        <section>
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Linha do tempo</h2>
+          <div className="flex flex-col divide-y divide-slate-800/60 rounded-2xl bg-slate-800/30">
+            {tasksForDate.map((task) => (
+              <TimelineItem key={task.id} task={task} onOpen={() => openTask(task.id)} />
+            ))}
+          </div>
+        </section>
 
-          {doneToday.length > 0 && (
-            <section>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-                Concluídas hoje ({doneToday.length})
-              </h2>
-              <div className="flex flex-col gap-3">
-                {doneToday.map((t) => (
-                  <TaskCard key={t.id} task={t} onReopen={() => reopenTask(t.id)} onEdit={() => openEdit(t)} />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      {!loading && view === 'agenda' && (
-        <div className="flex flex-col gap-6 p-4">
-          {byDate.length === 0 && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 text-center text-slate-300">
-              Nenhuma tarefa cadastrada.
-            </div>
-          )}
-          {byDate.map(([date, items]) => (
-            <section key={date}>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-                {formatDateLabel(date)}
-              </h2>
-              <div className="flex flex-col gap-3">
-                {items.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    onComplete={t.status === 'pendente' ? () => completeTask(t.id) : undefined}
-                    onReopen={t.status === 'concluido' ? () => reopenTask(t.id) : undefined}
-                    onEdit={() => openEdit(t)}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      )}
-
-      <BottomNav view={view} onChange={setView} onNew={openNew} />
+        <BaseIndicator />
+      </div>
     </main>
   );
 }
