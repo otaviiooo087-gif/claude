@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTasks } from '@/lib/useTasks';
+import { useLateAlert } from '@/lib/useLateAlert';
 import { formatDateFull } from '@/lib/format';
 import { getState, setState } from '@/lib/db';
 import DateSelector from '@/components/DateSelector';
@@ -10,9 +11,11 @@ import ProximaCard from '@/components/ProximaCard';
 import TimelineItem from '@/components/TimelineItem';
 import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
+import LateAlertBanner from '@/components/LateAlertBanner';
 
 export default function Home() {
   const {
+    tasks,
     tasksForDate,
     availableDates,
     loading,
@@ -26,6 +29,7 @@ export default function Home() {
     reopenTask,
   } = useTasks();
 
+  const lateTasks = useLateAlert(tasks);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,7 +58,7 @@ export default function Home() {
   ).length;
   const pendentesCount = tasksForDate.filter((t) => t.status === 'PENDENTE').length;
 
-  const openTask_ = openTaskId ? tasksForDate.find((t) => t.id === openTaskId) : undefined;
+  const openTask_ = openTaskId ? tasks.find((t) => t.id === openTaskId) : undefined;
 
   if (loading) {
     return (
@@ -95,6 +99,8 @@ export default function Home() {
       </header>
 
       <div className="flex flex-col gap-4 p-4">
+        <LateAlertBanner tasks={lateTasks} onOpen={openTask} />
+
         {!agora && (
           <div className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 text-center text-slate-300">
             Todas as tarefas do dia foram concluídas.

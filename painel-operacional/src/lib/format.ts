@@ -49,11 +49,15 @@ export function telUrl(phone: string): string {
   return `tel:${phone.replace(/[^0-9+]/g, '')}`;
 }
 
-export function whatsappUrl(phone: string): string {
+export function whatsappUrl(phone: string, mensagem?: string): string {
   const digits = phone.replace(/\D/g, '');
   const comCodigoPais = digits.startsWith('55') ? digits : `55${digits}`;
-  return `https://wa.me/${comCodigoPais}`;
+  const texto = mensagem ? `?text=${encodeURIComponent(mensagem)}` : '';
+  return `https://wa.me/${comCodigoPais}${texto}`;
 }
+
+export const MENSAGEM_ATRASO =
+  'Oi! Passando pra avisar que estou com um pequeno atraso, já estou a caminho. Obrigado pela paciência!';
 
 export function isAtrasada(task: Task): boolean {
   if (task.status === 'CONCLUIDA') return false;
