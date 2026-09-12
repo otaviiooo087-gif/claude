@@ -12,6 +12,16 @@ const STATE_STORE = 'appState';
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
+    // Nunca deixar a abertura do banco travar o app para sempre: se outra
+    // aba antiga segurar o banco aberto (evento "blocked") ou qualquer coisa
+    // impedir a conclusão, desiste depois de alguns segundos em vez de
+    // ficar pendurado silenciosamente.
+    const timeout = setTimeout(() => reject(new Error('Tempo esgotado ao abrir o banco de dados local.')), 8000);
+    const settle = (fn: () => void) => {
+      clearTimeout(timeout);
+      fn();
+    };
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = () => {
@@ -26,8 +36,9 @@ function openDB(): Promise<IDBDatabase> {
       }
     };
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    request.onsuccess = () => settle(() => resolve(request.result));
+    request.onerror = () => settle(() => reject(request.error));
+    request.onblocked = () => settle(() => reject(new Error('Banco de dados local bloqueado por outra aba.')));
   });
 }
 
