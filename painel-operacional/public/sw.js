@@ -1,5 +1,10 @@
 const CACHE_NAME = 'painel-operacional-v1';
-const APP_SHELL = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+
+function scopeUrl(path) {
+  return new URL(path, self.registration.scope).toString();
+}
+
+const APP_SHELL = ['', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png'].map(scopeUrl);
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -34,7 +39,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached || caches.match('/'));
+        .catch(() => cached || caches.match(scopeUrl('')));
 
       return cached || networkFetch;
     })
