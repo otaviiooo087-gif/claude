@@ -117,6 +117,19 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
 
   // ---------- 13/09/2026 ----------
   {
+    id: 'seed-14',
+    data: '2026-09-13',
+    horario: '07:20',
+    horarioComparacao: '07:20',
+    tipo: 'LOGISTICA',
+    cliente: 'Buscar Lelis',
+    endereco: 'Rua Engenheiro Antônio Mayer, 218, Jardim Panorama, Valinhos - SP',
+    cidade: 'Valinhos - SP',
+    observacoes: 'Objetivo: Buscar Lelis para começar o dia.',
+    checklist: [],
+    ordem: 1,
+  },
+  {
     id: 'seed-7',
     data: '2026-09-13',
     horario: '08:00',
@@ -138,7 +151,7 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
       'Não tampar entrada de ar',
       'Amarrar capa',
     ]),
-    ordem: 1,
+    ordem: 2,
   },
   {
     id: 'seed-8',
@@ -154,7 +167,18 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
     observacoes:
       'Referência: Chácara Estância Santa Tereza, Antiga Estrada Estadual Campinas-São Paulo KM 93,5, Bairro Dois Córregos. Retirada: Após 17:00. Seguir localização do Google Maps. Fica em frente à empresa Lenze. Próximo ao Pague Menos.',
     checklist: checklist(['8 detergentes', 'Bola de futebol', 'Mangueira', 'Motor protegido', 'Entrada de ar livre', 'Capa amarrada']),
-    ordem: 2,
+    ordem: 3,
+  },
+  {
+    id: 'seed-15',
+    data: '2026-09-13',
+    horario: 'Após 2º cliente',
+    horarioComparacao: '09:30',
+    tipo: 'LOGISTICA',
+    cliente: 'Ir para empresa',
+    observacoes: 'Objetivo: Pegar a máquina de pipoca para levar ao evento SESI.',
+    checklist: [],
+    ordem: 4,
   },
   {
     id: 'seed-9',
@@ -178,7 +202,7 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
       'Materiais',
       'Caixas',
     ]),
-    ordem: 3,
+    ordem: 5,
   },
   {
     id: 'seed-10',
@@ -201,7 +225,7 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
       'Colocar no local dos demais brinquedos',
       'Evitar risco de quebrar',
     ]),
-    ordem: 4,
+    ordem: 6,
   },
   {
     id: 'seed-11',
@@ -216,7 +240,7 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
     observacoes:
       'Referência: Chácara Estância Santa Tereza, Bairro Dois Córregos, em frente à empresa Lenze, próximo ao Pague Menos. Prioridade de navegação: Waze.',
     checklist: [],
-    ordem: 5,
+    ordem: 7,
   },
   {
     id: 'seed-12',
@@ -232,7 +256,7 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
     observacoes:
       'Tarefa adicional: passar no Ponto da Esfirra e pegar salgados — R. Treze de Maio, 427, Vila Olivo, Valinhos - SP.',
     checklist: checklist(['Se der tempo: ir para casa', 'Descarregar', 'Realizar última retirada']),
-    ordem: 6,
+    ordem: 8,
   },
   {
     id: 'seed-13',
@@ -245,7 +269,38 @@ export const INITIAL_TASKS: Omit<Task, 'status' | 'createdAt' | 'completedAt'>[]
     brinquedo: 'Mini Tobogã com Piscina de Bolinhas',
     endereco: 'Condomínio Terras do Oriente, Rua João Previtale, 2760, Casa 256, Valinhos - SP',
     cidade: 'Valinhos - SP',
-    checklist: checklist(['Retirar brinquedo', 'Descarregar tudo', 'Deixar junto com os demais brinquedos', 'Levar Lelis embora']),
-    ordem: 7,
+    checklist: checklist(['Retirar brinquedo', 'Deixar junto com os demais brinquedos']),
+    ordem: 9,
+  },
+  {
+    id: 'seed-16',
+    data: '2026-09-13',
+    horario: 'Após 20:00',
+    horarioComparacao: '20:00',
+    tipo: 'LOGISTICA',
+    cliente: 'Descarregar tudo na empresa',
+    observacoes: 'Descarregar tudo o que sobrou na empresa após a última retirada.',
+    checklist: [],
+    ordem: 10,
+  },
+  {
+    id: 'seed-17',
+    data: '2026-09-13',
+    horario: 'Após 20:00',
+    horarioComparacao: '20:00',
+    tipo: 'LOGISTICA',
+    cliente: 'Levar Lelis embora',
+    checklist: [],
+    ordem: 11,
+  },
+  {
+    id: 'seed-18',
+    data: '2026-09-13',
+    horario: 'Após 20:00',
+    horarioComparacao: '20:00',
+    tipo: 'LOGISTICA',
+    cliente: 'Voltar para empresa',
+    checklist: [],
+    ordem: 12,
   },
 ];

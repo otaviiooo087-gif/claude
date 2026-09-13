@@ -22,8 +22,10 @@ export function useTasks() {
     (async () => {
       try {
         const existing = await reload();
-        if (existing.length === 0) {
-          const seeded: Task[] = INITIAL_TASKS.map((t) => ({
+        const existingIds = new Set(existing.map((t) => t.id));
+        const faltando = INITIAL_TASKS.filter((t) => !existingIds.has(t.id));
+        if (faltando.length > 0) {
+          const seeded: Task[] = faltando.map((t) => ({
             ...t,
             status: 'PENDENTE' as TaskStatus,
             createdAt: Date.now(),
