@@ -116,6 +116,14 @@ export function useTasks() {
     [setStatus]
   );
 
+  const importTasks = useCallback(
+    async (novas: Task[]) => {
+      await putManyTasks(novas);
+      await reload();
+    },
+    [reload]
+  );
+
   const tasksForDate = tasks.filter((t) => t.data === selectedDate);
   const availableDates = Array.from(new Set(tasks.map((t) => t.data))).sort();
 
@@ -132,5 +140,6 @@ export function useTasks() {
     advanceStatus,
     completeTask,
     reopenTask,
+    importTasks,
   };
 }

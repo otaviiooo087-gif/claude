@@ -12,6 +12,7 @@ import TimelineItem from '@/components/TimelineItem';
 import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
+import ImportarAgenda from '@/components/ImportarAgenda';
 
 export default function Home() {
   const {
@@ -27,10 +28,12 @@ export default function Home() {
     advanceStatus,
     completeTask,
     reopenTask,
+    importTasks,
   } = useTasks();
 
   const lateTasks = useLateAlert(tasks);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [importando, setImportando] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -82,12 +85,30 @@ export default function Home() {
     );
   }
 
+  if (importando) {
+    return (
+      <ImportarAgenda
+        tasksExistentes={tasks}
+        onImportar={importTasks}
+        onFechar={() => setImportando(false)}
+      />
+    );
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-10">
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
-        <div>
-          <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
-          <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
+            <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+          </div>
+          <button
+            onClick={() => setImportando(true)}
+            className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+          >
+            + Importar agenda
+          </button>
         </div>
         <DateSelector dates={availableDates} selected={selectedDate} onSelect={selectDate} />
         <div className="flex gap-4 text-xs text-slate-400">
