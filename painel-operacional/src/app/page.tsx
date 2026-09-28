@@ -13,6 +13,10 @@ import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
 import ImportarAgenda from '@/components/ImportarAgenda';
+import Link from 'next/link';
+import { useAuth } from '@/lib/useAuth';
+import { useLiveLocation } from '@/lib/useLiveLocation';
+import { useSyncTarefaAtual } from '@/lib/useSyncTarefaAtual';
 
 export default function Home() {
   const {
@@ -34,6 +38,10 @@ export default function Home() {
   const lateTasks = useLateAlert(tasks);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
+
+  const { configured, user, profile, logout } = useAuth();
+  const rastreamentoAtivo = configured && Boolean(user);
+  useLiveLocation(user?.uid ?? null, profile?.nome ?? '', rastreamentoAtivo);
 
   useEffect(() => {
     if (loading) return;
@@ -62,6 +70,8 @@ export default function Home() {
   const pendentesCount = tasksForDate.filter((t) => t.status === 'PENDENTE').length;
 
   const openTask_ = openTaskId ? tasks.find((t) => t.id === openTaskId) : undefined;
+
+  useSyncTarefaAtual(user?.uid ?? null, rastreamentoAtivo, agora);
 
   if (loading) {
     return (
@@ -103,12 +113,30 @@ export default function Home() {
             <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
             <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
           </div>
-          <button
-            onClick={() => setImportando(true)}
-            className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
-          >
-            + Importar agenda
-          </button>
+          <div className="flex gap-2">
+            {profile?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+              >
+                Admin
+              </Link>
+            )}
+            <button
+              onClick={() => setImportando(true)}
+              className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+            >
+              + Importar agenda
+            </button>
+            {configured && (
+              <button
+                onClick={() => logout()}
+                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-red-400"
+              >
+                Sair
+              </button>
+            )}
+          </div>
         </div>
         <DateSelector dates={availableDates} selected={selectedDate} onSelect={selectDate} />
         <div className="flex gap-4 text-xs text-slate-400">

@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Regras do Firestore para o Painel Operacional / Zimba Festa.
+// Cole isso em: Firebase Console > Firestore Database > Regras.
+//
+// A primeira conta (admin) é criada manualmente no Console (Authentication +
+// um documento em usuarios/{uid} com role: "admin") — de propósito o app não
+// tem um botão de "criar conta admin" pela web, para ninguém conseguir se
+// autopromover a admin sabendo só a chave pública do projeto.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function estaLogado() {
+      return request.auth != null;
+    }
+
+    function ehAdmin() {
+      return estaLogado() &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /usuarios/{uid} {
+      allow read: if estaLogado() && (request.auth.uid == uid || ehAdmin());
+      // Só o admin cria contas de operador pelo app; a conta admin em si é
+      // criada manualmente no Console (ver comentário acima).
+      allow create, update, delete: if ehAdmin();
+    }
+
+    match /localizacoes/{uid} {
+      allow read: if ehAdmin() || (estaLogado() && request.auth.uid == uid);
+      // Cada operador só escreve a própria localização.
+      allow write: if estaLogado() && request.auth.uid == uid;
+    }
+
+    match /contratos/{id} {
+      allow read, write: if ehAdmin();
+    }
+  }
+}
