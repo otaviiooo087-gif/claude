@@ -26,22 +26,28 @@ login e a mostrar a equipe no mapa para o admin.
 ## 3. Criar a primeira conta (admin) — feito uma única vez, manualmente
 
 Por segurança, o app não tem um botão para "criar conta admin" pela web
-(assim ninguém consegue se autopromover a admin). Você cria a sua conta
-direto no Console:
+(assim ninguém consegue se autopromover a admin). Quem tem acesso ao Console
+do Firebase (nem precisa ser o próprio admin) cria a conta do admin direto
+por lá — no caso, a conta do **Matheus Zimbaldi**:
 
-1. **Authentication > Users > Add user**: informe seu e-mail e uma senha.
+1. **Authentication > Users > Add user**: informe o e-mail e uma senha para
+   o Matheus (pode ser uma senha provisória — ele consegue trocar depois,
+   se você adicionar isso no Firebase, ou você mesmo troca no Console).
 2. Copie o **User UID** gerado.
 3. **Firestore Database > Iniciar coleção** `usuarios` > documento com ID
    igual ao UID copiado, com os campos:
    - `uid` (string) = o mesmo UID
-   - `email` (string) = seu e-mail
-   - `nome` (string) = seu nome
+   - `email` (string) = o e-mail do Matheus
+   - `nome` (string) = `Matheus Zimbaldi`
    - `role` (string) = `admin`
    - `criadoEm` (número) = qualquer timestamp, ex: `0`
 
-Pronto — agora você loga no app com esse e-mail/senha e vê o botão **Admin**
-no topo. De lá, use "+ Adicionar operador" para criar o login de cada pessoa
-da equipe (isso já é feito pelo app, sem precisar voltar ao Console).
+Só isso — o Matheus **não precisa de acesso ao Console do Firebase**, só do
+e-mail/senha que você criou para ele. Repasse esse login para ele instalar o
+app e entrar. A partir daí ele já vê o botão **Admin** no topo e, de lá,
+usa "+ Adicionar operador" para criar o login de cada operador da equipe
+(inclusive o seu, se você também for operador em campo) — isso já é feito
+pelo próprio app, sem precisar voltar ao Console.
 
 ## 4. Rebuild e publicar
 
