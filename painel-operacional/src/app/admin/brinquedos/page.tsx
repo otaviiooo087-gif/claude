@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import { Produto, ProdutoDraft, atualizarProduto, criarProduto, excluirProduto, ouvirProdutos } from '@/lib/produtos';
+import { comprimirImagem } from '@/lib/imagem';
 
 const VAZIO: ProdutoDraft = {
   nome: '',
@@ -20,6 +21,9 @@ export default function BrinquedosPage() {
   const [form, setForm] = useState<ProdutoDraft>(VAZIO);
   const [novoItem, setNovoItem] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [processandoImagem, setProcessandoImagem] = useState(false);
+  const [erroImagem, setErroImagem] = useState<string | null>(null);
+  const inputArquivoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -36,7 +40,7 @@ export default function BrinquedosPage() {
   }
 
   function abrirEdicao(p: Produto) {
-    setForm({ nome: p.nome, cor: p.cor, imagemUrl: p.imagemUrl ?? '', itens: [...p.itens] });
+    setForm({ nome: p.nome, cor: p.cor, imagemUrl: p.imagemUrl, itens: [...p.itens] });
     setEditando(p.id);
     setNovoItem('');
     setMostrarForm(true);
@@ -51,6 +55,22 @@ export default function BrinquedosPage() {
 
   function removerItem(idx: number) {
     setForm({ ...form, itens: form.itens.filter((_, i) => i !== idx) });
+  }
+
+  async function selecionarFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!arquivo) return;
+    setErroImagem(null);
+    setProcessandoImagem(true);
+    try {
+      const dataUrl = await comprimirImagem(arquivo);
+      setForm((f) => ({ ...f, imagemUrl: dataUrl }));
+    } catch {
+      setErroImagem('Não foi possível processar essa foto. Tente outra.');
+    } finally {
+      setProcessandoImagem(false);
+    }
   }
 
   async function salvar() {
@@ -132,23 +152,47 @@ export default function BrinquedosPage() {
                 />
               </Campo>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Campo label="Cor de identificação">
-                  <input
-                    type="color"
-                    value={form.cor}
-                    onChange={(e) => setForm({ ...form, cor: e.target.value })}
-                    className="h-10 w-full rounded-lg bg-slate-800 ring-1 ring-slate-700"
-                  />
-                </Campo>
-                <Campo label="Link da imagem (opcional)">
-                  <input
-                    value={form.imagemUrl}
-                    onChange={(e) => setForm({ ...form, imagemUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                  />
-                </Campo>
+              <Campo label="Cor de identificação">
+                <input
+                  type="color"
+                  value={form.cor}
+                  onChange={(e) => setForm({ ...form, cor: e.target.value })}
+                  className="h-10 w-full rounded-lg bg-slate-800 ring-1 ring-slate-700"
+                />
+              </Campo>
+
+              <div>
+                <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500">Foto do brinquedo</span>
+                <div className="flex items-center gap-3">
+                  {form.imagemUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={form.imagemUrl}
+                      alt="Prévia"
+                      className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-slate-700"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-[10px] text-slate-500 ring-1 ring-slate-700">
+                      Sem foto
+                    </div>
+                  )}
+                  <button
+                    onClick={() => inputArquivoRef.current?.click()}
+                    disabled={processandoImagem}
+                    className="flex-1 rounded-lg bg-slate-700 py-2.5 text-sm font-semibold text-slate-100 disabled:opacity-50"
+                  >
+                    {processandoImagem ? 'Processando...' : form.imagemUrl ? 'Trocar foto' : 'Tirar/escolher foto'}
+                  </button>
+                </div>
+                <input
+                  ref={inputArquivoRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={selecionarFoto}
+                  className="hidden"
+                />
+                {erroImagem && <p className="mt-1 text-xs text-red-400">{erroImagem}</p>}
               </div>
 
               <div>
@@ -186,11 +230,14 @@ export default function BrinquedosPage() {
 
               <button
                 onClick={salvar}
-                disabled={!form.nome}
+                disabled={!form.nome || !form.imagemUrl || processandoImagem}
                 className="rounded-xl bg-brand-500 py-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 Salvar
               </button>
+              {!form.imagemUrl && (
+                <p className="-mt-2 text-center text-xs text-slate-500">A foto é obrigatória para salvar.</p>
+              )}
               {editando && (
                 <button
                   onClick={async () => {

@@ -14,7 +14,7 @@ export interface Produto {
   id: string;
   nome: string;
   cor: string; // hex, ex: #22c55e — pra identificar o brinquedo de longe
-  imagemUrl?: string;
+  imagemUrl: string; // data URL (foto comprimida, guardada direto no documento)
   itens: string[]; // cada peça que compõe o brinquedo (motor, lona, extensão, estacas...)
   criadoEm: number;
 }
