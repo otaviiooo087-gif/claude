@@ -121,14 +121,14 @@ export default function AtribuirLogisticaPage() {
     <div className="min-h-screen bg-slate-900 pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
         <MenuLateral />
-        <h1 className="text-base font-bold text-slate-50">Atribuir logística</h1>
+        <h1 className="text-base font-bold text-slate-50">Planejamento de logística</h1>
       </header>
 
       <div className="flex flex-col gap-4 p-4">
         {operadores.length === 0 && (
           <p className="text-sm text-amber-400">
-            Nenhum operador cadastrado ainda — vá em &quot;+ Adicionar pessoa&quot; no painel Admin antes de
-            atribuir tarefas.
+            Nenhum operador cadastrado ainda — vá em &quot;+ Adicionar pessoa&quot; no Monitoramento de equipe
+            antes de atribuir tarefas.
           </p>
         )}
 
