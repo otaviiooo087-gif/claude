@@ -6,12 +6,14 @@ import { formatCurrency, isAtrasada, whatsappUrl, mensagemEstouIndo, MENSAGEM_CU
 import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
 import PromptMinutosDialog from './PromptMinutosDialog';
+import CobrarTarefaModal from './CobrarTarefaModal';
 
 interface Props {
   task: Task;
   onBack: () => void;
   onToggleChecklistItem: (itemId: string) => void;
   onSaveObservacao: (texto: string) => void;
+  onConfirmarPagamento: () => void;
   onSetStatus: (status: Task['status']) => void;
   onComplete: () => void;
   onReopen: () => void;
@@ -22,6 +24,7 @@ export default function TaskDetail({
   onBack,
   onToggleChecklistItem,
   onSaveObservacao,
+  onConfirmarPagamento,
   onSetStatus,
   onComplete,
   onReopen,
@@ -30,6 +33,7 @@ export default function TaskDetail({
   const [confirmando, setConfirmando] = useState(false);
   const [statusAberto, setStatusAberto] = useState(false);
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
+  const [cobrando, setCobrando] = useState(false);
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
   const checklistPendente = task.checklist.some((item) => !item.marcado);
@@ -62,8 +66,23 @@ export default function TaskDetail({
 
         {task.valor !== undefined && (
           <div className="rounded-xl bg-slate-800/60 px-4 py-3">
-            <span className="text-xs uppercase text-slate-400">Valor</span>
-            <p className="text-xl font-bold text-emerald-400">{formatCurrency(task.valor)}</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs uppercase text-slate-400">Valor a cobrar</span>
+                <p className="text-xl font-bold text-emerald-400">{formatCurrency(task.valor)}</p>
+              </div>
+              {task.pagamentoConfirmado && (
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-400">
+                  Pago
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setCobrando(true)}
+              className="mt-3 w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white"
+            >
+              {task.pagamentoConfirmado ? 'Ver cobrança Pix' : 'Cobrar via Pix'}
+            </button>
           </div>
         )}
 
@@ -194,6 +213,17 @@ export default function TaskDetail({
             onComplete();
             setConfirmando(false);
           }}
+        />
+      )}
+
+      {cobrando && task.valor !== undefined && (
+        <CobrarTarefaModal
+          cliente={task.cliente}
+          valor={task.valor}
+          identificador={task.id}
+          jaConfirmado={!!task.pagamentoConfirmado}
+          onConfirmarRecebimento={onConfirmarPagamento}
+          onFechar={() => setCobrando(false)}
         />
       )}
 

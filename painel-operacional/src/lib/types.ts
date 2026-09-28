@@ -28,6 +28,8 @@ export interface Task {
   wazeQuery?: string; // termo de busca alternativo para o Waze (ex: nome de um local conhecido)
   createdAt: number;
   completedAt?: number;
+  pagamentoConfirmado?: boolean;
+  pagamentoConfirmadoEm?: number;
 }
 
 export const STATUS_ORDER: TaskStatus[] = [

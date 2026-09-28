@@ -29,6 +29,7 @@ export default function Home() {
     selectDate,
     toggleChecklistItem,
     saveObservacaoAdicional,
+    confirmarPagamento,
     setStatus,
     advanceStatus,
     completeTask,
@@ -90,6 +91,7 @@ export default function Home() {
         onBack={closeTask}
         onToggleChecklistItem={(itemId) => toggleChecklistItem(openTask_.id, itemId)}
         onSaveObservacao={(texto) => saveObservacaoAdicional(openTask_.id, texto)}
+        onConfirmarPagamento={() => confirmarPagamento(openTask_.id)}
         onSetStatus={(status) => setStatus(openTask_.id, status)}
         onComplete={() => completeTask(openTask_.id)}
         onReopen={() => reopenTask(openTask_.id)}

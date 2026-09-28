@@ -76,6 +76,16 @@ export function useTasks() {
     [tasks, reload]
   );
 
+  const confirmarPagamento = useCallback(
+    async (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      await putTask({ ...task, pagamentoConfirmado: true, pagamentoConfirmadoEm: Date.now() });
+      await reload();
+    },
+    [tasks, reload]
+  );
+
   const setStatus = useCallback(
     async (taskId: string, status: TaskStatus) => {
       const task = tasks.find((t) => t.id === taskId);
@@ -136,6 +146,7 @@ export function useTasks() {
     selectDate,
     toggleChecklistItem,
     saveObservacaoAdicional,
+    confirmarPagamento,
     setStatus,
     advanceStatus,
     completeTask,

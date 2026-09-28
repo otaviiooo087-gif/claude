@@ -312,6 +312,19 @@ export default function AtribuirLogisticaPage() {
                     />
                   </div>
 
+                  <div className="mb-2">
+                    <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
+                      Valor a cobrar nessa parada (opcional)
+                    </label>
+                    <input
+                      value={d.valor || ''}
+                      onChange={(e) => atualizarDraft(idx, 'valor', e.target.value)}
+                      inputMode="decimal"
+                      placeholder="Ex: 150,00"
+                      className="w-full rounded-lg bg-slate-900 px-2 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                    />
+                  </div>
+
                   <div>
                     <label className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
                       Observações
