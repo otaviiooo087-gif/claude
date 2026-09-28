@@ -11,3 +11,10 @@ body {
 body {
   background-color: #0f172a;
 }
+
+/* Faz o marcador de carro no mapa deslizar suavemente até a posição nova
+   (estilo Uber) em vez de pular de um ponto a outro — o Leaflet só move o
+   elemento via transform, então basta animar essa propriedade em CSS. */
+.marcador-operador {
+  transition: transform 1.2s linear;
+}
