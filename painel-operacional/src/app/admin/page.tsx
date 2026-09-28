@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/useAuth';
 import { useLocalizacoes } from '@/lib/useLocalizacoes';
 import { todayISO } from '@/lib/format';
 import { UserRole } from '@/lib/authTypes';
+import MenuLateral from '@/components/MenuLateral';
 
 const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   ssr: false,
@@ -28,7 +29,7 @@ function minutosAtraso(horarioComparacao?: string): number | null {
 }
 
 export default function AdminPage() {
-  const { profile, logout, criarUsuario } = useAuth();
+  const { profile, criarUsuario } = useAuth();
   const ehAdmin = profile?.role === 'admin';
   const operadores = useLocalizacoes(ehAdmin);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -83,27 +84,11 @@ export default function AdminPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-900">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/95 p-4">
+      <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900/95 p-4">
+        <MenuLateral />
         <div>
           <h1 className="text-lg font-bold text-slate-50">Painel Admin</h1>
           <p className="text-xs text-slate-400">{todayISO()}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/contratos" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
-            Contratos
-          </Link>
-          <Link href="/admin/brinquedos" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
-            Brinquedos
-          </Link>
-          <Link href="/admin/atribuir" className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-white">
-            Atribuir logística
-          </Link>
-          <Link href="/" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
-            Minha agenda
-          </Link>
-          <button onClick={() => logout()} className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-red-400">
-            Sair
-          </button>
         </div>
       </header>
 

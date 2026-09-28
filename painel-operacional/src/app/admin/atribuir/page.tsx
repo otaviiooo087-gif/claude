@@ -8,6 +8,7 @@ import { TaskType, TYPE_LABELS } from '@/lib/types';
 import { listarUsuarios } from '@/lib/usuarios';
 import { UserProfile } from '@/lib/authTypes';
 import { atribuirTarefas } from '@/lib/tarefasAtribuidas';
+import MenuLateral from '@/components/MenuLateral';
 
 const TIPOS: TaskType[] = ['MONTAGEM', 'RETIRADA', 'EVENTO', 'LOGISTICA'];
 
@@ -119,9 +120,7 @@ export default function AtribuirLogisticaPage() {
   return (
     <div className="min-h-screen bg-slate-900 pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
-        <Link href="/admin" className="text-lg font-bold text-brand-500">
-          ← Voltar
-        </Link>
+        <MenuLateral />
         <h1 className="text-base font-bold text-slate-50">Atribuir logística</h1>
       </header>
 

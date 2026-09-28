@@ -13,7 +13,7 @@ import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
 import ImportarAgenda from '@/components/ImportarAgenda';
-import Link from 'next/link';
+import MenuLateral from '@/components/MenuLateral';
 import { useAuth } from '@/lib/useAuth';
 import { useLiveLocation } from '@/lib/useLiveLocation';
 import { useSyncTarefaAtual } from '@/lib/useSyncTarefaAtual';
@@ -40,7 +40,7 @@ export default function Home() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
 
-  const { configured, user, profile, logout } = useAuth();
+  const { configured, user, profile } = useAuth();
   const rastreamentoAtivo = configured && Boolean(user);
   useLiveLocation(user?.uid ?? null, profile?.nome ?? '', rastreamentoAtivo);
   useSincronizarAtribuidas(user?.uid ?? null, rastreamentoAtivo, loading, tasks, importTasks);
@@ -111,42 +111,19 @@ export default function Home() {
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-10">
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
-            <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+          <div className="flex items-center gap-3">
+            {configured && user && <MenuLateral />}
+            <div>
+              <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
+              <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {profile?.role === 'admin' && (
-              <Link
-                href="/admin"
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
-              >
-                Admin
-              </Link>
-            )}
-            {configured && user && (
-              <Link
-                href="/admin/brinquedos"
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
-              >
-                Brinquedos
-              </Link>
-            )}
-            <button
-              onClick={() => setImportando(true)}
-              className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
-            >
-              + Importar agenda
-            </button>
-            {configured && (
-              <button
-                onClick={() => logout()}
-                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-red-400"
-              >
-                Sair
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setImportando(true)}
+            className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+          >
+            + Importar agenda
+          </button>
         </div>
         <DateSelector dates={availableDates} selected={selectedDate} onSelect={selectDate} />
         <div className="flex gap-4 text-xs text-slate-400">

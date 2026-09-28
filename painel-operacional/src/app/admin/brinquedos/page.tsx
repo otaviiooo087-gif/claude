@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import { Produto, ProdutoDraft, atualizarProduto, criarProduto, excluirProduto, ouvirProdutos } from '@/lib/produtos';
 import { comprimirImagem } from '@/lib/imagem';
+import MenuLateral from '@/components/MenuLateral';
 
 const VAZIO: ProdutoDraft = {
   nome: '',
@@ -86,9 +86,7 @@ export default function BrinquedosPage() {
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-24">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
         <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-lg font-bold text-brand-500">
-            ← Voltar
-          </Link>
+          <MenuLateral />
           <h1 className="text-base font-bold text-slate-50">Brinquedos</h1>
         </div>
         {ehAdmin && (
