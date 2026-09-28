@@ -19,6 +19,8 @@ export type LocalizacaoDoc = {
   tarefaAtual?: string;
   tarefaHorario?: string;
   tarefaHorarioComparacao?: string;
+  tarefaEndereco?: string;
+  tarefaCidade?: string;
 };
 
 /**

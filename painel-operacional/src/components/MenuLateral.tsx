@@ -40,7 +40,7 @@ export default function MenuLateral() {
       </button>
 
       {aberto && (
-        <div className="fixed inset-0 z-30 flex" onClick={() => setAberto(false)}>
+        <div className="fixed inset-0 z-[5000] flex" onClick={() => setAberto(false)}>
           <div
             className="flex h-full w-72 max-w-[85vw] flex-col bg-slate-900 p-4 shadow-2xl ring-1 ring-slate-800"
             onClick={(e) => e.stopPropagation()}

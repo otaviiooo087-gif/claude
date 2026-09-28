@@ -18,3 +18,19 @@ body {
 .marcador-operador {
   transition: transform 1.2s linear;
 }
+
+/* Bolha de ETA (estilo Uber) acima do carrinho no mapa admin. */
+.etiqueta-eta {
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.etiqueta-eta::before {
+  display: none;
+}

@@ -24,6 +24,8 @@ export function useSyncTarefaAtual(uid: string | null, ativo: boolean, tarefa: T
         tarefaAtual: tarefa ? `${tarefa.cliente}` : null,
         tarefaHorario: tarefa?.horario ?? null,
         tarefaHorarioComparacao: tarefa?.horarioComparacao ?? null,
+        tarefaEndereco: tarefa?.endereco ?? null,
+        tarefaCidade: tarefa?.cidade ?? null,
       },
       { merge: true }
     ).catch(() => {});

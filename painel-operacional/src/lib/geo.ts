@@ -21,3 +21,14 @@ export function calcularRumo(a: { lat: number; lng: number }, b: { lat: number; 
   const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
   return (deg(Math.atan2(y, x)) + 360) % 360;
 }
+
+/**
+ * Estimativa de tempo de chegada em minutos, a partir da distância em linha
+ * reta. Sem serviço de rotas (pago), assume uma velocidade média urbana que
+ * já compensa o fato da rota real não ser reta.
+ */
+export function estimarMinutos(distanciaM: number): number {
+  const VELOCIDADE_MEDIA_KMH = 28;
+  const minutos = (distanciaM / 1000 / VELOCIDADE_MEDIA_KMH) * 60;
+  return Math.max(1, Math.round(minutos));
+}
