@@ -48,5 +48,12 @@ service cloud.firestore {
       allow read: if ehAdmin() || (estaLogado() && request.auth.uid == operadorUid);
       allow write: if ehAdmin();
     }
+
+    match /configuracoes/{id} {
+      // Qualquer operador logado pode ler (ex: gerar cobrança Pix em campo);
+      // só o admin edita chave Pix e modelo de contrato.
+      allow read: if estaLogado();
+      allow write: if ehAdmin();
+    }
   }
 }

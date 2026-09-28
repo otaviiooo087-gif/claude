@@ -15,6 +15,7 @@ const ITENS_ADMIN: ItemMenu[] = [
   { href: '/admin/atribuir', label: 'Planejamento de logística' },
   { href: '/admin/contratos', label: 'Contratos' },
   { href: '/admin/brinquedos', label: 'Brinquedos' },
+  { href: '/admin/configuracoes', label: 'Configurações' },
   { href: '/', label: 'Agenda de eventos' },
 ];
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
+import CobrancaPixModal from '@/components/CobrancaPixModal';
 import { formatCurrency, whatsappUrl } from '@/lib/format';
 import {
   Contrato,
@@ -45,6 +46,7 @@ export default function ContratosPage() {
   const [editando, setEditando] = useState<string | null>(null);
   const [form, setForm] = useState<ContratoDraft>(VAZIO);
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [cobrando, setCobrando] = useState<Contrato | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -117,34 +119,38 @@ export default function ContratosPage() {
         {contratos.length === 0 && <p className="text-sm text-slate-500">Nenhum contrato cadastrado ainda.</p>}
 
         {contratos.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => abrirEdicao(c)}
-            className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4 text-left"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-slate-100">{c.cliente}</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                  c.status === 'PAGO'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : c.status === 'CANCELADO'
-                    ? 'bg-slate-700 text-slate-400'
-                    : 'bg-amber-500/20 text-amber-400'
-                }`}
-              >
-                {STATUS_LABEL[c.status]}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-slate-300">{c.brinquedo}</p>
-            <div className="mt-2 flex justify-between text-xs text-slate-400">
-              <span>{c.dataEvento}</span>
-              <span>
-                Sinal {formatCurrency(c.valorSinal)} + chegada {formatCurrency(c.valorChegada)} ={' '}
-                {formatCurrency(c.valorSinal + c.valorChegada)}
-              </span>
-            </div>
-          </button>
+          <div key={c.id} className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+            <button onClick={() => abrirEdicao(c)} className="w-full text-left">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-100">{c.cliente}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    c.status === 'PAGO'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : c.status === 'CANCELADO'
+                      ? 'bg-slate-700 text-slate-400'
+                      : 'bg-amber-500/20 text-amber-400'
+                  }`}
+                >
+                  {STATUS_LABEL[c.status]}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-slate-300">{c.brinquedo}</p>
+              <div className="mt-2 flex justify-between text-xs text-slate-400">
+                <span>{c.dataEvento}</span>
+                <span>
+                  Sinal {formatCurrency(c.valorSinal)} + chegada {formatCurrency(c.valorChegada)} ={' '}
+                  {formatCurrency(c.valorSinal + c.valorChegada)}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setCobrando(c)}
+              className="mt-3 w-full rounded-lg bg-emerald-600/20 py-2 text-xs font-bold text-emerald-400"
+            >
+              Cobrar via Pix
+            </button>
+          </div>
         ))}
       </div>
 
@@ -297,6 +303,8 @@ export default function ContratosPage() {
           </div>
         </div>
       )}
+
+      {cobrando && <CobrancaPixModal contrato={cobrando} onFechar={() => setCobrando(null)} />}
     </main>
   );
 }
