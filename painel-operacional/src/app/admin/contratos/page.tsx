@@ -22,11 +22,14 @@ const STATUS_LABEL: Record<ContratoStatus, string> = {
 
 const VAZIO: ContratoDraft = {
   cliente: '',
+  cpf: '',
+  dataNascimento: '',
   telefone: '',
-  descricao: '',
+  brinquedo: '',
   dataEvento: '',
-  valor: 0,
-  valorPago: 0,
+  endereco: '',
+  valorSinal: 0,
+  valorChegada: 0,
   status: 'PENDENTE',
   observacoes: '',
 };
@@ -66,11 +69,14 @@ export default function ContratosPage() {
   function abrirEdicao(c: Contrato) {
     setForm({
       cliente: c.cliente,
+      cpf: c.cpf ?? '',
+      dataNascimento: c.dataNascimento ?? '',
       telefone: c.telefone ?? '',
-      descricao: c.descricao,
+      brinquedo: c.brinquedo,
       dataEvento: c.dataEvento,
-      valor: c.valor,
-      valorPago: c.valorPago,
+      endereco: c.endereco ?? '',
+      valorSinal: c.valorSinal,
+      valorChegada: c.valorChegada,
       status: c.status,
       observacoes: c.observacoes ?? '',
     });
@@ -124,11 +130,12 @@ export default function ContratosPage() {
                 {STATUS_LABEL[c.status]}
               </span>
             </div>
-            <p className="mt-1 text-sm text-slate-300">{c.descricao}</p>
+            <p className="mt-1 text-sm text-slate-300">{c.brinquedo}</p>
             <div className="mt-2 flex justify-between text-xs text-slate-400">
               <span>{c.dataEvento}</span>
               <span>
-                {formatCurrency(c.valorPago)} / {formatCurrency(c.valor)}
+                Sinal {formatCurrency(c.valorSinal)} + chegada {formatCurrency(c.valorChegada)} ={' '}
+                {formatCurrency(c.valorSinal + c.valorChegada)}
               </span>
             </div>
           </button>
@@ -145,13 +152,31 @@ export default function ContratosPage() {
               {editando ? 'Editar contrato' : 'Novo contrato'}
             </h2>
             <div className="flex flex-col gap-3">
-              <Campo label="Cliente">
+              <Campo label="Nome completo">
                 <input
                   value={form.cliente}
                   onChange={(e) => setForm({ ...form, cliente: e.target.value })}
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
+              <div className="grid grid-cols-2 gap-2">
+                <Campo label="CPF">
+                  <input
+                    value={form.cpf}
+                    onChange={(e) => setForm({ ...form, cpf: e.target.value })}
+                    placeholder="000.000.000-00"
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+                <Campo label="Data de nascimento">
+                  <input
+                    type="date"
+                    value={form.dataNascimento}
+                    onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+              </div>
               <Campo label="Telefone">
                 <input
                   value={form.telefone}
@@ -159,11 +184,18 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
-              <Campo label="Descrição do evento/brinquedos">
-                <textarea
-                  value={form.descricao}
-                  onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                  rows={2}
+              <Campo label="Qual brinquedo">
+                <input
+                  value={form.brinquedo}
+                  onChange={(e) => setForm({ ...form, brinquedo: e.target.value })}
+                  placeholder="Ex: Cama elástica 3,05m"
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <Campo label="Endereço do evento">
+                <input
+                  value={form.endereco}
+                  onChange={(e) => setForm({ ...form, endereco: e.target.value })}
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
@@ -191,23 +223,26 @@ export default function ContratosPage() {
                 </Campo>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Campo label="Valor total (R$)">
+                <Campo label="Valor do sinal (R$)">
                   <input
                     type="number"
-                    value={form.valor}
-                    onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })}
+                    value={form.valorSinal}
+                    onChange={(e) => setForm({ ...form, valorSinal: Number(e.target.value) })}
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
-                <Campo label="Valor pago (R$)">
+                <Campo label="Valor na chegada (R$)">
                   <input
                     type="number"
-                    value={form.valorPago}
-                    onChange={(e) => setForm({ ...form, valorPago: Number(e.target.value) })}
+                    value={form.valorChegada}
+                    onChange={(e) => setForm({ ...form, valorChegada: Number(e.target.value) })}
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
               </div>
+              <p className="-mt-1 text-xs text-slate-500">
+                Valor total: {formatCurrency((form.valorSinal || 0) + (form.valorChegada || 0))}
+              </p>
               <Campo label="Observações">
                 <textarea
                   value={form.observacoes}

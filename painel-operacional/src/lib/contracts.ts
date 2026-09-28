@@ -14,12 +14,15 @@ export type ContratoStatus = 'PENDENTE' | 'PAGO' | 'CANCELADO';
 
 export interface Contrato {
   id: string;
-  cliente: string;
+  cliente: string; // nome completo do contratante
+  cpf?: string;
+  dataNascimento?: string; // YYYY-MM-DD
   telefone?: string;
-  descricao: string;
+  brinquedo: string;
   dataEvento: string; // YYYY-MM-DD
-  valor: number;
-  valorPago: number;
+  endereco?: string;
+  valorSinal: number;
+  valorChegada: number;
   status: ContratoStatus;
   observacoes?: string;
   criadoEm: number;
