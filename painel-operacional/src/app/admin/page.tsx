@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import { useLocalizacoes } from '@/lib/useLocalizacoes';
 import { todayISO } from '@/lib/format';
+import { UserRole } from '@/lib/authTypes';
 
 const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   ssr: false,
@@ -27,13 +28,14 @@ function minutosAtraso(horarioComparacao?: string): number | null {
 }
 
 export default function AdminPage() {
-  const { profile, logout, criarOperador } = useAuth();
+  const { profile, logout, criarUsuario } = useAuth();
   const ehAdmin = profile?.role === 'admin';
   const operadores = useLocalizacoes(ehAdmin);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [nome, setNome] = useState('');
+  const [role, setRole] = useState<UserRole>('operador');
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
@@ -65,14 +67,15 @@ export default function AdminPage() {
     setMensagem(null);
     setSalvando(true);
     try {
-      await criarOperador(email, senha, nome);
-      setMensagem(`Login criado para ${nome}. Repasse e-mail e senha para ele instalar o app.`);
+      await criarUsuario(email, senha, nome, role);
+      setMensagem(`Login criado para ${nome} (${role === 'admin' ? 'admin' : 'operador'}). Repasse e-mail e senha para ele instalar o app.`);
       setEmail('');
       setSenha('');
       setNome('');
+      setRole('operador');
       setMostrarForm(false);
     } catch (e) {
-      setMensagem(e instanceof Error ? e.message : 'Erro ao criar operador.');
+      setMensagem(e instanceof Error ? e.message : 'Erro ao criar usuário.');
     } finally {
       setSalvando(false);
     }
@@ -109,7 +112,7 @@ export default function AdminPage() {
             onClick={() => setMostrarForm((v) => !v)}
             className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-200"
           >
-            + Adicionar operador
+            + Adicionar pessoa
           </button>
         </div>
 
@@ -118,7 +121,7 @@ export default function AdminPage() {
             <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              placeholder="Nome do operador"
+              placeholder="Nome"
               className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
             />
             <input
@@ -135,12 +138,30 @@ export default function AdminPage() {
               type="text"
               className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
             />
+            <div className="flex gap-1">
+              <button
+                onClick={() => setRole('operador')}
+                className={`flex-1 rounded-lg py-2 text-xs font-semibold ${
+                  role === 'operador' ? 'bg-brand-500 text-white' : 'bg-slate-900 text-slate-400'
+                }`}
+              >
+                Operador
+              </button>
+              <button
+                onClick={() => setRole('admin')}
+                className={`flex-1 rounded-lg py-2 text-xs font-semibold ${
+                  role === 'admin' ? 'bg-brand-500 text-white' : 'bg-slate-900 text-slate-400'
+                }`}
+              >
+                Admin
+              </button>
+            </div>
             <button
               onClick={criar}
               disabled={salvando || !nome || !email || senha.length < 6}
               className="rounded-lg bg-brand-500 py-2 text-sm font-bold text-white disabled:opacity-50"
             >
-              {salvando ? 'Criando...' : 'Criar login do operador'}
+              {salvando ? 'Criando...' : 'Criar login'}
             </button>
           </div>
         )}

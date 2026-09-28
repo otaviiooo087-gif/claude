@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { firebaseConfigured, getFirebaseAuth, getFirebaseDb } from './firebase';
-import { UserProfile } from './authTypes';
+import { UserProfile, UserRole } from './authTypes';
 
 interface AuthContextValue {
   loading: boolean;
@@ -13,8 +13,8 @@ interface AuthContextValue {
   configured: boolean;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
-  /** Admin cria login para um operador da equipe. */
-  criarOperador: (email: string, senha: string, nome: string) => Promise<void>;
+  /** Admin cria login para alguém da equipe (operador ou outro admin). */
+  criarUsuario: (email: string, senha: string, nome: string, role: UserRole) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(getFirebaseAuth());
   }, []);
 
-  const criarOperador = useCallback(async (email: string, senha: string, nome: string) => {
+  const criarUsuario = useCallback(async (email: string, senha: string, nome: string, role: UserRole) => {
     // Cria a conta usando um app secundário para não derrubar a sessão do admin logado.
     const { initializeApp, deleteApp } = await import('firebase/app');
     const { getAuth: getSecondaryAuth, createUserWithEmailAndPassword: createSecondary } =
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid: cred.user.uid,
         email,
         nome,
-        role: 'operador',
+        role,
         criadoEm: Date.now(),
       });
     } finally {
@@ -74,8 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ loading, user, profile, configured: firebaseConfigured, login, logout, criarOperador }),
-    [loading, user, profile, login, logout, criarOperador]
+    () => ({ loading, user, profile, configured: firebaseConfigured, login, logout, criarUsuario }),
+    [loading, user, profile, login, logout, criarUsuario]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
