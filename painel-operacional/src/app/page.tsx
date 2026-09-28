@@ -113,13 +113,21 @@ export default function Home() {
             <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
             <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {profile?.role === 'admin' && (
               <Link
                 href="/admin"
                 className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
               >
                 Admin
+              </Link>
+            )}
+            {configured && user && (
+              <Link
+                href="/admin/brinquedos"
+                className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+              >
+                Brinquedos
               </Link>
             )}
             <button

@@ -35,5 +35,12 @@ service cloud.firestore {
     match /contratos/{id} {
       allow read, write: if ehAdmin();
     }
+
+    match /brinquedos/{id} {
+      // Qualquer operador logado precisa ver o catálogo pra saber o que
+      // carregar; só o admin cadastra/edita/apaga um brinquedo.
+      allow read: if estaLogado();
+      allow write: if ehAdmin();
+    }
   }
 }

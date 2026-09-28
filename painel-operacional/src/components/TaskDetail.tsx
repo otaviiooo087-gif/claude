@@ -32,6 +32,7 @@ export default function TaskDetail({
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
+  const checklistPendente = task.checklist.some((item) => !item.marcado);
 
   return (
     <div className="min-h-screen bg-slate-900 pb-8">
@@ -167,12 +168,20 @@ export default function TaskDetail({
               REABRIR TAREFA
             </button>
           ) : (
-            <button
-              onClick={() => setConfirmando(true)}
-              className="rounded-xl bg-emerald-600 py-3 text-base font-bold text-white"
-            >
-              CONCLUIR TAREFA
-            </button>
+            <>
+              <button
+                onClick={() => setConfirmando(true)}
+                disabled={checklistPendente}
+                className="rounded-xl bg-emerald-600 py-3 text-base font-bold text-white disabled:opacity-40"
+              >
+                CONCLUIR TAREFA
+              </button>
+              {checklistPendente && (
+                <p className="text-center text-xs text-amber-400">
+                  Marque todos os itens do checklist para poder concluir.
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

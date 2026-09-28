@@ -83,14 +83,17 @@ export default function AdminPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-900">
-      <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900/95 p-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/95 p-4">
         <div>
           <h1 className="text-lg font-bold text-slate-50">Painel Admin</h1>
           <p className="text-xs text-slate-400">{todayISO()}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/admin/contratos" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
             Contratos
+          </Link>
+          <Link href="/admin/brinquedos" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
+            Brinquedos
           </Link>
           <Link href="/" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
             Minha agenda

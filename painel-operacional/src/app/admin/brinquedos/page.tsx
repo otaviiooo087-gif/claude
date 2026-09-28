@@ -1,0 +1,220 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/useAuth';
+import { Produto, ProdutoDraft, atualizarProduto, criarProduto, excluirProduto, ouvirProdutos } from '@/lib/produtos';
+
+const VAZIO: ProdutoDraft = {
+  nome: '',
+  cor: '#1568bb',
+  imagemUrl: '',
+  itens: [],
+};
+
+export default function BrinquedosPage() {
+  const { profile } = useAuth();
+  const ehAdmin = profile?.role === 'admin';
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [editando, setEditando] = useState<string | null>(null);
+  const [form, setForm] = useState<ProdutoDraft>(VAZIO);
+  const [novoItem, setNovoItem] = useState('');
+  const [mostrarForm, setMostrarForm] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    return ouvirProdutos(setProdutos);
+  }, [profile]);
+
+  if (!profile) return null;
+
+  function abrirNovo() {
+    setForm(VAZIO);
+    setEditando(null);
+    setNovoItem('');
+    setMostrarForm(true);
+  }
+
+  function abrirEdicao(p: Produto) {
+    setForm({ nome: p.nome, cor: p.cor, imagemUrl: p.imagemUrl ?? '', itens: [...p.itens] });
+    setEditando(p.id);
+    setNovoItem('');
+    setMostrarForm(true);
+  }
+
+  function adicionarItem() {
+    const texto = novoItem.trim();
+    if (!texto) return;
+    setForm({ ...form, itens: [...form.itens, texto] });
+    setNovoItem('');
+  }
+
+  function removerItem(idx: number) {
+    setForm({ ...form, itens: form.itens.filter((_, i) => i !== idx) });
+  }
+
+  async function salvar() {
+    if (editando) {
+      await atualizarProduto(editando, form);
+    } else {
+      await criarProduto(form);
+    }
+    setMostrarForm(false);
+  }
+
+  return (
+    <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-24">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <Link href="/admin" className="text-lg font-bold text-brand-500">
+            ← Voltar
+          </Link>
+          <h1 className="text-base font-bold text-slate-50">Brinquedos</h1>
+        </div>
+        {ehAdmin && (
+          <button onClick={abrirNovo} className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-bold text-white">
+            + Cadastrar
+          </button>
+        )}
+      </header>
+
+      <div className="flex flex-col gap-3 p-4">
+        {produtos.length === 0 && (
+          <p className="text-sm text-slate-500">Nenhum brinquedo cadastrado ainda.</p>
+        )}
+
+        {produtos.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => ehAdmin && abrirEdicao(p)}
+            disabled={!ehAdmin}
+            className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4 text-left disabled:opacity-100"
+          >
+            {p.imagemUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.imagemUrl} alt={p.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+            ) : (
+              <span
+                className="h-14 w-14 shrink-0 rounded-lg"
+                style={{ backgroundColor: p.cor }}
+                aria-hidden
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: p.cor }} aria-hidden />
+                <span className="font-bold text-slate-100">{p.nome}</span>
+              </div>
+              {p.itens.length > 0 && (
+                <p className="mt-1 text-xs text-slate-400">{p.itens.join(' · ')}</p>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {mostrarForm && (
+        <div className="fixed inset-0 z-20 flex items-end bg-black/60" onClick={() => setMostrarForm(false)}>
+          <div
+            className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-slate-900 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-4 text-base font-bold text-slate-50">
+              {editando ? 'Editar brinquedo' : 'Novo brinquedo'}
+            </h2>
+            <div className="flex flex-col gap-3">
+              <Campo label="Nome do brinquedo">
+                <input
+                  value={form.nome}
+                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                  placeholder="Ex: Cama elástica 3,05m"
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Campo label="Cor de identificação">
+                  <input
+                    type="color"
+                    value={form.cor}
+                    onChange={(e) => setForm({ ...form, cor: e.target.value })}
+                    className="h-10 w-full rounded-lg bg-slate-800 ring-1 ring-slate-700"
+                  />
+                </Campo>
+                <Campo label="Link da imagem (opcional)">
+                  <input
+                    value={form.imagemUrl}
+                    onChange={(e) => setForm({ ...form, imagemUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+              </div>
+
+              <div>
+                <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
+                  Itens que compõem o brinquedo
+                </span>
+                <div className="flex flex-col gap-2">
+                  {form.itens.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2">
+                      <span className="flex-1 text-sm text-slate-100">{item}</span>
+                      <button onClick={() => removerItem(idx)} className="text-xs font-bold text-red-400">
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={novoItem}
+                    onChange={(e) => setNovoItem(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        adicionarItem();
+                      }
+                    }}
+                    placeholder="Ex: Motor, Lona, Extensão 20m, 4 estacas..."
+                    className="flex-1 rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                  <button onClick={adicionarItem} className="rounded-lg bg-slate-700 px-4 text-sm font-bold text-slate-100">
+                    + Item
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={salvar}
+                disabled={!form.nome}
+                className="rounded-xl bg-brand-500 py-3 text-sm font-bold text-white disabled:opacity-50"
+              >
+                Salvar
+              </button>
+              {editando && (
+                <button
+                  onClick={async () => {
+                    await excluirProduto(editando);
+                    setMostrarForm(false);
+                  }}
+                  className="rounded-xl bg-slate-800 py-3 text-sm font-bold text-red-400"
+                >
+                  Excluir brinquedo
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
+function Campo({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[10px] font-bold uppercase text-slate-500">{label}</span>
+      {children}
+    </label>
+  );
+}
