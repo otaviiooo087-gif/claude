@@ -1,6 +1,12 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentSingleTabManager,
+  getFirestore,
+  type Firestore,
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -30,6 +36,19 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getFirebaseDb(): Firestore {
-  if (!dbInstance) dbInstance = getFirestore(getFirebaseApp());
+  if (!dbInstance) {
+    try {
+      // Guarda leituras/escritas em IndexedDB local: se o operador ficar sem
+      // sinal em campo, a localização continua sendo salva no aparelho e
+      // sincroniza sozinha com o Firestore assim que a internet voltar.
+      dbInstance = initializeFirestore(getFirebaseApp(), {
+        localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({}) }),
+      });
+    } catch {
+      // Ambientes sem suporte a IndexedDB (ex: aba privada) caem para o
+      // comportamento padrão, só sem cache offline.
+      dbInstance = getFirestore(getFirebaseApp());
+    }
+  }
   return dbInstance;
 }
