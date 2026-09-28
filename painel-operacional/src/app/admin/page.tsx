@@ -86,8 +86,8 @@ export default function AdminPage() {
     <main className="flex min-h-screen flex-col bg-slate-900">
       <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900/95 p-4">
         <MenuLateral />
-        <div>
-          <h1 className="text-lg font-bold text-slate-50">Monitoramento de equipe</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-bold text-slate-50">Monitoramento de equipe</h1>
           <p className="text-xs text-slate-400">{todayISO()}</p>
         </div>
       </header>

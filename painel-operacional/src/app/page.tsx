@@ -111,11 +111,11 @@ export default function Home() {
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-10">
       <header className="sticky top-0 z-10 flex flex-col gap-3 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {configured && user && <MenuLateral />}
-            <div>
-              <h1 className="text-lg font-bold text-slate-50">Zimba Festa</h1>
-              <p className="text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold text-slate-50">Zimba Festa</h1>
+              <p className="truncate text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
             </div>
           </div>
           <button

@@ -191,10 +191,9 @@ export default function MapaOperadores({ operadores }: Props) {
   return (
     <MapContainer center={centro} zoom={12} className="h-full w-full" scrollWheelZoom>
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={20}
+        className="tiles-limpo"
+        attribution='&copy; OpenStreetMap'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MarcadoresOperadores operadores={operadores} destinos={destinos} />
     </MapContainer>

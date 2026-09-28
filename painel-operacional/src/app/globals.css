@@ -6,6 +6,7 @@ html,
 body {
   height: 100%;
   overscroll-behavior-y: none;
+  overflow-x: hidden;
 }
 
 body {
@@ -33,4 +34,10 @@ body {
 
 .etiqueta-eta::before {
   display: none;
+}
+
+/* Deixa as tiles do OpenStreetMap com visual mais clean/discreto (sem
+   depender de um provedor de mapa pago que exige chave de API). */
+.tiles-limpo {
+  filter: saturate(0.75) brightness(1.05) contrast(0.95);
 }
