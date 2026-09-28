@@ -42,5 +42,11 @@ service cloud.firestore {
       allow read: if estaLogado();
       allow write: if ehAdmin();
     }
+
+    match /tarefasAtribuidas/{operadorUid}/itens/{id} {
+      // O operador só lê as próprias tarefas atribuídas; só o admin atribui.
+      allow read: if ehAdmin() || (estaLogado() && request.auth.uid == operadorUid);
+      allow write: if ehAdmin();
+    }
   }
 }

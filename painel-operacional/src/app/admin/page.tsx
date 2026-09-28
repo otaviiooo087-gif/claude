@@ -95,6 +95,9 @@ export default function AdminPage() {
           <Link href="/admin/brinquedos" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
             Brinquedos
           </Link>
+          <Link href="/admin/atribuir" className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-white">
+            Atribuir logística
+          </Link>
           <Link href="/" className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200">
             Minha agenda
           </Link>

@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import { useLiveLocation } from '@/lib/useLiveLocation';
 import { useSyncTarefaAtual } from '@/lib/useSyncTarefaAtual';
+import { useSincronizarAtribuidas } from '@/lib/useSincronizarAtribuidas';
 
 export default function Home() {
   const {
@@ -42,6 +43,7 @@ export default function Home() {
   const { configured, user, profile, logout } = useAuth();
   const rastreamentoAtivo = configured && Boolean(user);
   useLiveLocation(user?.uid ?? null, profile?.nome ?? '', rastreamentoAtivo);
+  useSincronizarAtribuidas(user?.uid ?? null, rastreamentoAtivo, loading, tasks, importTasks);
 
   useEffect(() => {
     if (loading) return;
