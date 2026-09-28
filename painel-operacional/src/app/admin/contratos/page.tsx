@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, whatsappUrl } from '@/lib/format';
 import {
   Contrato,
   ContratoDraft,
@@ -13,6 +13,7 @@ import {
   excluirContrato,
   ouvirContratos,
 } from '@/lib/contracts';
+import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 
 const STATUS_LABEL: Record<ContratoStatus, string> = {
   PENDENTE: 'Pendente',
@@ -28,6 +29,8 @@ const VAZIO: ContratoDraft = {
   brinquedo: '',
   dataEvento: '',
   endereco: '',
+  motivoLembrete: '',
+  dataLembrete: '',
   valorSinal: 0,
   valorChegada: 0,
   status: 'PENDENTE',
@@ -75,6 +78,8 @@ export default function ContratosPage() {
       brinquedo: c.brinquedo,
       dataEvento: c.dataEvento,
       endereco: c.endereco ?? '',
+      motivoLembrete: c.motivoLembrete ?? '',
+      dataLembrete: c.dataLembrete ?? '',
       valorSinal: c.valorSinal,
       valorChegada: c.valorChegada,
       status: c.status,
@@ -106,6 +111,8 @@ export default function ContratosPage() {
           + Novo
         </button>
       </header>
+
+      <LembretesProximos contratos={contratos} />
 
       <div className="flex flex-col gap-3 p-4">
         {contratos.length === 0 && <p className="text-sm text-slate-500">Nenhum contrato cadastrado ainda.</p>}
@@ -199,6 +206,27 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
+              <Campo label="Motivo do lembrete (opcional)">
+                <input
+                  value={form.motivoLembrete}
+                  onChange={(e) => setForm({ ...form, motivoLembrete: e.target.value })}
+                  placeholder="Ex: aniversário do João, 1 ano de casados, formatura da Maria"
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <Campo label="Data do lembrete">
+                <input
+                  type="date"
+                  value={form.dataLembrete}
+                  onChange={(e) => setForm({ ...form, dataLembrete: e.target.value })}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <p className="-mt-1 text-xs text-slate-500">
+                Preenchendo a data, o contrato aparece automaticamente em &quot;Lembretes próximos&quot; nos 5
+                dias antes da data — não precisa ser aniversário, pode ser qualquer data que valha a pena
+                lembrar o cliente (o ano digitado não importa, só repete o dia/mês todo ano).
+              </p>
               <div className="grid grid-cols-2 gap-2">
                 <Campo label="Data do evento">
                   <input
@@ -280,5 +308,39 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[10px] font-bold uppercase text-slate-500">{label}</span>
       {children}
     </label>
+  );
+}
+
+function LembretesProximos({ contratos }: { contratos: Contrato[] }) {
+  const proximos = lembretesProximos(contratos);
+  if (proximos.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2 p-4 pb-0">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-amber-400">🔔 Lembretes próximos</h2>
+      {proximos.map(({ contrato, dias }) => (
+        <div key={contrato.id} className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-slate-100">{contrato.cliente}</span>
+            <span className="text-xs font-semibold text-amber-400">
+              {dias === 0 ? 'é hoje!' : dias === 1 ? 'amanhã' : `em ${dias} dias`}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">
+            {contrato.motivoLembrete || 'Data especial'} · {formatDiaMes(contrato.dataLembrete!)}
+          </p>
+          {contrato.telefone && (
+            <a
+              href={whatsappUrl(contrato.telefone, mensagemLembrete(contrato))}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 block rounded-lg bg-emerald-600 py-2 text-center text-xs font-bold text-white"
+            >
+              Mandar mensagem no WhatsApp
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

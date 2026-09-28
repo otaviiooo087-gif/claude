@@ -21,6 +21,8 @@ export interface Contrato {
   brinquedo: string;
   dataEvento: string; // YYYY-MM-DD
   endereco?: string;
+  motivoLembrete?: string; // ex: "aniversário do João", "1 ano de casados", "formatura da Maria"
+  dataLembrete?: string; // YYYY-MM-DD (o ano é ignorado nos lembretes, só dia/mês importam)
   valorSinal: number;
   valorChegada: number;
   status: ContratoStatus;
