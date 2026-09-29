@@ -30,6 +30,13 @@ service cloud.firestore {
       allow read: if ehAdmin() || (estaLogado() && request.auth.uid == uid);
       // Cada operador só escreve a própria localização.
       allow write: if estaLogado() && request.auth.uid == uid;
+
+      match /rota/{id} {
+        // Rastro (histórico de posições) do dia — só o admin acompanha o
+        // trajeto de todo mundo; cada operador só grava o próprio.
+        allow read: if ehAdmin() || (estaLogado() && request.auth.uid == uid);
+        allow create: if estaLogado() && request.auth.uid == uid;
+      }
     }
 
     match /contratos/{id} {

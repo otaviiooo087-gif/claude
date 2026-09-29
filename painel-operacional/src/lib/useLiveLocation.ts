@@ -1,12 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseDb } from './firebase';
 import { distanciaMetros } from './geo';
+import { todayISO } from './format';
 
 const INTERVALO_MINIMO_MS = 15000;
 const DISTANCIA_MOVIMENTO_METROS = 30;
+// O rastro (trajeto) grava com menos frequência que a posição atual, só pra
+// não estourar a cota gratuita de escritas do Firestore — não precisa de um
+// ponto a cada poucos segundos pra desenhar uma linha decente no mapa.
+const INTERVALO_RASTRO_MS = 45000;
+const DISTANCIA_RASTRO_METROS = 40;
 
 export type LocalizacaoDoc = {
   uid: string;
@@ -34,6 +40,7 @@ export function useLiveLocation(uid: string | null, nome: string, ativo: boolean
   const ultimaPosicao = useRef<{ lat: number; lng: number } | null>(null);
   const paradoDesdeRef = useRef<number>(Date.now());
   const ultimoEnvioRef = useRef<number>(0);
+  const ultimoPontoRastroRef = useRef<{ lat: number; lng: number; ts: number } | null>(null);
 
   useEffect(() => {
     if (!ativo || !uid || typeof navigator === 'undefined' || !navigator.geolocation) return;
@@ -49,6 +56,21 @@ export function useLiveLocation(uid: string | null, nome: string, ativo: boolean
           paradoDesdeRef.current = agora;
         }
         ultimaPosicao.current = atual;
+
+        const pontoAnteriorRastro = ultimoPontoRastroRef.current;
+        const podeGravarRastro =
+          !pontoAnteriorRastro ||
+          (agora - pontoAnteriorRastro.ts >= INTERVALO_RASTRO_MS &&
+            distanciaMetros(pontoAnteriorRastro, atual) >= DISTANCIA_RASTRO_METROS);
+        if (podeGravarRastro) {
+          ultimoPontoRastroRef.current = { ...atual, ts: agora };
+          addDoc(collection(getFirebaseDb(), 'localizacoes', uid, 'rota'), {
+            lat: atual.lat,
+            lng: atual.lng,
+            data: todayISO(),
+            criadoEm: agora,
+          }).catch(() => {});
+        }
 
         if (agora - ultimoEnvioRef.current < INTERVALO_MINIMO_MS) return;
         ultimoEnvioRef.current = agora;

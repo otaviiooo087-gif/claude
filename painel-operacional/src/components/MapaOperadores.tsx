@@ -7,6 +7,15 @@ import 'leaflet/dist/leaflet.css';
 import { LocalizacaoDoc } from '@/lib/useLiveLocation';
 import { calcularRumo, distanciaMetros, estimarMinutos } from '@/lib/geo';
 import { DestinoMap, useDestinos } from '@/lib/useDestinos';
+import { TrajetoMap, useTrajetos } from '@/lib/useTrajetos';
+
+const CORES_TRAJETO = ['#22c55e', '#f59e0b', '#ec4899', '#a855f7', '#06b6d4', '#f43f5e'];
+
+function corDoTrajeto(uid: string): string {
+  let hash = 0;
+  for (let i = 0; i < uid.length; i++) hash = (hash * 31 + uid.charCodeAt(i)) >>> 0;
+  return CORES_TRAJETO[hash % CORES_TRAJETO.length];
+}
 
 // SVG de carro visto de cima. A rotação fica num <div> interno separado do
 // elemento que o Leaflet posiciona — assim as duas transformações (posição
@@ -57,10 +66,45 @@ interface MarcadorDestino {
   coords: { lat: number; lng: number };
 }
 
-function MarcadoresOperadores({ operadores, destinos }: { operadores: LocalizacaoDoc[]; destinos: DestinoMap }) {
+function MarcadoresOperadores({
+  operadores,
+  destinos,
+  trajetos,
+}: {
+  operadores: LocalizacaoDoc[];
+  destinos: DestinoMap;
+  trajetos: TrajetoMap;
+}) {
   const map = useMap();
   const carrosRef = useRef<Map<string, MarcadorCarro>>(new Map());
   const destinosRef = useRef<Map<string, MarcadorDestino>>(new Map());
+  const trajetosRef = useRef<Map<string, L.Polyline>>(new Map());
+
+  useEffect(() => {
+    const linhas = trajetosRef.current;
+    const uidsAtuais = new Set(operadores.map((op) => op.uid));
+
+    for (const [uid, linha] of linhas) {
+      if (!uidsAtuais.has(uid)) {
+        map.removeLayer(linha);
+        linhas.delete(uid);
+      }
+    }
+
+    for (const op of operadores) {
+      const pontos = trajetos[op.uid];
+      if (!pontos || pontos.length < 2) continue;
+      const latlngs = pontos.map((p) => [p.lat, p.lng] as [number, number]);
+
+      let linha = linhas.get(op.uid);
+      if (!linha) {
+        linha = L.polyline(latlngs, { color: corDoTrajeto(op.uid), weight: 3, opacity: 0.55 }).addTo(map);
+        linhas.set(op.uid, linha);
+      } else {
+        linha.setLatLngs(latlngs);
+      }
+    }
+  }, [map, operadores, trajetos]);
 
   useEffect(() => {
     const carros = carrosRef.current;
@@ -159,6 +203,7 @@ function MarcadoresOperadores({ operadores, destinos }: { operadores: Localizaca
   useEffect(() => {
     const carros = carrosRef.current;
     const destinosMarcados = destinosRef.current;
+    const linhasTrajeto = trajetosRef.current;
     return () => {
       carros.forEach((estado) => map.removeLayer(estado.marker));
       carros.clear();
@@ -167,6 +212,8 @@ function MarcadoresOperadores({ operadores, destinos }: { operadores: Localizaca
         map.removeLayer(estado.linha);
       });
       destinosMarcados.clear();
+      linhasTrajeto.forEach((linha) => map.removeLayer(linha));
+      linhasTrajeto.clear();
     };
   }, [map]);
 
@@ -185,6 +232,7 @@ interface Props {
 
 export default function MapaOperadores({ operadores }: Props) {
   const destinos = useDestinos(operadores);
+  const trajetos = useTrajetos(operadores.map((op) => op.uid));
   const centro: [number, number] =
     operadores.length > 0 ? [operadores[0].lat, operadores[0].lng] : [-22.9707, -47.0104]; // Valinhos-SP
 
@@ -195,7 +243,7 @@ export default function MapaOperadores({ operadores }: Props) {
         attribution='&copy; OpenStreetMap'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MarcadoresOperadores operadores={operadores} destinos={destinos} />
+      <MarcadoresOperadores operadores={operadores} destinos={destinos} trajetos={trajetos} />
     </MapContainer>
   );
 }

@@ -14,6 +14,7 @@ import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
 import ImportarAgenda from '@/components/ImportarAgenda';
 import MenuLateral from '@/components/MenuLateral';
+import AlternarModo from '@/components/AlternarModo';
 import { useAuth } from '@/lib/useAuth';
 import { useLiveLocation } from '@/lib/useLiveLocation';
 import { useSyncTarefaAtual } from '@/lib/useSyncTarefaAtual';
@@ -120,12 +121,15 @@ export default function Home() {
               <p className="truncate text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
             </div>
           </div>
-          <button
-            onClick={() => setImportando(true)}
-            className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
-          >
-            + Importar agenda
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {configured && user && <AlternarModo />}
+            <button
+              onClick={() => setImportando(true)}
+              className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
+            >
+              + Importar agenda
+            </button>
+          </div>
         </div>
         <DateSelector dates={availableDates} selected={selectedDate} onSelect={selectDate} />
         <div className="flex gap-4 text-xs text-slate-400">

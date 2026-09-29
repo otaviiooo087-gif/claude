@@ -14,7 +14,17 @@ interface AuthContextValue {
   login: (email: string, senha: string) => Promise<void>;
   logout: () => Promise<void>;
   /** Admin cria login para alguém da equipe (operador ou outro admin). */
-  criarUsuario: (email: string, senha: string, nome: string, role: UserRole) => Promise<void>;
+  criarUsuario: (dados: NovoUsuario) => Promise<void>;
+}
+
+export interface NovoUsuario {
+  email: string;
+  senha: string;
+  nome: string;
+  role: UserRole;
+  cpf?: string;
+  telefone?: string;
+  endereco?: string;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -51,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await firebaseSignOut(getFirebaseAuth());
   }, []);
 
-  const criarUsuario = useCallback(async (email: string, senha: string, nome: string, role: UserRole) => {
+  const criarUsuario = useCallback(async (dados: NovoUsuario) => {
     // Cria a conta usando um app secundário para não derrubar a sessão do admin logado.
     const { initializeApp, deleteApp } = await import('firebase/app');
     const { getAuth: getSecondaryAuth, createUserWithEmailAndPassword: createSecondary } =
@@ -60,12 +70,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const secondaryApp = initializeApp(primary.options, `secondary-${Date.now()}`);
     try {
       const secondaryAuth = getSecondaryAuth(secondaryApp);
-      const cred = await createSecondary(secondaryAuth, email, senha);
+      const cred = await createSecondary(secondaryAuth, dados.email, dados.senha);
       await setDoc(doc(getFirebaseDb(), 'usuarios', cred.user.uid), {
         uid: cred.user.uid,
-        email,
-        nome,
-        role,
+        email: dados.email,
+        nome: dados.nome,
+        role: dados.role,
+        cpf: dados.cpf || null,
+        telefone: dados.telefone || null,
+        endereco: dados.endereco || null,
         criadoEm: Date.now(),
       });
     } finally {

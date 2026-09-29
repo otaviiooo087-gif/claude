@@ -5,5 +5,8 @@ export interface UserProfile {
   email: string;
   nome: string;
   role: UserRole;
+  cpf?: string;
+  telefone?: string;
+  endereco?: string;
   criadoEm: number;
 }

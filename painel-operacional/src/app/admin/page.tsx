@@ -8,6 +8,7 @@ import { useLocalizacoes } from '@/lib/useLocalizacoes';
 import { todayISO } from '@/lib/format';
 import { UserRole } from '@/lib/authTypes';
 import MenuLateral from '@/components/MenuLateral';
+import AlternarModo from '@/components/AlternarModo';
 
 const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   ssr: false,
@@ -68,7 +69,7 @@ export default function AdminPage() {
     setMensagem(null);
     setSalvando(true);
     try {
-      await criarUsuario(email, senha, nome, role);
+      await criarUsuario({ email, senha, nome, role });
       setMensagem(`Login criado para ${nome} (${role === 'admin' ? 'admin' : 'operador'}). Repasse e-mail e senha para ele instalar o app.`);
       setEmail('');
       setSenha('');
@@ -90,6 +91,7 @@ export default function AdminPage() {
           <h1 className="truncate text-lg font-bold text-slate-50">Monitoramento de equipe</h1>
           <p className="text-xs text-slate-400">{todayISO()}</p>
         </div>
+        <AlternarModo />
       </header>
 
       <div className="h-72 shrink-0 border-b border-slate-800">
