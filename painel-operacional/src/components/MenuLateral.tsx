@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
@@ -40,51 +41,53 @@ export default function MenuLateral() {
         <span className="h-0.5 w-5 rounded bg-slate-200" />
       </button>
 
-      {aberto && (
-        <div className="fixed inset-0 z-[5000] flex bg-black/60" onClick={() => setAberto(false)}>
-          <div
-            className="flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto bg-slate-900 p-4 shadow-2xl ring-1 ring-slate-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-base font-bold text-slate-50">Zimba Festa</span>
-              <button onClick={() => setAberto(false)} aria-label="Fechar menu" className="p-1 text-xl text-slate-400">
-                ×
-              </button>
-            </div>
-
-            <nav className="flex flex-col gap-1">
-              {itens.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setAberto(false)}
-                  className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-                    pathname === item.href ? 'bg-brand-500 text-white' : 'text-slate-200 active:bg-slate-800'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-
-            {configured && (
-              <div className="mt-auto border-t border-slate-800 pt-3">
-                <button
-                  onClick={() => {
-                    setAberto(false);
-                    logout();
-                  }}
-                  className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-red-400"
-                >
-                  Sair
+      {aberto &&
+        createPortal(
+          <div className="fixed inset-0 z-[5000] flex bg-black/60" onClick={() => setAberto(false)}>
+            <div
+              className="flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto bg-slate-900 p-4 shadow-2xl ring-1 ring-slate-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-base font-bold text-slate-50">Zimba Festa</span>
+                <button onClick={() => setAberto(false)} aria-label="Fechar menu" className="p-1 text-xl text-slate-400">
+                  ×
                 </button>
               </div>
-            )}
-          </div>
-          <div className="flex-1" />
-        </div>
-      )}
+
+              <nav className="flex flex-col gap-1">
+                {itens.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setAberto(false)}
+                    className={`rounded-xl px-4 py-3 text-sm font-semibold ${
+                      pathname === item.href ? 'bg-brand-500 text-white' : 'text-slate-200 active:bg-slate-800'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              {configured && (
+                <div className="mt-auto border-t border-slate-800 pt-3">
+                  <button
+                    onClick={() => {
+                      setAberto(false);
+                      logout();
+                    }}
+                    className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-red-400"
+                  >
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex-1" />
+          </div>,
+          document.body
+        )}
     </>
   );
 }
