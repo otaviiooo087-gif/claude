@@ -30,6 +30,7 @@ export interface Task {
   completedAt?: number;
   pagamentoConfirmado?: boolean;
   pagamentoConfirmadoEm?: number;
+  statusHistorico?: Partial<Record<TaskStatus, number>>;
 }
 
 export const STATUS_ORDER: TaskStatus[] = [

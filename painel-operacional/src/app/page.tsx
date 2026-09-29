@@ -19,6 +19,8 @@ import { useAuth } from '@/lib/useAuth';
 import { useLiveLocation } from '@/lib/useLiveLocation';
 import { useSyncTarefaAtual } from '@/lib/useSyncTarefaAtual';
 import { useSincronizarAtribuidas } from '@/lib/useSincronizarAtribuidas';
+import { useSyncProdutividade } from '@/lib/useSyncProdutividade';
+import BotaoEmergencia from '@/components/BotaoEmergencia';
 
 export default function Home() {
   const {
@@ -46,6 +48,7 @@ export default function Home() {
   const rastreamentoAtivo = configured && Boolean(user);
   useLiveLocation(user?.uid ?? null, profile?.nome ?? '', rastreamentoAtivo);
   useSincronizarAtribuidas(user?.uid ?? null, rastreamentoAtivo, loading, tasks, importTasks);
+  useSyncProdutividade(user?.uid ?? null, profile?.nome ?? '', rastreamentoAtivo, tasks);
 
   useEffect(() => {
     if (loading) return;
@@ -166,6 +169,8 @@ export default function Home() {
 
         <BaseIndicator />
       </div>
+
+      {configured && user && <BotaoEmergencia />}
     </main>
   );
 }

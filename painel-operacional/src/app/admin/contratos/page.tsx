@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
 import CobrancaPixModal from '@/components/CobrancaPixModal';
+import AtribuirOperadorBotao from '@/components/AtribuirOperadorBotao';
 import { formatCurrency, whatsappUrl } from '@/lib/format';
 import {
   Contrato,
@@ -16,6 +17,8 @@ import {
   ouvirContratos,
 } from '@/lib/contracts';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
+import { buscarProdutos } from '@/lib/produtos';
+import { ChecklistItem, Task } from '@/lib/types';
 
 const STATUS_LABEL: Record<ContratoStatus, string> = {
   PENDENTE: 'Pendente',
@@ -47,6 +50,8 @@ export default function ContratosPage() {
   const [form, setForm] = useState<ContratoDraft>(VAZIO);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cobrando, setCobrando] = useState<Contrato | null>(null);
+  const [logisticaGerada, setLogisticaGerada] = useState<Record<string, Task>>({});
+  const [gerandoLogistica, setGerandoLogistica] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -101,6 +106,43 @@ export default function ContratosPage() {
     setMostrarForm(false);
   }
 
+  async function gerarLogistica(c: Contrato) {
+    setGerandoLogistica(c.id);
+    try {
+      const produtos = await buscarProdutos();
+      const produto = produtos.find((p) => p.nome.trim().toLowerCase() === c.brinquedo.trim().toLowerCase());
+      const checklist: ChecklistItem[] =
+        produto?.itens.map((item, idx) => ({ id: `item-${idx}`, texto: item, marcado: false })) ?? [];
+
+      const observacoesPartes = [
+        `Sinal já pago: ${formatCurrency(c.valorSinal)}.`,
+        `Cobrar na chegada: ${formatCurrency(c.valorChegada)}.`,
+      ];
+      if (c.observacoes) observacoesPartes.push(c.observacoes);
+
+      const tarefa: Task = {
+        id: `contrato-${c.id}`,
+        data: c.dataEvento,
+        horario: 'A combinar',
+        horarioComparacao: '00:00',
+        tipo: 'MONTAGEM',
+        cliente: c.cliente,
+        telefone: c.telefone,
+        endereco: c.endereco,
+        brinquedo: c.brinquedo,
+        valor: c.valorChegada,
+        observacoes: observacoesPartes.join(' '),
+        checklist,
+        status: 'PENDENTE',
+        ordem: 0,
+        createdAt: Date.now(),
+      };
+      setLogisticaGerada((atual) => ({ ...atual, [c.id]: tarefa }));
+    } finally {
+      setGerandoLogistica(null);
+    }
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-24">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
@@ -150,6 +192,23 @@ export default function ContratosPage() {
             >
               Cobrar via Pix
             </button>
+
+            {logisticaGerada[c.id] ? (
+              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-900 px-3 py-2 ring-1 ring-slate-700">
+                <span className="text-xs text-slate-400">
+                  Logística pronta{logisticaGerada[c.id].checklist.length > 0 ? ` (${logisticaGerada[c.id].checklist.length} itens)` : ''} — atribuir a:
+                </span>
+                <AtribuirOperadorBotao task={logisticaGerada[c.id]} />
+              </div>
+            ) : (
+              <button
+                onClick={() => gerarLogistica(c)}
+                disabled={gerandoLogistica === c.id}
+                className="mt-2 w-full rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200 disabled:opacity-50"
+              >
+                {gerandoLogistica === c.id ? 'Gerando...' : 'Gerar logística (checklist do brinquedo)'}
+              </button>
+            )}
           </div>
         ))}
       </div>

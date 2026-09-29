@@ -93,6 +93,7 @@ export function useTasks() {
       const updated: Task = {
         ...task,
         status,
+        statusHistorico: { ...task.statusHistorico, [status]: Date.now() },
         completedAt: status === 'CONCLUIDA' ? Date.now() : task.completedAt,
       };
       await putTask(updated);

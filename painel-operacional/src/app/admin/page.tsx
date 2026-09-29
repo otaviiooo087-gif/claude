@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
@@ -9,6 +9,7 @@ import { todayISO } from '@/lib/format';
 import { UserRole } from '@/lib/authTypes';
 import MenuLateral from '@/components/MenuLateral';
 import AlternarModo from '@/components/AlternarModo';
+import { ouvirProdutividadeDoDia, RegistroProdutividade } from '@/lib/produtividade';
 
 const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   ssr: false,
@@ -40,6 +41,12 @@ export default function AdminPage() {
   const [role, setRole] = useState<UserRole>('operador');
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [produtividade, setProdutividade] = useState<RegistroProdutividade[]>([]);
+
+  useEffect(() => {
+    if (!ehAdmin) return;
+    return ouvirProdutividadeDoDia(todayISO(), setProdutividade);
+  }, [ehAdmin]);
 
   const listaOrdenada = useMemo(
     () => [...operadores].sort((a, b) => a.nome.localeCompare(b.nome)),
@@ -194,6 +201,33 @@ export default function AdminPage() {
             </div>
           );
         })}
+
+        <div className="mt-4 flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            Relatório de produtividade — hoje
+          </h2>
+        </div>
+        {produtividade.length === 0 && (
+          <p className="text-sm text-slate-500">Nenhuma tarefa concluída hoje ainda.</p>
+        )}
+        {produtividade
+          .slice()
+          .sort((a, b) => b.concluidaEm - a.concluidaEm)
+          .map((r) => (
+            <div key={r.id} className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-100">{r.operadorNome}</span>
+                <span className="text-xs text-slate-500">
+                  {new Date(r.concluidaEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              <p className="text-sm text-slate-300">{r.cliente}</p>
+              <div className="mt-2 flex gap-4 text-xs text-slate-400">
+                <span>Deslocamento: {r.tempoDeslocamentoMin !== null ? `${r.tempoDeslocamentoMin} min` : '—'}</span>
+                <span>Montagem: {r.tempoMontagemMin !== null ? `${r.tempoMontagemMin} min` : '—'}</span>
+              </div>
+            </div>
+          ))}
       </div>
     </main>
   );

@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -28,6 +29,11 @@ export function ouvirProdutos(callback: (produtos: Produto[]) => void) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Produto));
   });
+}
+
+export async function buscarProdutos(): Promise<Produto[]> {
+  const snap = await getDocs(collection(getFirebaseDb(), COLECAO));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Produto);
 }
 
 export async function criarProduto(dados: ProdutoDraft): Promise<void> {

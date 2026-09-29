@@ -3,6 +3,7 @@ import PwaRegister from '@/components/PwaRegister';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/lib/useAuth';
 import AuthGate from '@/components/AuthGate';
+import EmergenciaWatcher from '@/components/EmergenciaWatcher';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaRegister />
         <ErrorBoundary>
           <AuthProvider>
+            <EmergenciaWatcher />
             <AuthGate>{children}</AuthGate>
           </AuthProvider>
         </ErrorBoundary>
