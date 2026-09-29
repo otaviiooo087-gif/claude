@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
-import { Configuracoes, ouvirConfiguracoes, salvarConfiguracoes } from '@/lib/configuracoes';
+import { AvisoPersonalizado, Configuracoes, ouvirConfiguracoes, salvarConfiguracoes } from '@/lib/configuracoes';
 import { MENSAGEM_ATRASO, MENSAGEM_CUIDADOS_POS_MONTAGEM } from '@/lib/format';
 
 const PADRAO_ESTOU_INDO = 'Oi! Estou a caminho, {cliente}. Devo chegar em aproximadamente {minutos} minutos!';
@@ -19,6 +19,9 @@ export default function AvisosPage() {
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [config, setConfig] = useState<Configuracoes>({});
+  const [personalizados, setPersonalizados] = useState<AvisoPersonalizado[]>([]);
+  const [novoTitulo, setNovoTitulo] = useState('');
+  const [novoTexto, setNovoTexto] = useState('');
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -27,6 +30,7 @@ export default function AvisosPage() {
       setAvisoEstouIndo(dados.avisoEstouIndo ?? '');
       setAvisoCuidadosPosMontagem(dados.avisoCuidadosPosMontagem ?? '');
       setAvisoAtraso(dados.avisoAtraso ?? '');
+      setPersonalizados(dados.avisosPersonalizados ?? []);
     });
   }, [ehAdmin]);
 
@@ -54,6 +58,22 @@ export default function AvisosPage() {
     } finally {
       setSalvando(false);
     }
+  }
+
+  async function adicionarPersonalizado() {
+    if (!novoTitulo.trim() || !novoTexto.trim()) return;
+    const novo: AvisoPersonalizado = { id: `aviso-${Date.now()}`, titulo: novoTitulo.trim(), texto: novoTexto.trim() };
+    const atualizados = [...personalizados, novo];
+    setPersonalizados(atualizados);
+    setNovoTitulo('');
+    setNovoTexto('');
+    await salvarConfiguracoes({ avisosPersonalizados: atualizados });
+  }
+
+  async function removerPersonalizado(id: string) {
+    const atualizados = personalizados.filter((a) => a.id !== id);
+    setPersonalizados(atualizados);
+    await salvarConfiguracoes({ avisosPersonalizados: atualizados });
   }
 
   return (
@@ -102,6 +122,49 @@ export default function AvisosPage() {
           {salvando ? 'Salvando...' : 'Salvar avisos'}
         </button>
         {mensagem && <p className="text-center text-sm text-emerald-400">{mensagem}</p>}
+
+        <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Avisos personalizados</h2>
+          <p className="text-xs text-slate-500">
+            Mensagens extras que aparecem na tela da tarefa pro operador escolher e mandar quando quiser.
+          </p>
+
+          {personalizados.length === 0 && (
+            <p className="text-xs text-slate-600">Nenhum aviso personalizado ainda.</p>
+          )}
+          {personalizados.map((a) => (
+            <div key={a.id} className="rounded-lg bg-slate-900 px-3 py-2 ring-1 ring-slate-700">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-slate-100">{a.titulo}</span>
+                <button onClick={() => removerPersonalizado(a.id)} className="text-xs font-bold text-red-400">
+                  Remover
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">{a.texto}</p>
+            </div>
+          ))}
+
+          <input
+            value={novoTitulo}
+            onChange={(e) => setNovoTitulo(e.target.value)}
+            placeholder="Nome do aviso (ex: Chuva prevista)"
+            className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+          />
+          <textarea
+            value={novoTexto}
+            onChange={(e) => setNovoTexto(e.target.value)}
+            placeholder="Texto da mensagem (pode usar {cliente})"
+            rows={3}
+            className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+          />
+          <button
+            onClick={adicionarPersonalizado}
+            disabled={!novoTitulo.trim() || !novoTexto.trim()}
+            className="rounded-lg bg-slate-700 py-2 text-sm font-semibold text-slate-100 disabled:opacity-50"
+          >
+            + Adicionar aviso
+          </button>
+        </section>
       </div>
     </main>
   );

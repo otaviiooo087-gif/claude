@@ -16,6 +16,8 @@ const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   loading: () => <div className="flex h-full items-center justify-center text-slate-500">Carregando mapa...</div>,
 });
 
+const TrajetoReplayModal = dynamic(() => import('@/components/TrajetoReplayModal'), { ssr: false });
+
 function minutosDesde(ms: number): number {
   return Math.max(0, Math.floor((Date.now() - ms) / 60000));
 }
@@ -42,6 +44,7 @@ export default function AdminPage() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [produtividade, setProdutividade] = useState<RegistroProdutividade[]>([]);
+  const [replayOperador, setReplayOperador] = useState<{ uid: string; nome: string } | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -178,7 +181,11 @@ export default function AdminPage() {
           const atraso = minutosAtraso(op.tarefaHorarioComparacao);
           const semSinalHaMuito = minutosDesde(op.atualizadoEm) > 5;
           return (
-            <div key={op.uid} className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+            <button
+              key={op.uid}
+              onClick={() => setReplayOperador({ uid: op.uid, nome: op.nome })}
+              className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4 text-left"
+            >
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-100">{op.nome}</span>
                 {semSinalHaMuito && (
@@ -192,13 +199,14 @@ export default function AdminPage() {
                   {op.tarefaAtual} {op.tarefaHorario ? `· ${op.tarefaHorario}` : ''}
                 </p>
               )}
-              <div className="mt-2 flex gap-4 text-xs">
+              <div className="mt-2 flex items-center justify-between gap-4 text-xs">
                 <span className="text-slate-400">Parado há {minutosDesde(op.paradoDesde)} min</span>
                 {atraso !== null && atraso > 0 && (
                   <span className="font-semibold text-red-400">{atraso} min de atraso</span>
                 )}
+                <span className="ml-auto font-semibold text-brand-500">Ver trajeto de hoje →</span>
               </div>
-            </div>
+            </button>
           );
         })}
 
@@ -229,6 +237,14 @@ export default function AdminPage() {
             </div>
           ))}
       </div>
+
+      {replayOperador && (
+        <TrajetoReplayModal
+          uid={replayOperador.uid}
+          nome={replayOperador.nome}
+          onFechar={() => setReplayOperador(null)}
+        />
+      )}
     </main>
   );
 }

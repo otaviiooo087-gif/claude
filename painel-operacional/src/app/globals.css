@@ -20,6 +20,12 @@ body {
   transition: transform 1.2s linear;
 }
 
+/* Carrinho do replay de trajeto (Monitoramento de equipe) — passo mais
+   rápido que o marcador ao vivo, pra acompanhar a animação da reprodução. */
+.marcador-replay {
+  transition: transform 0.35s linear;
+}
+
 /* Bolha de ETA (estilo Uber) acima do carrinho no mapa admin. */
 .etiqueta-eta {
   background: #0f172a;

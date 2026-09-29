@@ -10,7 +10,14 @@ export interface Configuracoes {
   avisoEstouIndo?: string;
   avisoCuidadosPosMontagem?: string;
   avisoAtraso?: string;
+  avisosPersonalizados?: AvisoPersonalizado[];
   atualizadoEm?: number;
+}
+
+export interface AvisoPersonalizado {
+  id: string;
+  titulo: string;
+  texto: string;
 }
 
 const CAMINHO = 'configuracoes/geral';

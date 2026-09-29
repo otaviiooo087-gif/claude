@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { Task, TYPE_LABELS, STATUS_LABELS, STATUS_ORDER } from '@/lib/types';
 import { formatCurrency, isAtrasada, whatsappUrl } from '@/lib/format';
-import { textoEstouIndo, textoCuidadosPosMontagem } from '@/lib/avisos';
+import { textoEstouIndo, textoCuidadosPosMontagem, substituirPlaceholders } from '@/lib/avisos';
 import { useConfiguracoes } from '@/lib/useConfiguracoes';
+import { calcularMinutosAteTarefa } from '@/lib/etaAutomatico';
 import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
 import PromptMinutosDialog from './PromptMinutosDialog';
@@ -35,11 +36,31 @@ export default function TaskDetail({
   const [confirmando, setConfirmando] = useState(false);
   const [statusAberto, setStatusAberto] = useState(false);
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
+  const [calculandoEta, setCalculandoEta] = useState(false);
   const [cobrando, setCobrando] = useState(false);
   const config = useConfiguracoes();
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
   const checklistPendente = task.checklist.some((item) => !item.marcado);
+
+  async function avisarQueEstouIndo() {
+    if (!task.telefone) return;
+    setCalculandoEta(true);
+    try {
+      const minutos = await calcularMinutosAteTarefa(task);
+      if (minutos) {
+        const url = whatsappUrl(task.telefone, textoEstouIndo(config, task.tipo, task.cliente, minutos));
+        window.open(url, '_blank', 'noreferrer');
+      } else {
+        // Sem GPS ou endereço não encontrado: pede pra digitar o tempo manualmente.
+        setPerguntandoMinutos(true);
+      }
+    } catch {
+      setPerguntandoMinutos(true);
+    } finally {
+      setCalculandoEta(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 pb-8">
@@ -95,10 +116,15 @@ export default function TaskDetail({
           <div className="flex flex-col gap-2">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-400">Mensagens rápidas</span>
             <button
-              onClick={() => setPerguntandoMinutos(true)}
-              className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white"
+              onClick={avisarQueEstouIndo}
+              disabled={calculandoEta}
+              className="rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {task.tipo === 'RETIRADA' ? 'AVISAR QUE ESTOU INDO RETIRAR' : 'AVISAR QUE ESTOU INDO'}
+              {calculandoEta
+                ? 'Calculando tempo até lá...'
+                : task.tipo === 'RETIRADA'
+                ? 'AVISAR QUE ESTOU INDO RETIRAR'
+                : 'AVISAR QUE ESTOU INDO'}
             </button>
             {task.tipo === 'MONTAGEM' && (
               <a
@@ -110,6 +136,17 @@ export default function TaskDetail({
                 ENVIAR CUIDADOS PÓS-MONTAGEM
               </a>
             )}
+            {(config.avisosPersonalizados ?? []).map((aviso) => (
+              <a
+                key={aviso.id}
+                href={whatsappUrl(task.telefone!, substituirPlaceholders(aviso.texto, { cliente: task.cliente }))}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl bg-slate-700 px-4 py-3 text-center text-sm font-semibold text-slate-100"
+              >
+                {aviso.titulo}
+              </a>
+            ))}
           </div>
         )}
 
@@ -232,7 +269,7 @@ export default function TaskDetail({
 
       {perguntandoMinutos && task.telefone && (
         <PromptMinutosDialog
-          titulo="Em quantos minutos você chega?"
+          titulo="Não consegui calcular sozinho (sem GPS ou endereço). Em quantos minutos você chega?"
           onCancel={() => setPerguntandoMinutos(false)}
           onConfirm={(minutos) => {
             const url = whatsappUrl(task.telefone!, textoEstouIndo(config, task.tipo, task.cliente, minutos));

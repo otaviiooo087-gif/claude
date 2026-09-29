@@ -29,10 +29,11 @@ const SVG_CARRO = `
   </div>
 `;
 
+// Casinha (estilo Uber) marcando o endereço do próximo cliente.
 const SVG_DESTINO = `
-  <svg viewBox="0 0 24 24" width="26" height="26" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,0.45))">
-    <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="#ef4444" stroke="white" stroke-width="1.5" />
-    <circle cx="12" cy="10" r="3" fill="white" />
+  <svg viewBox="0 0 24 24" width="30" height="30" style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5))">
+    <circle cx="12" cy="12" r="11" fill="#ef4444" stroke="white" stroke-width="2" />
+    <path d="M12 5.5 L19 11.5 V18.5 H14.5 V14 H9.5 V18.5 H5 V11.5 Z" fill="white" />
   </svg>
 `;
 
@@ -50,8 +51,8 @@ function criarIconeDestino() {
   return L.divIcon({
     className: 'marcador-destino',
     html: SVG_DESTINO,
-    iconSize: [26, 26],
-    iconAnchor: [13, 26],
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
   });
 }
 
