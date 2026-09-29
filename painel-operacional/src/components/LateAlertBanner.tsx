@@ -1,7 +1,9 @@
 'use client';
 
 import { Task } from '@/lib/types';
-import { whatsappUrl, MENSAGEM_ATRASO } from '@/lib/format';
+import { whatsappUrl } from '@/lib/format';
+import { textoAtraso } from '@/lib/avisos';
+import { useConfiguracoes } from '@/lib/useConfiguracoes';
 
 interface Props {
   tasks: Task[];
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function LateAlertBanner({ tasks, onOpen }: Props) {
+  const config = useConfiguracoes();
   if (tasks.length === 0) return null;
 
   return (
@@ -25,7 +28,7 @@ export default function LateAlertBanner({ tasks, onOpen }: Props) {
           </button>
           {task.telefone && (
             <a
-              href={whatsappUrl(task.telefone, MENSAGEM_ATRASO)}
+              href={whatsappUrl(task.telefone, textoAtraso(config, task.cliente))}
               target="_blank"
               rel="noreferrer"
               className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold uppercase text-white"

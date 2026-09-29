@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { buscarTarefasAtribuidas } from './tarefasAtribuidas';
-import { Task } from './types';
+import { ouvirTarefasAtribuidas } from './tarefasAtribuidas';
+import { CAMPOS_CONTROLADOS_PELO_ADMIN, Task } from './types';
 
 /**
- * Ao logar, puxa uma vez as tarefas que o admin atribuiu pra esse operador
- * no Firestore e junta com a agenda local (sem sobrescrever nada que já
- * exista com o mesmo id — mesma lógica não-destrutiva do seed local).
- * Roda só uma vez por sessão de login (guardado pelo ref), não fica
- * escutando o tempo todo.
+ * Fica ouvindo, em tempo real, as tarefas que o admin atribuiu pra esse
+ * operador no Firestore. Tarefa nova (id que ainda não existe localmente)
+ * entra inteira. Tarefa que já existe localmente só recebe os campos que o
+ * admin controla (data, horário, endereço, ajudante, cancelamento etc) —
+ * nunca sobrescreve o que o operador já registrou em campo (checklist,
+ * status, observação, confirmação de pagamento).
  */
 export function useSincronizarAtribuidas(
   uid: string | null,
@@ -18,24 +19,37 @@ export function useSincronizarAtribuidas(
   tasksLocais: Task[],
   importTasks: (novas: Task[]) => Promise<void>
 ) {
-  const sincronizadoRef = useRef<string | null>(null);
+  const tasksLocaisRef = useRef(tasksLocais);
+  tasksLocaisRef.current = tasksLocais;
 
   useEffect(() => {
     if (!ativo || carregando || !uid) return;
-    if (sincronizadoRef.current === uid) return;
-    sincronizadoRef.current = uid;
 
-    (async () => {
-      try {
-        const atribuidas = await buscarTarefasAtribuidas(uid);
-        if (atribuidas.length === 0) return;
-        const idsExistentes = new Set(tasksLocais.map((t) => t.id));
-        const novas = atribuidas.filter((t) => !idsExistentes.has(t.id));
-        if (novas.length > 0) await importTasks(novas);
-      } catch {
-        // Sem internet ou erro de permissão: tenta de novo no próximo carregamento do app.
-        sincronizadoRef.current = null;
+    return ouvirTarefasAtribuidas(uid, (remotas) => {
+      if (remotas.length === 0) return;
+      const locaisPorId = new Map(tasksLocaisRef.current.map((t) => [t.id, t]));
+
+      const paraSalvar: Task[] = [];
+      for (const remota of remotas) {
+        const local = locaisPorId.get(remota.id);
+        if (!local) {
+          paraSalvar.push(remota);
+          continue;
+        }
+
+        const mudou = CAMPOS_CONTROLADOS_PELO_ADMIN.some(
+          (campo) => JSON.stringify(local[campo]) !== JSON.stringify(remota[campo])
+        );
+        if (!mudou) continue;
+
+        const patch: Partial<Task> = {};
+        for (const campo of CAMPOS_CONTROLADOS_PELO_ADMIN) {
+          (patch as Record<string, unknown>)[campo] = remota[campo];
+        }
+        paraSalvar.push({ ...local, ...patch });
       }
-    })();
-  }, [ativo, carregando, uid, tasksLocais, importTasks]);
+
+      if (paraSalvar.length > 0) importTasks(paraSalvar).catch(() => {});
+    });
+  }, [ativo, carregando, uid, importTasks]);
 }

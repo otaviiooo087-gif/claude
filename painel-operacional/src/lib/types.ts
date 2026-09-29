@@ -31,7 +31,28 @@ export interface Task {
   pagamentoConfirmado?: boolean;
   pagamentoConfirmadoEm?: number;
   statusHistorico?: Partial<Record<TaskStatus, number>>;
+  ajudanteUid?: string;
+  ajudanteNome?: string;
+  cancelada?: boolean;
 }
+
+/** Campos que o admin controla ao editar/reagendar/cancelar uma tarefa já atribuída — nunca sobrescreve o que o operador registrou em campo (checklist, status, observação, pagamento). */
+export const CAMPOS_CONTROLADOS_PELO_ADMIN = [
+  'data',
+  'horario',
+  'horarioComparacao',
+  'tipo',
+  'cliente',
+  'telefone',
+  'endereco',
+  'cidade',
+  'brinquedo',
+  'valor',
+  'observacoes',
+  'ajudanteUid',
+  'ajudanteNome',
+  'cancelada',
+] as const;
 
 export const STATUS_ORDER: TaskStatus[] = [
   'PENDENTE',

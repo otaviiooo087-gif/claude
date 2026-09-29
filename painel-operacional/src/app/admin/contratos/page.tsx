@@ -19,6 +19,9 @@ import {
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { buscarProdutos } from '@/lib/produtos';
 import { ChecklistItem, Task } from '@/lib/types';
+import { lerArquivoComoDataUrl } from '@/lib/arquivo';
+
+const TAMANHO_MAXIMO_ANEXO = 700 * 1024;
 
 const STATUS_LABEL: Record<ContratoStatus, string> = {
   PENDENTE: 'Pendente',
@@ -52,6 +55,8 @@ export default function ContratosPage() {
   const [cobrando, setCobrando] = useState<Contrato | null>(null);
   const [logisticaGerada, setLogisticaGerada] = useState<Record<string, Task>>({});
   const [gerandoLogistica, setGerandoLogistica] = useState<string | null>(null);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
+  const [processandoAnexo, setProcessandoAnexo] = useState(false);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -92,6 +97,8 @@ export default function ContratosPage() {
       valorChegada: c.valorChegada,
       status: c.status,
       observacoes: c.observacoes ?? '',
+      contratoAssinadoBase64: c.contratoAssinadoBase64 ?? '',
+      contratoAssinadoNome: c.contratoAssinadoNome ?? '',
     });
     setEditando(c.id);
     setMostrarForm(true);
@@ -104,6 +111,28 @@ export default function ContratosPage() {
       await criarContrato(form);
     }
     setMostrarForm(false);
+  }
+
+  async function selecionarContratoAssinado(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!arquivo) return;
+    setErroAnexo(null);
+
+    if (arquivo.size > TAMANHO_MAXIMO_ANEXO) {
+      setErroAnexo(`Esse arquivo é grande demais (limite ${(TAMANHO_MAXIMO_ANEXO / 1024).toFixed(0)} KB).`);
+      return;
+    }
+
+    setProcessandoAnexo(true);
+    try {
+      const dataUrl = await lerArquivoComoDataUrl(arquivo);
+      setForm((f) => ({ ...f, contratoAssinadoBase64: dataUrl, contratoAssinadoNome: arquivo.name }));
+    } catch {
+      setErroAnexo('Não foi possível ler esse arquivo. Tente outro.');
+    } finally {
+      setProcessandoAnexo(false);
+    }
   }
 
   async function gerarLogistica(c: Contrato) {
@@ -343,6 +372,41 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
+
+              <div>
+                <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
+                  Contrato assinado (opcional)
+                </span>
+                {form.contratoAssinadoNome ? (
+                  <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-800 px-3 py-2 ring-1 ring-slate-700">
+                    <a
+                      href={form.contratoAssinadoBase64}
+                      download={form.contratoAssinadoNome}
+                      className="min-w-0 flex-1 truncate text-sm font-semibold text-brand-500"
+                    >
+                      {form.contratoAssinadoNome}
+                    </a>
+                    <button
+                      onClick={() => setForm({ ...form, contratoAssinadoBase64: '', contratoAssinadoNome: '' })}
+                      className="shrink-0 text-xs font-bold text-red-400"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer rounded-lg bg-slate-700 py-2.5 text-center text-sm font-semibold text-slate-100">
+                    {processandoAnexo ? 'Processando...' : 'Anexar PDF/foto do contrato assinado'}
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,image/*"
+                      onChange={selecionarContratoAssinado}
+                      disabled={processandoAnexo}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+                {erroAnexo && <p className="mt-1 text-xs text-red-400">{erroAnexo}</p>}
+              </div>
 
               <button onClick={salvar} className="rounded-xl bg-brand-500 py-3 text-sm font-bold text-white">
                 Salvar

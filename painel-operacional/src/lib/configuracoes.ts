@@ -7,6 +7,9 @@ export interface Configuracoes {
   cidadeRecebedorPix?: string;
   modeloContratoBase64?: string;
   modeloContratoNome?: string;
+  avisoEstouIndo?: string;
+  avisoCuidadosPosMontagem?: string;
+  avisoAtraso?: string;
   atualizadoEm?: number;
 }
 

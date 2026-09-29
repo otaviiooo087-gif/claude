@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { Task, TYPE_LABELS, STATUS_LABELS, STATUS_ORDER } from '@/lib/types';
-import { formatCurrency, isAtrasada, whatsappUrl, mensagemEstouIndo, MENSAGEM_CUIDADOS_POS_MONTAGEM } from '@/lib/format';
+import { formatCurrency, isAtrasada, whatsappUrl } from '@/lib/format';
+import { textoEstouIndo, textoCuidadosPosMontagem } from '@/lib/avisos';
+import { useConfiguracoes } from '@/lib/useConfiguracoes';
 import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
 import PromptMinutosDialog from './PromptMinutosDialog';
@@ -34,6 +36,7 @@ export default function TaskDetail({
   const [statusAberto, setStatusAberto] = useState(false);
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
   const [cobrando, setCobrando] = useState(false);
+  const config = useConfiguracoes();
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
   const checklistPendente = task.checklist.some((item) => !item.marcado);
@@ -99,7 +102,7 @@ export default function TaskDetail({
             </button>
             {task.tipo === 'MONTAGEM' && (
               <a
-                href={whatsappUrl(task.telefone, MENSAGEM_CUIDADOS_POS_MONTAGEM)}
+                href={whatsappUrl(task.telefone, textoCuidadosPosMontagem(config, task.cliente))}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-xl bg-emerald-700 px-4 py-3 text-center text-sm font-semibold text-white"
@@ -232,7 +235,7 @@ export default function TaskDetail({
           titulo="Em quantos minutos você chega?"
           onCancel={() => setPerguntandoMinutos(false)}
           onConfirm={(minutos) => {
-            const url = whatsappUrl(task.telefone!, mensagemEstouIndo(task.tipo, minutos));
+            const url = whatsappUrl(task.telefone!, textoEstouIndo(config, task.tipo, task.cliente, minutos));
             window.open(url, '_blank', 'noreferrer');
             setPerguntandoMinutos(false);
           }}

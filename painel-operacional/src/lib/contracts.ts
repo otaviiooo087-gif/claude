@@ -27,6 +27,8 @@ export interface Contrato {
   valorChegada: number;
   status: ContratoStatus;
   observacoes?: string;
+  contratoAssinadoBase64?: string;
+  contratoAssinadoNome?: string;
   criadoEm: number;
 }
 

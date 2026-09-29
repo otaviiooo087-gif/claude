@@ -13,11 +13,13 @@ interface ItemMenu {
 
 const ITENS_ADMIN: ItemMenu[] = [
   { href: '/admin', label: 'Monitoramento de equipe' },
+  { href: '/admin/agenda', label: 'Agenda de eventos' },
   { href: '/admin/atribuir', label: 'Planejamento de logística' },
   { href: '/admin/contratos', label: 'Contratos' },
   { href: '/admin/brinquedos', label: 'Brinquedos' },
+  { href: '/admin/avisos', label: 'Avisos' },
   { href: '/admin/configuracoes', label: 'Configurações' },
-  { href: '/', label: 'Agenda de eventos' },
+  { href: '/', label: 'Minha agenda' },
 ];
 
 const ITENS_OPERADOR: ItemMenu[] = [{ href: '/admin/brinquedos', label: 'Brinquedos' }];
