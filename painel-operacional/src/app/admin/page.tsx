@@ -10,6 +10,7 @@ import { UserRole } from '@/lib/authTypes';
 import MenuLateral from '@/components/MenuLateral';
 import AlternarModo from '@/components/AlternarModo';
 import { ouvirProdutividadeDoDia, RegistroProdutividade } from '@/lib/produtividade';
+import { LocalizacaoDoc } from '@/lib/useLiveLocation';
 
 const MapaOperadores = dynamic(() => import('@/components/MapaOperadores'), {
   ssr: false,
@@ -44,7 +45,7 @@ export default function AdminPage() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [produtividade, setProdutividade] = useState<RegistroProdutividade[]>([]);
-  const [replayOperador, setReplayOperador] = useState<{ uid: string; nome: string } | null>(null);
+  const [replayOperador, setReplayOperador] = useState<LocalizacaoDoc | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -183,7 +184,7 @@ export default function AdminPage() {
           return (
             <button
               key={op.uid}
-              onClick={() => setReplayOperador({ uid: op.uid, nome: op.nome })}
+              onClick={() => setReplayOperador(op)}
               className="rounded-2xl border border-slate-800 bg-slate-800/40 p-4 text-left"
             >
               <div className="flex items-center justify-between">
@@ -239,11 +240,7 @@ export default function AdminPage() {
       </div>
 
       {replayOperador && (
-        <TrajetoReplayModal
-          uid={replayOperador.uid}
-          nome={replayOperador.nome}
-          onFechar={() => setReplayOperador(null)}
-        />
+        <TrajetoReplayModal operador={replayOperador} onFechar={() => setReplayOperador(null)} />
       )}
     </main>
   );

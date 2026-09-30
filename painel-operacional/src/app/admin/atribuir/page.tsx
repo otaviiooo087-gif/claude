@@ -9,6 +9,7 @@ import { listarUsuarios } from '@/lib/usuarios';
 import { UserProfile } from '@/lib/authTypes';
 import { atribuirTarefas } from '@/lib/tarefasAtribuidas';
 import MenuLateral from '@/components/MenuLateral';
+import { extrairTextoContrato } from '@/lib/lerContrato';
 
 const TIPOS: TaskType[] = ['MONTAGEM', 'RETIRADA', 'EVENTO', 'LOGISTICA'];
 
@@ -22,6 +23,8 @@ export default function AtribuirLogisticaPage() {
   const [atribuicoes, setAtribuicoes] = useState<Record<number, string>>({});
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [lendoArquivo, setLendoArquivo] = useState(false);
+  const [erroArquivo, setErroArquivo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -45,6 +48,29 @@ export default function AtribuirLogisticaPage() {
     const resultado = parseLogistica(texto);
     setDrafts(resultado);
     setAtribuicoes({});
+  }
+
+  async function enviarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!arquivo) return;
+
+    setErroArquivo(null);
+    setLendoArquivo(true);
+    try {
+      const textoLido =
+        arquivo.type === 'text/plain' || arquivo.name.toLowerCase().endsWith('.txt')
+          ? await arquivo.text()
+          : await extrairTextoContrato(arquivo);
+
+      setTexto(textoLido);
+      setDrafts(parseLogistica(textoLido));
+      setAtribuicoes({});
+    } catch (err) {
+      setErroArquivo(err instanceof Error ? err.message : 'Não consegui ler esse arquivo.');
+    } finally {
+      setLendoArquivo(false);
+    }
   }
 
   function atualizarDraft(idx: number, campo: keyof TaskDraft, valor: string) {
@@ -153,6 +179,28 @@ export default function AtribuirLogisticaPage() {
             >
               ANALISAR TEXTO
             </button>
+
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-slate-800" />
+              <span className="text-xs text-slate-500">ou</span>
+              <div className="h-px flex-1 bg-slate-800" />
+            </div>
+
+            <label
+              className={`block cursor-pointer rounded-xl bg-slate-800 py-3 text-center text-sm font-bold text-slate-200 ${
+                lendoArquivo ? 'opacity-50' : ''
+              }`}
+            >
+              {lendoArquivo ? 'Lendo arquivo...' : '📄 Enviar arquivo pronto (.txt, PDF ou foto)'}
+              <input
+                type="file"
+                accept=".txt,.pdf,image/*"
+                onChange={enviarArquivo}
+                disabled={lendoArquivo}
+                className="hidden"
+              />
+            </label>
+            {erroArquivo && <p className="text-xs text-red-400">{erroArquivo}</p>}
           </>
         )}
 

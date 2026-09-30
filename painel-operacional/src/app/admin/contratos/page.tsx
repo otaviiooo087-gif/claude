@@ -227,7 +227,7 @@ export default function ContratosPage() {
               lendoContrato ? 'opacity-50' : ''
             }`}
           >
-            {lendoContrato ? 'Lendo...' : '📄 Ler contrato'}
+            {lendoContrato ? 'Lendo...' : '📎 Anexar contrato'}
             <input
               type="file"
               accept=".pdf,image/*"
