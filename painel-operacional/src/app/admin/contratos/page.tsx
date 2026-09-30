@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
@@ -16,9 +16,11 @@ import {
   criarContrato,
   excluirContrato,
   ouvirContratos,
+  nomesDosItens,
 } from '@/lib/contracts';
+import { gerarToken, linkAssinatura, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
-import { buscarProdutos } from '@/lib/produtos';
+import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
 import { ChecklistItem, Task } from '@/lib/types';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { extrairTextoContrato } from '@/lib/lerContrato';
@@ -46,6 +48,10 @@ const VAZIO: ContratoDraft = {
   valorChegada: 0,
   status: 'PENDENTE',
   observacoes: '',
+  itens: [],
+  horarioInicio: '',
+  horarioTermino: '',
+  valorTotal: 0,
 };
 
 export default function ContratosPage() {
@@ -62,11 +68,18 @@ export default function ContratosPage() {
   const [processandoAnexo, setProcessandoAnexo] = useState(false);
   const [lendoContrato, setLendoContrato] = useState(false);
   const [erroLeitura, setErroLeitura] = useState<string | null>(null);
+  const [catalogo, setCatalogo] = useState<Produto[]>([]);
+  const [assinados, setAssinados] = useState<Record<string, number>>({});
+  const [enviandoContrato, setEnviandoContrato] = useState<string | null>(null);
+  const [avisoContrato, setAvisoContrato] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
-    return ouvirContratos(setContratos);
+    const fns = [ouvirContratos(setContratos), ouvirProdutos(setCatalogo), ouvirAssinaturas(setAssinados)];
+    return () => fns.forEach((f) => f());
   }, [ehAdmin]);
+
+  const itensDoForm = useMemo(() => form.itens ?? [], [form.itens]);
 
   if (!profile) return null;
 
@@ -109,9 +122,13 @@ export default function ContratosPage() {
         telefone: extraido.telefone,
         endereco: extraido.endereco,
         brinquedo: extraido.brinquedo,
+        itens: extraido.brinquedo
+          ? [{ nome: extraido.brinquedo, peso: catalogo.find((p) => p.nome === extraido.brinquedo)?.pesoSuportado ?? '' }]
+          : [],
         dataEvento: extraido.dataEvento,
         valorSinal: extraido.valorSinal,
         valorChegada: extraido.valorChegada,
+        valorTotal: extraido.valorSinal + extraido.valorChegada,
         contratoAssinadoBase64: dataUrl,
         contratoAssinadoNome: arquivo.name,
       });
@@ -141,18 +158,74 @@ export default function ContratosPage() {
       observacoes: c.observacoes ?? '',
       contratoAssinadoBase64: c.contratoAssinadoBase64 ?? '',
       contratoAssinadoNome: c.contratoAssinadoNome ?? '',
+      itens: nomesDosItens(c).map((nome) => ({
+        nome,
+        peso: c.itens?.find((i) => i.nome === nome)?.peso ?? catalogo.find((p) => p.nome === nome)?.pesoSuportado ?? '',
+      })),
+      horarioInicio: c.horarioInicio ?? '',
+      horarioTermino: c.horarioTermino ?? '',
+      valorTotal: c.valorTotal ?? c.valorSinal + c.valorChegada,
+      tokenAssinatura: c.tokenAssinatura,
     });
     setEditando(c.id);
     setMostrarForm(true);
   }
 
+  function dadosParaSalvar(): ContratoDraft {
+    const itens = itensDoForm.filter((i) => i.nome.trim());
+    return {
+      ...form,
+      itens,
+      brinquedo: itens.map((i) => i.nome).join(' + '),
+      valorTotal: form.valorTotal || form.valorSinal + form.valorChegada,
+    };
+  }
+
   async function salvar() {
+    const dados = dadosParaSalvar();
     if (editando) {
-      await atualizarContrato(editando, form);
+      await atualizarContrato(editando, dados);
     } else {
-      await criarContrato(form);
+      await criarContrato(dados);
     }
     setMostrarForm(false);
+  }
+
+  function adicionarItem(nome: string) {
+    if (!nome) return;
+    const peso = catalogo.find((p) => p.nome === nome)?.pesoSuportado ?? '';
+    setForm((f) => ({ ...f, itens: [...(f.itens ?? []), { nome, peso }] }));
+  }
+
+  function definirTotal(total: number) {
+    setForm((f) => ({ ...f, valorTotal: total, valorChegada: Math.max(0, total - (f.valorSinal || 0)) }));
+  }
+
+  function definirSinal(sinal: number) {
+    setForm((f) => ({ ...f, valorSinal: sinal, valorChegada: Math.max(0, (f.valorTotal || 0) - sinal) }));
+  }
+
+  /** Salva (se preciso), publica o contrato preenchido e abre o WhatsApp do cliente com o link de assinatura. */
+  async function enviarPeloWhatsapp(c: Contrato) {
+    setAvisoContrato(null);
+    if (!c.telefone) {
+      setAvisoContrato('Esse contrato não tem telefone do cliente — edite e preencha para enviar pelo WhatsApp.');
+      return;
+    }
+    setEnviandoContrato(c.id);
+    try {
+      const token = c.tokenAssinatura ?? gerarToken();
+      // Já assinado: não republica (sobrescreveria a assinatura), só reenvia o link.
+      if (!assinados[token]) await publicarContrato(c, token);
+      if (!c.tokenAssinatura) await atualizarContrato(c.id, { tokenAssinatura: token });
+      const link = linkAssinatura(token);
+      const msg = `Olá, ${c.cliente.split(' ')[0]}! Segue o contrato de locação da Zimba Festas para conferir e assinar:\n${link}\n\nÉ só abrir, ler e assinar com o dedo na tela. Qualquer dúvida, é só chamar! 🎈`;
+      window.open(whatsappUrl(c.telefone, msg), '_blank');
+    } catch {
+      setAvisoContrato('Não consegui gerar o link. Confira a internet e se as regras do Firestore foram republicadas.');
+    } finally {
+      setEnviandoContrato(null);
+    }
   }
 
   async function selecionarContratoAssinado(e: React.ChangeEvent<HTMLInputElement>) {
@@ -181,9 +254,14 @@ export default function ContratosPage() {
     setGerandoLogistica(c.id);
     try {
       const produtos = await buscarProdutos();
-      const produto = produtos.find((p) => p.nome.trim().toLowerCase() === c.brinquedo.trim().toLowerCase());
-      const checklist: ChecklistItem[] =
-        produto?.itens.map((item, idx) => ({ id: `item-${idx}`, texto: item, marcado: false })) ?? [];
+      const checklist: ChecklistItem[] = [];
+      const varios = nomesDosItens(c).length > 1;
+      nomesDosItens(c).forEach((nome) => {
+        const produto = produtos.find((p) => p.nome.trim().toLowerCase() === nome.trim().toLowerCase());
+        produto?.itens.forEach((item) =>
+          checklist.push({ id: `item-${checklist.length}`, texto: varios ? `${nome}: ${item}` : item, marcado: false })
+        );
+      });
 
       const observacoesPartes = [
         `Sinal já pago: ${formatCurrency(c.valorSinal)}.`,
@@ -194,8 +272,8 @@ export default function ContratosPage() {
       const tarefa: Task = {
         id: `contrato-${c.id}`,
         data: c.dataEvento,
-        horario: 'A combinar',
-        horarioComparacao: '00:00',
+        horario: c.horarioInicio || 'A combinar',
+        horarioComparacao: c.horarioInicio || '00:00',
         tipo: 'MONTAGEM',
         cliente: c.cliente,
         telefone: c.telefone,
@@ -242,6 +320,9 @@ export default function ContratosPage() {
         </div>
       </header>
 
+      {avisoContrato && (
+        <p className="border-b border-slate-800 bg-amber-500/10 px-4 py-2 text-xs text-amber-400">{avisoContrato}</p>
+      )}
       {erroLeitura && (
         <p className="border-b border-slate-800 bg-amber-500/10 px-4 py-2 text-xs text-amber-400">{erroLeitura}</p>
       )}
@@ -268,7 +349,7 @@ export default function ContratosPage() {
                   {STATUS_LABEL[c.status]}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-slate-300">{c.brinquedo}</p>
+              <p className="mt-1 text-sm text-slate-300">{nomesDosItens(c).join(' + ')}</p>
               <div className="mt-2 flex items-center gap-2">
                 <span className="text-xs text-slate-400">{c.dataEvento}</span>
                 <ClimaBadge endereco={c.endereco} data={c.dataEvento} />
@@ -281,8 +362,21 @@ export default function ContratosPage() {
               </div>
             </button>
             <button
+              onClick={() => enviarPeloWhatsapp(c)}
+              disabled={enviandoContrato === c.id}
+              className="mt-3 w-full rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white disabled:opacity-50"
+            >
+              {enviandoContrato === c.id
+                ? 'Gerando link...'
+                : c.tokenAssinatura && assinados[c.tokenAssinatura]
+                ? '✅ Assinado — reenviar link'
+                : c.tokenAssinatura
+                ? '⏳ Aguardando assinatura — reenviar pelo WhatsApp'
+                : '📄 Gerar contrato e enviar pelo WhatsApp'}
+            </button>
+            <button
               onClick={() => setCobrando(c)}
-              className="mt-3 w-full rounded-lg bg-emerald-600/20 py-2 text-xs font-bold text-emerald-400"
+              className="mt-2 w-full rounded-lg bg-emerald-600/20 py-2 text-xs font-bold text-emerald-400"
             >
               Cobrar via Pix
             </button>
@@ -322,7 +416,7 @@ export default function ContratosPage() {
               </p>
             )}
             <div className={`flex flex-col gap-3 ${!editando && form.contratoAssinadoNome ? '' : 'mt-4'}`}>
-              <Campo label="Nome completo">
+              <Campo label="Nome do contratante">
                 <input
                   value={form.cliente}
                   onChange={(e) => setForm({ ...form, cliente: e.target.value })}
@@ -330,7 +424,7 @@ export default function ContratosPage() {
                 />
               </Campo>
               <div className="grid grid-cols-2 gap-2">
-                <Campo label="CPF">
+                <Campo label="CPF ou CNPJ">
                   <input
                     value={form.cpf}
                     onChange={(e) => setForm({ ...form, cpf: e.target.value })}
@@ -354,14 +448,51 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
-              <Campo label="Qual brinquedo">
-                <input
-                  value={form.brinquedo}
-                  onChange={(e) => setForm({ ...form, brinquedo: e.target.value })}
-                  placeholder="Ex: Cama elástica 3,05m"
-                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                />
-              </Campo>
+              <div>
+                <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
+                  Descrição dos itens (brinquedos)
+                </span>
+                <div className="flex flex-col gap-1">
+                  {itensDoForm.map((it, idx) => (
+                    <div key={idx} className="flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 ring-1 ring-slate-700">
+                      <span className="min-w-0 flex-1 truncate text-sm text-slate-100">{it.nome}</span>
+                      <input
+                        value={it.peso}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            itens: itensDoForm.map((x, i) => (i === idx ? { ...x, peso: e.target.value } : x)),
+                          })
+                        }
+                        placeholder="peso suportado"
+                        className="w-28 rounded bg-slate-900 px-2 py-1 text-xs text-slate-100 outline-none ring-1 ring-slate-700"
+                      />
+                      <button
+                        onClick={() => setForm({ ...form, itens: itensDoForm.filter((_, i) => i !== idx) })}
+                        className="text-xs font-bold text-red-400"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <select
+                  value=""
+                  onChange={(e) => adicionarItem(e.target.value)}
+                  className="mt-2 w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                >
+                  <option value="">+ Adicionar brinquedo do catálogo…</option>
+                  {catalogo.map((p) => (
+                    <option key={p.id} value={p.nome}>
+                      {p.nome}
+                      {p.pesoSuportado ? ` (${p.pesoSuportado})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500">
+                  O peso suportado vem do cadastro do brinquedo e vai preenchido no contrato.
+                </p>
+              </div>
               <Campo label="Endereço do evento">
                 <input
                   value={form.endereco}
@@ -414,25 +545,43 @@ export default function ContratosPage() {
                 </Campo>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <Campo label="Valor do sinal (R$)">
+                <Campo label="Início da montagem">
                   <input
-                    type="number"
-                    value={form.valorSinal}
-                    onChange={(e) => setForm({ ...form, valorSinal: Number(e.target.value) })}
+                    type="time"
+                    value={form.horarioInicio ?? ''}
+                    onChange={(e) => setForm({ ...form, horarioInicio: e.target.value })}
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
-                <Campo label="Valor na chegada (R$)">
+                <Campo label="Término">
                   <input
-                    type="number"
-                    value={form.valorChegada}
-                    onChange={(e) => setForm({ ...form, valorChegada: Number(e.target.value) })}
+                    type="time"
+                    value={form.horarioTermino ?? ''}
+                    onChange={(e) => setForm({ ...form, horarioTermino: e.target.value })}
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
               </div>
-              <p className="-mt-1 text-xs text-slate-500">
-                Valor total: {formatCurrency((form.valorSinal || 0) + (form.valorChegada || 0))}
+              <div className="grid grid-cols-2 gap-2">
+                <Campo label="Valor total acordado (R$)">
+                  <input
+                    type="number"
+                    value={form.valorTotal ?? 0}
+                    onChange={(e) => definirTotal(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+                <Campo label="Valor do sinal (R$)">
+                  <input
+                    type="number"
+                    value={form.valorSinal}
+                    onChange={(e) => definirSinal(Number(e.target.value))}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+              </div>
+              <p className="-mt-1 text-xs text-emerald-400">
+                Restante pago na chegada da equipe: {formatCurrency(form.valorChegada || 0)}
               </p>
               <Campo label="Observações">
                 <textarea

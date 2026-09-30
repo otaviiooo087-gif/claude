@@ -45,6 +45,17 @@ service cloud.firestore {
       allow read, write: if ehAdmin();
     }
 
+    match /contratosPublicos/{token} {
+      // O token (32 hex aleatórios) é o segredo do link enviado ao cliente:
+      // quem tem o link lê aquele contrato; ninguém consegue listar.
+      allow get: if true;
+      allow list, create, delete: if ehAdmin();
+      // Cliente (sem login) só pode assinar UMA vez, mexendo só na assinatura.
+      allow update: if ehAdmin() ||
+        (resource.data.assinadoEm == null &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assinatura', 'assinadoEm']));
+    }
+
     match /brinquedos/{id} {
       // Qualquer operador logado precisa ver o catálogo pra saber o que
       // carregar; só o admin cadastra/edita/apaga um brinquedo.

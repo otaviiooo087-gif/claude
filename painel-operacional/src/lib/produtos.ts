@@ -17,6 +17,7 @@ export interface Produto {
   cor: string; // hex, ex: #22c55e — pra identificar o brinquedo de longe
   imagemUrl: string; // data URL (foto comprimida, guardada direto no documento)
   itens: string[]; // cada peça que compõe o brinquedo (motor, lona, extensão, estacas...)
+  pesoSuportado?: string; // ex: "até 150 kg" — vai pro contrato
   quantidade: number; // quantas unidades desse brinquedo a empresa tem (pra checar disponibilidade por data)
   criadoEm: number;
 }

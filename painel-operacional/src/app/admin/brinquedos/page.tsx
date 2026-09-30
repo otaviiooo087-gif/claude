@@ -14,6 +14,7 @@ const VAZIO: ProdutoDraft = {
   imagemUrl: '',
   itens: [],
   quantidade: 1,
+  pesoSuportado: '',
 };
 
 export default function BrinquedosPage() {
@@ -48,7 +49,7 @@ export default function BrinquedosPage() {
   }
 
   function abrirEdicao(p: Produto) {
-    setForm({ nome: p.nome, cor: p.cor, imagemUrl: p.imagemUrl, itens: [...p.itens], quantidade: p.quantidade ?? 1 });
+    setForm({ nome: p.nome, cor: p.cor, imagemUrl: p.imagemUrl, itens: [...p.itens], quantidade: p.quantidade ?? 1, pesoSuportado: p.pesoSuportado ?? '' });
     setEditando(p.id);
     setNovoItem('');
     setMostrarForm(true);
@@ -231,6 +232,15 @@ export default function BrinquedosPage() {
                   min={1}
                   value={form.quantidade}
                   onChange={(e) => setForm({ ...form, quantidade: Math.max(1, Number(e.target.value)) })}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+
+              <Campo label="Peso suportado (aparece no contrato)">
+                <input
+                  value={form.pesoSuportado ?? ''}
+                  onChange={(e) => setForm({ ...form, pesoSuportado: e.target.value })}
+                  placeholder="Ex: até 150 kg no total"
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>

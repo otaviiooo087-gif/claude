@@ -1,7 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getFirebaseDb } from './firebase';
 import { buscarProdutos } from './produtos';
-import { Contrato } from './contracts';
+import { Contrato, nomesDosItens } from './contracts';
 
 export interface ResultadoDisponibilidade {
   quantidadeTotal: number;
@@ -26,7 +26,10 @@ export async function verificarDisponibilidade(
 
   const reservas = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }) as Contrato)
-    .filter((c) => c.status !== 'CANCELADO' && c.brinquedo.trim().toLowerCase() === nomeNormalizado)
+    .filter(
+      (c) =>
+        c.status !== 'CANCELADO' && nomesDosItens(c).some((n) => n.trim().toLowerCase() === nomeNormalizado)
+    )
     .map((c) => ({ cliente: c.cliente, contratoId: c.id }));
 
   return { quantidadeTotal, reservas, disponiveis: Math.max(0, quantidadeTotal - reservas.length) };

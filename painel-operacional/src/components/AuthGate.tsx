@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import LoginScreen from './LoginScreen';
 
@@ -10,6 +11,10 @@ import LoginScreen from './LoginScreen';
  */
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { configured, loading, user, profile, logout } = useAuth();
+  const pathname = usePathname();
+
+  // Página pública onde o cliente assina o contrato pelo link: sem login.
+  if (pathname?.replace(/\/$/, '').endsWith('/assinar')) return <>{children}</>;
 
   if (!configured) return <>{children}</>;
 
