@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import TrocarSenhaModal from './TrocarSenhaModal';
+import { LOGO_UI } from '@/lib/contratoImagens';
 
 interface ItemMenu {
   href: string;
@@ -53,7 +54,11 @@ export default function MenuLateral() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-base font-bold text-slate-50">Zimba Festa</span>
+                <span className="flex items-center gap-2 text-base font-bold text-slate-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={LOGO_UI} alt="" className="h-9 w-auto rounded-lg bg-white p-1" />
+                  Zimba Festa
+                </span>
                 <button onClick={() => setAberto(false)} aria-label="Fechar menu" className="p-1 text-xl text-slate-400">
                   ×
                 </button>

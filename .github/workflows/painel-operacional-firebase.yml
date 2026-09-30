@@ -1,4 +1,4 @@
-name: Painel Operacional — publica no Firebase Hosting (zimba-festa.web.app)
+name: Painel Operacional — publica no Firebase Hosting (zimbafestaapp.web.app)
 
 on:
   push:

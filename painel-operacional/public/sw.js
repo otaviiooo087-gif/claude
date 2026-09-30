@@ -1,4 +1,4 @@
-const CACHE_NAME = 'painel-operacional-v2';
+const CACHE_NAME = 'painel-operacional-v3';
 
 function scopeUrl(path) {
   return new URL(path, self.registration.scope).toString();

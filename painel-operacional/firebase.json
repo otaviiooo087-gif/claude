@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "zimbafestaapp",
     "public": "out",
     "cleanUrls": false,
     "trailingSlash": true,
