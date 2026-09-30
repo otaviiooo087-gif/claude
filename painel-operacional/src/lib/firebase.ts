@@ -43,11 +43,16 @@ export function getFirebaseDb(): Firestore {
       // sincroniza sozinha com o Firestore assim que a internet voltar.
       dbInstance = initializeFirestore(getFirebaseApp(), {
         localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({}) }),
+        // Muita tarefa/contrato/produto no app tem campo opcional (telefone,
+        // endereço, valor...) que vira `undefined` em vez de ausente quando
+        // não preenchido. Sem isso, o Firestore rejeita a escrita inteira com
+        // "Unsupported field value: undefined" em vez de só ignorar o campo.
+        ignoreUndefinedProperties: true,
       });
     } catch {
       // Ambientes sem suporte a IndexedDB (ex: aba privada) caem para o
       // comportamento padrão, só sem cache offline.
-      dbInstance = getFirestore(getFirebaseApp());
+      dbInstance = initializeFirestore(getFirebaseApp(), { ignoreUndefinedProperties: true });
     }
   }
   return dbInstance;
