@@ -60,8 +60,9 @@ export function ouvirContratos(callback: (contratos: Contrato[]) => void) {
   });
 }
 
-export async function criarContrato(dados: ContratoDraft): Promise<void> {
-  await addDoc(collection(getFirebaseDb(), COLECAO), { ...dados, criadoEm: Date.now() });
+export async function criarContrato(dados: ContratoDraft): Promise<string> {
+  const ref = await addDoc(collection(getFirebaseDb(), COLECAO), { ...dados, criadoEm: Date.now() });
+  return ref.id;
 }
 
 export async function atualizarContrato(id: string, dados: Partial<ContratoDraft>): Promise<void> {

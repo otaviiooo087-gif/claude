@@ -211,7 +211,19 @@ export default function ContratosPage() {
     if (editando) {
       await atualizarContrato(editando, dados);
     } else {
-      await criarContrato(dados);
+      const id = await criarContrato(dados);
+      // Contrato já fechado/assinado (anexado com o arquivo): a logística sai na hora, sem esperar link de assinatura.
+      if (dados.contratoAssinadoBase64) {
+        try {
+          await salvarLogisticaContrato(
+            { ...dados, id, criadoEm: Date.now() },
+            await buscarProdutos(),
+            'manual'
+          );
+        } catch {
+          setAvisoContrato('Contrato salvo, mas não consegui gerar a logística. Use o botão do card.');
+        }
+      }
     }
     setMostrarForm(false);
   }
