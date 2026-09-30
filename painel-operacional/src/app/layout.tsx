@@ -6,13 +6,15 @@ import AuthGate from '@/components/AuthGate';
 import EmergenciaWatcher from '@/components/EmergenciaWatcher';
 import './globals.css';
 
+const BASE = process.env.GITHUB_PAGES === 'true' ? '/claude' : '';
+
 export const metadata: Metadata = {
   title: 'Zimba Festas App',
   description: 'Painel offline para controle de montagens e retiradas.',
-  manifest: 'manifest.json',
+  manifest: `${BASE}/manifest.json`,
   icons: {
-    icon: 'icons/icon-192.png',
-    apple: 'icons/icon-192.png',
+    icon: [{ url: `${BASE}/icons/icon-192.png?v=3`, type: 'image/png' }],
+    apple: `${BASE}/icons/icon-192.png?v=3`,
   },
 };
 
