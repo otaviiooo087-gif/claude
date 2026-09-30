@@ -423,7 +423,14 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
-              <div className="grid grid-cols-2 gap-2">
+              <h3 className="mt-2 border-b border-slate-800 pb-1 text-[11px] font-extrabold uppercase tracking-widest text-brand-500">Contratante</h3>
+              <Campo label="Nome do contratante">
+                <input
+                  value={form.cliente}
+                  onChange={(e) => setForm({ ...form, cliente: e.target.value })}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
                 <Campo label="CPF ou CNPJ">
                   <input
                     value={form.cpf}
@@ -432,15 +439,6 @@ export default function ContratosPage() {
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
-                <Campo label="Data de nascimento">
-                  <input
-                    type="date"
-                    value={form.dataNascimento}
-                    onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })}
-                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                  />
-                </Campo>
-              </div>
               <Campo label="Telefone">
                 <input
                   value={form.telefone}
@@ -448,6 +446,14 @@ export default function ContratosPage() {
                   className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                 />
               </Campo>
+              <Campo label="Endereço">
+                <input
+                  value={form.endereco}
+                  onChange={(e) => setForm({ ...form, endereco: e.target.value })}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <h3 className="mt-2 border-b border-slate-800 pb-1 text-[11px] font-extrabold uppercase tracking-widest text-brand-500">Locação</h3>
               <div>
                 <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500">
                   Descrição dos itens (brinquedos)
@@ -493,36 +499,7 @@ export default function ContratosPage() {
                   O peso suportado vem do cadastro do brinquedo e vai preenchido no contrato.
                 </p>
               </div>
-              <Campo label="Endereço do evento">
-                <input
-                  value={form.endereco}
-                  onChange={(e) => setForm({ ...form, endereco: e.target.value })}
-                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                />
-              </Campo>
-              <Campo label="Motivo do lembrete (opcional)">
-                <input
-                  value={form.motivoLembrete}
-                  onChange={(e) => setForm({ ...form, motivoLembrete: e.target.value })}
-                  placeholder="Ex: aniversário do João, 1 ano de casados, formatura da Maria"
-                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                />
-              </Campo>
-              <Campo label="Data do lembrete">
-                <input
-                  type="date"
-                  value={form.dataLembrete}
-                  onChange={(e) => setForm({ ...form, dataLembrete: e.target.value })}
-                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                />
-              </Campo>
-              <p className="-mt-1 text-xs text-slate-500">
-                Preenchendo a data, o contrato aparece automaticamente em &quot;Lembretes próximos&quot; nos 5
-                dias antes da data — não precisa ser aniversário, pode ser qualquer data que valha a pena
-                lembrar o cliente (o ano digitado não importa, só repete o dia/mês todo ano).
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Campo label="Data do evento">
+                <Campo label="Data da locação">
                   <input
                     type="date"
                     value={form.dataEvento}
@@ -530,20 +507,6 @@ export default function ContratosPage() {
                     className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
                   />
                 </Campo>
-                <Campo label="Status">
-                  <select
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as ContratoStatus })}
-                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
-                  >
-                    {(Object.keys(STATUS_LABEL) as ContratoStatus[]).map((s) => (
-                      <option key={s} value={s}>
-                        {STATUS_LABEL[s]}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-              </div>
               <div className="grid grid-cols-2 gap-2">
                 <Campo label="Início da montagem">
                   <input
@@ -562,6 +525,7 @@ export default function ContratosPage() {
                   />
                 </Campo>
               </div>
+              <h3 className="mt-2 border-b border-slate-800 pb-1 text-[11px] font-extrabold uppercase tracking-widest text-brand-500">Valores</h3>
               <div className="grid grid-cols-2 gap-2">
                 <Campo label="Valor total acordado (R$)">
                   <input
@@ -582,6 +546,49 @@ export default function ContratosPage() {
               </div>
               <p className="-mt-1 text-xs text-emerald-400">
                 Restante pago na chegada da equipe: {formatCurrency(form.valorChegada || 0)}
+              </p>
+              <h3 className="mt-2 border-b border-slate-800 pb-1 text-[11px] font-extrabold uppercase tracking-widest text-brand-500">Outras informações (opcional)</h3>
+                <Campo label="Data de nascimento">
+                  <input
+                    type="date"
+                    value={form.dataNascimento}
+                    onChange={(e) => setForm({ ...form, dataNascimento: e.target.value })}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  />
+                </Campo>
+                <Campo label="Status">
+                  <select
+                    value={form.status}
+                    onChange={(e) => setForm({ ...form, status: e.target.value as ContratoStatus })}
+                    className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                  >
+                    {(Object.keys(STATUS_LABEL) as ContratoStatus[]).map((s) => (
+                      <option key={s} value={s}>
+                        {STATUS_LABEL[s]}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              <Campo label="Motivo do lembrete (opcional)">
+                <input
+                  value={form.motivoLembrete}
+                  onChange={(e) => setForm({ ...form, motivoLembrete: e.target.value })}
+                  placeholder="Ex: aniversário do João, 1 ano de casados, formatura da Maria"
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <Campo label="Data do lembrete">
+                <input
+                  type="date"
+                  value={form.dataLembrete}
+                  onChange={(e) => setForm({ ...form, dataLembrete: e.target.value })}
+                  className="w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                />
+              </Campo>
+              <p className="-mt-1 text-xs text-slate-500">
+                Preenchendo a data, o contrato aparece automaticamente em &quot;Lembretes próximos&quot; nos 5
+                dias antes da data — não precisa ser aniversário, pode ser qualquer data que valha a pena
+                lembrar o cliente (o ano digitado não importa, só repete o dia/mês todo ano).
               </p>
               <Campo label="Observações">
                 <textarea
