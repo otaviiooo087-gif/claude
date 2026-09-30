@@ -18,7 +18,8 @@ import {
   ouvirContratos,
   nomesDosItens,
 } from '@/lib/contracts';
-import { gerarToken, linkAssinatura, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
+import { gerarToken, linkAssinatura, montarPublico, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
+import ContratoDocumento from '@/components/ContratoDocumento';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
 import { ChecklistItem, Task } from '@/lib/types';
@@ -72,6 +73,7 @@ export default function ContratosPage() {
   const [assinados, setAssinados] = useState<Record<string, number>>({});
   const [enviandoContrato, setEnviandoContrato] = useState<string | null>(null);
   const [avisoContrato, setAvisoContrato] = useState<string | null>(null);
+  const [previa, setPrevia] = useState<Contrato | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -362,7 +364,7 @@ export default function ContratosPage() {
               </div>
             </button>
             <button
-              onClick={() => enviarPeloWhatsapp(c)}
+              onClick={() => setPrevia(c)}
               disabled={enviandoContrato === c.id}
               className="mt-3 w-full rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white disabled:opacity-50"
             >
@@ -649,6 +651,44 @@ export default function ContratosPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {previa && (
+        <div className="fixed inset-0 z-30 flex flex-col bg-black/80">
+          <div className="flex items-center justify-between gap-2 bg-slate-900 p-3">
+            <p className="text-xs font-bold text-slate-200">Confira o contrato antes de enviar</p>
+            <button onClick={() => setPrevia(null)} className="text-xs font-bold text-slate-400">
+              Fechar
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-slate-200 p-2">
+            <div className="mx-auto max-w-3xl shadow-lg">
+              <ContratoDocumento c={montarPublico(previa)} />
+            </div>
+          </div>
+          <div className="flex gap-2 bg-slate-900 p-3">
+            <button
+              onClick={() => {
+                const c = previa;
+                setPrevia(null);
+                abrirEdicao(c);
+              }}
+              className="flex-1 rounded-xl bg-slate-800 py-3 text-sm font-bold text-slate-200"
+            >
+              Corrigir dados
+            </button>
+            <button
+              onClick={async () => {
+                const c = previa;
+                setPrevia(null);
+                await enviarPeloWhatsapp(c);
+              }}
+              className="flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white"
+            >
+              Está certo — gerar link e enviar
+            </button>
           </div>
         </div>
       )}

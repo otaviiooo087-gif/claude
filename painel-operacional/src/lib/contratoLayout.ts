@@ -1,0 +1,519 @@
+// Geometria extraída do PDF oficial CONTRATO_2026.pdf (A4, unidades em pt). NÃO editar à mão:
+// o contrato é redesenhado em SVG com as mesmas posições, fontes e linhas do modelo.
+export const PAGINA = { w: 595.32, h: 841.92 };
+export const FONTE = 8.16;
+
+export interface TextoFixo { s: string; x: number; y: number; w: number; cor?: string; valor?: string; corValor?: string }
+export const TEXTOS: TextoFixo[] = [
+ {
+  "s": "CONTRATO PARA LOCAÇÃO",
+  "x": 188.76,
+  "y": 14.4,
+  "w": 93.7,
+  "cor": "#FF0000"
+ },
+ {
+  "s": "ZIMBA FESTAS LOCAÇÃO DE BRINQUEDOS",
+  "x": 194.88,
+  "y": 26.28,
+  "w": 142.44,
+  "cor": "#ED7D31"
+ },
+ {
+  "s": "NOME FANTASIA: ",
+  "x": 167.16,
+  "y": 38.16,
+  "w": 110.64,
+  "valor": "ZIMBA FESTAS",
+  "corValor": "#ED7D31"
+ },
+ {
+  "s": "CNPJ: ",
+  "x": 283.2,
+  "y": 38.16,
+  "w": 88.36,
+  "valor": "47.913.609/0001-15",
+  "corValor": "#ED7D31"
+ },
+ {
+  "s": "SITE: ",
+  "x": 167.15,
+  "y": 50.04,
+  "w": 120.03,
+  "valor": "WWW.ZIMBAFESTAS.COM.BR",
+  "corValor": "#ED7D31"
+ },
+ {
+  "s": "E-MAIL: ",
+  "x": 294.36,
+  "y": 50.04,
+  "w": 146.77,
+  "valor": "CONTATO@ZIMBAFESTAS.COM.BR",
+  "corValor": "#ED7D31"
+ },
+ {
+  "s": "NOME DO CONTRATANTE:",
+  "x": 30.36,
+  "y": 62.88,
+  "w": 89.71
+ },
+ {
+  "s": "CPF/CNPJ:",
+  "x": 348.71,
+  "y": 62.88,
+  "w": 34.9
+ },
+ {
+  "s": "ENDEREÇO:",
+  "x": 30.36,
+  "y": 76.32,
+  "w": 39.07
+ },
+ {
+  "s": "TELEFONE:",
+  "x": 327.32,
+  "y": 89.04,
+  "w": 36.35
+ },
+ {
+  "s": "DESCRIÇÃO DO ITEM:",
+  "x": 181.56,
+  "y": 101.4,
+  "w": 72.58
+ },
+ {
+  "s": "PESO SUPORTADO",
+  "x": 483.81,
+  "y": 101.4,
+  "w": 62.71
+ },
+ {
+  "s": "POR ESTAREM DE ACORDO, SEGUE O CONTRATO:",
+  "x": 32.16,
+  "y": 768,
+  "w": 167.2
+ },
+ {
+  "s": "DATA DA LOCAÇÃO:",
+  "x": 343.43,
+  "y": 768,
+  "w": 68.02
+ },
+ {
+  "s": "HORÁRIO DE INÍCIO DA MONTAGEM:",
+  "x": 282.36,
+  "y": 780.36,
+  "w": 125.93
+ },
+ {
+  "s": "CHAVE PIX ZIMBA FESTAS: 47.913.609/0001-15",
+  "x": 30.36,
+  "y": 792.72,
+  "w": 158.1,
+  "cor": "#FF0000"
+ },
+ {
+  "s": "HORÁRIO DO TÉRMINO:",
+  "x": 330.6,
+  "y": 792.72,
+  "w": 81.65
+ },
+ {
+  "s": "(CNPJ)",
+  "x": 30.36,
+  "y": 805.08,
+  "w": 21.89,
+  "cor": "#FF0000"
+ },
+ {
+  "s": "VALOR TOTAL ACORDADO:",
+  "x": 318.6,
+  "y": 805.08,
+  "w": 91.26
+ },
+ {
+  "s": "VALOR DO SINAL:",
+  "x": 347.15,
+  "y": 817.44,
+  "w": 59.65
+ },
+ {
+  "s": "ASSINATURA DO CLIENTE: ________________________________ ASS ZIMBA FESTAS: ______________________",
+  "x": 30.36,
+  "y": 831.12,
+  "w": 376.83
+ },
+ {
+  "s": "7 -",
+  "x": 30.36,
+  "y": 553.56,
+  "w": 8.37
+ },
+ {
+  "s": "APÓS A CONFIRMAÇÃO DA RESERVA, ALTERAÇÕES DE DATA OU HORÁRIO SÓ PODERÃO SER REALIZADAS COM ANTECEDÊNCIA ADEQUADA E ESTÃO SUJEITAS",
+  "x": 40.56,
+  "y": 553.56,
+  "w": 519.5
+ },
+ {
+  "s": "A VARIAÇÕES DE VALORES CASO A NOVA DATA POSSUA PREÇO DIFERENTE. PRÓXIMO À DATA DA MONTAGEM, MUDANÇAS DE HORÁRIO SERÃO ANALISADAS",
+  "x": 30.36,
+  "y": 564.24,
+  "w": 521.32
+ },
+ {
+  "s": "APENAS SE NÃO IMPACTAREM A NOSSA OPERAÇÃO; CASO CONTRÁRIO, NENHUMA MODIFICAÇÃO SERÁ PERMITIDA, VISTO QUE NOSSA LOGÍSTICA É PLANEJADA",
+  "x": 30.36,
+  "y": 574.92,
+  "w": 531.03
+ },
+ {
+  "s": "PREVIAMENTE E A EQUIPE, OS VEÍCULOS E OS EQUIPAMENTOS SÃO RESERVADOS EXCLUSIVAMENTE PARA O SEU ATENDIMENTO. JÁ AS ALTERAÇÕES DE DATA SÓ",
+  "x": 30.36,
+  "y": 585.6,
+  "w": 533.66
+ },
+ {
+  "s": "SERÃO ACEITAS COM AMPLA ANTECEDÊNCIA OU EM CASOS COMPROVADOS DE FORÇA MAIOR, COMO MOTIVOS DE SAÚDE DO CONTRATANTE, CÔNJUGE OU",
+  "x": 30.36,
+  "y": 596.28,
+  "w": 521.71
+ },
+ {
+  "s": "FILHOS (COMPROVADOS POR ATESTADO MÉDICO), DESASTRES NATURAIS OU CRISES SANITÁRIAS GRAVES. PARA EVENTOS EM LOCAIS ABERTOS, A PROTEÇÃO",
+  "x": 30.36,
+  "y": 606.96,
+  "w": 521.79
+ },
+ {
+  "s": "CONTRA A CHUVA É DE TOTAL RESPONSABILIDADE DO CONTRATANTE, QUE DEVERÁ PROVIDENCIAR LONA, TOLDO OU UM ESPAÇO COBERTO ALTERNATIVO.",
+  "x": 30.36,
+  "y": 617.64,
+  "w": 518.07
+ },
+ {
+  "s": "CASO ISSO NÃO SEJA FEITO, AUTORIZAMOS O USO DOS BRINQUEDOS INFLÁVEIS SOB CHUVA MODERADA, DESDE QUE OS MOTORES PERMANEÇAM PROTEGIDOS",
+  "x": 30.36,
+  "y": 628.32,
+  "w": 533.79
+ },
+ {
+  "s": "CONFORME DEIXADOS NA MONTAGEM, CABENDO AO CLIENTE APENAS MONITORAR SE A PROTEÇÃO CONTINUA POSICIONADA.",
+  "x": 30.36,
+  "y": 639,
+  "w": 424.47
+ },
+ {
+  "s": "SE ESTIVER CHOVENDO MUITO",
+  "x": 456.6,
+  "y": 639,
+  "w": 104.47
+ },
+ {
+  "s": "NO MOMENTO DA MONTAGEM",
+  "x": 30.36,
+  "y": 649.68,
+  "w": 108.26
+ },
+ {
+  "s": "E O CLIENTE OPTAR POR NÃO PROSSEGUIR COM O SERVIÇO NAQUELE DIA, PERMITIREMOS UM ÚNICO REAGENDAMENTO",
+  "x": 140.4,
+  "y": 649.68,
+  "w": 403.81
+ },
+ {
+  "s": "GRATUITO, VÁLIDO EXCLUSIVAMENTE PARA DIAS DE SEMANA (DE SEGUNDA A SEXTA-FEIRA, EXCETO FERIADOS E DATAS COMEMORATIVAS) E SUJEITO À",
+  "x": 30.36,
+  "y": 660.36,
+  "w": 504.42
+ },
+ {
+  "s": "DISPONIBILIDADE DA NOSSA AGENDA. COMO OS FATORES CLIMÁTICOS FOGEM AO NOSSO CONTROLE, NÃO HAVERÁ REEMBOLSO POR MOTIVO DE CHUVA OU",
+  "x": 30.36,
+  "y": 671.04,
+  "w": 525.81
+ },
+ {
+  "s": "FRIO, INCLUSIVE SE O CLIENTE RECUSAR O REAGENDAMENTO PARA OS DIAS ÚTEIS. DA MESMA FORMA, SE A CHUVA COMEÇAR APÓS A MONTAGEM, NÃO SERÁ",
+  "x": 30.36,
+  "y": 681.72,
+  "w": 529.48
+ },
+ {
+  "s": "POSSÍVEL CANCELAR OU REAGENDAR, POIS O SERVIÇO JÁ TERÁ SIDO EFETIVAMENTE PRESTADO. POR FIM, EM CASO DE CANCELAMENTO OU DESISTÊNCIA POR",
+  "x": 30.36,
+  "y": 692.4,
+  "w": 525.72
+ },
+ {
+  "s": "INICIATIVA DO CLIENTE, O VALOR PAGO NÃO SERÁ DEVOLVIDO.",
+  "x": 30.36,
+  "y": 703.08,
+  "w": 211.09
+ },
+ {
+  "s": "6 - NOSSOS BRINQUEDOS NÃO ACOMPANHAM MONITORES,",
+  "x": 30.36,
+  "y": 510.12,
+  "w": 205.16
+ },
+ {
+  "s": "COM EXCEÇÕES PONTUAIS EM EVENTOS GRANDES E FESTAS DE SEGUNDA A SEXTA-FEIRA, ONDE O",
+  "x": 237.36,
+  "y": 510.12,
+  "w": 326.17
+ },
+ {
+  "s": "SERVIÇO É PAGO À PARTE E E EXPLICITAMENTE DESCRITO NO CAMPO DE DESCRIÇÃO DO ITEM. PORTANTO, A RESPONSABILIDADE PELO CUIDADO E",
+  "x": 30.36,
+  "y": 520.8,
+  "w": 487.24
+ },
+ {
+  "s": "ACOMPANHAMENTO DAS CRIANÇAS DURANTE TODO O PERÍODO DA LOCAÇÃO É INTEIRAMENTE DO CONTRATANTE.",
+  "x": 30.36,
+  "y": 531.48,
+  "w": 386.53
+ },
+ {
+  "s": "5 -",
+  "x": 30.36,
+  "y": 476.4,
+  "w": 8.37
+ },
+ {
+  "s": "MESMO APÓS A EMISSÃO DO CONTRATO, A RESERVA DO BRINQUEDO SÓ É EFETIVADA APÓS A CONFIRMAÇÃO DO RECEBIMENTO DO SINAL ACORDADO.",
+  "x": 40.56,
+  "y": 476.4,
+  "w": 517.93
+ },
+ {
+  "s": "ATÉ QUE ISSO OCORRA, O EQUIPAMENTO PERMANECE DISPONÍVEL PARA OUTROS CLIENTES, VISTO QUE A EMISSÃO PRÉVIA DO CONTRATO É APENAS PARA A",
+  "x": 30.36,
+  "y": 487.08,
+  "w": 522.76
+ },
+ {
+  "s": "CONFERÊNCIA DAS INFORMAÇÕES POR PARTE DO CONTRATANTE.",
+  "x": 30.36,
+  "y": 497.76,
+  "w": 219.26
+ },
+ {
+  "s": "REGRAS GERAIS: É DE RESPONSABILIDADE DO CONTRATANTE GARANTIR O CUIDADO E O USO CORRETO DOS BRINQUEDOS LOCADOS, BEM COMO TODO O",
+  "x": 30.36,
+  "y": 142.32,
+  "w": 522.58
+ },
+ {
+  "s": "CUIDADO E MONITORAMENTO DAS CRIANÇAS",
+  "x": 30.36,
+  "y": 153,
+  "w": 157.32
+ },
+ {
+  "s": ". É PROIBIDA A ENTRADA NOS BRINQUEDOS COM CALÇADOS, COMIDAS, BEBIDAS, OUTROS BRINQUEDOS OU",
+  "x": 187.68,
+  "y": 153,
+  "w": 360.78
+ },
+ {
+  "s": "OBJETOS QUE POSSAM DANIFICÁ-LOS (COMO TINTAS, BRINCOS, CORRENTES, ETC.). RECOMENDAMOS NÃO ENTRAR COM JOIAS E CELULARES, POIS NÃO NOS",
+  "x": 30.36,
+  "y": 163.68,
+  "w": 520.51
+ },
+ {
+  "s": "RESPONSABILIZAMOS POR ITENS PERDIDOS DURANTE O USO DO BRINQUEDO. EM CASO DE CHUVA MODERADA, OS MOTORES DEVEM ESTAR TOTALMENTE",
+  "x": 30.36,
+  "y": 174.36,
+  "w": 515.79
+ },
+ {
+  "s": "PROTEGIDOS (DEIXAMOS UM BANCO EM CIMA DOS MOTORES NA MONTAGEM COM UMA LONA EM CIMA, CABENDO AO CLIENTE APENAS MONITORAR SE A",
+  "x": 30.36,
+  "y": 185.04,
+  "w": 520.35
+ },
+ {
+  "s": "PROTEÇÃO CONTINUA DEVIDAMENTE POSICIONADA). EM CASO DE CHUVA FORTE, OS MOTORES DEVEM SER RETIRADOS PELO CONTRATANTE PARA EVITAR QUE",
+  "x": 30.36,
+  "y": 195.72,
+  "w": 532.36
+ },
+ {
+  "s": "O VENTO ARRASTE O BRINQUEDO JUNTO COM O MOTOR, OCASIONANDO A QUEIMA. É PROIBIDO O USO DO BRINQUEDO COM O MOTOR EXPOSTO À CHUVA OU",
+  "x": 30.36,
+  "y": 206.4,
+  "w": 534.8
+ },
+ {
+  "s": "À ÁGUA, POIS O MESMO NÃO POSSUI PROTEÇÃO CONTRA LÍQUIDOS. OS MOTORES NÃO PODEM SER TOTALMENTE COBERTOS DURANTE O FUNCIONAMENTO",
+  "x": 30.36,
+  "y": 217.08,
+  "w": 524.06
+ },
+ {
+  "s": "PARA NÃO QUEIMAREM POR FALTA DE RESFRIAMENTO, E A TOMADA DO MOTOR NÃO DEVE SER ALTERADA APÓS A INSTALAÇÃO PARA ENERGIA 220V, POIS",
+  "x": 30.36,
+  "y": 227.76,
+  "w": 517.77
+ },
+ {
+  "s": "QUEIMARÁ (ALGUNS DOS NOSSOS MOTORES SÃO 110V, SEMPRE FAZEMOS O TESTE NA TOMADA ANTES DA INSTALAÇÃO E COLOCAMOS TRANSFORMADOR, SE",
+  "x": 30.36,
+  "y": 238.44,
+  "w": 528.16
+ },
+ {
+  "s": "NECESSÁRIO).",
+  "x": 30.36,
+  "y": 249.12,
+  "w": 46.08
+ },
+ {
+  "s": "8 -",
+  "x": 30.36,
+  "y": 725.4,
+  "w": 8.37
+ },
+ {
+  "s": "TODO IMPEDIMENTO À REALIZAÇÃO DO SERVIÇO POR MOTIVO DE FALTA DE ENERGIA, FALTA DE ESPAÇO PARA O BRINQUEDO, ORGANIZAÇÃO OU OUTROS",
+  "x": 38.76,
+  "y": 725.4,
+  "w": 514.83
+ },
+ {
+  "s": "QUE NÃO SEJAM PROVOCADOS PELA PRESTADORA DE SERVIÇO SERÁ DE RESPONSABILIDADE DO CONTRATANTE. EM CASOS DE DIFICULDADE DE ACESSO, A",
+  "x": 30.36,
+  "y": 736.08,
+  "w": 514.26
+ },
+ {
+  "s": "EMPRESA DEVERÁ SER INFORMADA COM ANTECEDÊNCIA. CASO NÃO SEJA POSSÍVEL A MONTAGEM PELOS MOTIVOS CITADOS NESTE CONTRATO, A EMPRESA SE",
+  "x": 30.36,
+  "y": 746.76,
+  "w": 530.94
+ },
+ {
+  "s": "RESERVA O DIREITO DE CANCELAR A PRESTAÇÃO, REALIZANDO A COBRANÇA INTEGRAL DOS VALORES.",
+  "x": 30.36,
+  "y": 757.44,
+  "w": 338.67
+ },
+ {
+  "s": "4 -",
+  "x": 30.36,
+  "y": 414.6,
+  "w": 8.37
+ },
+ {
+  "s": "NOSSOS BRINQUEDOS SERÃO INSTALADOS APENAS EM LOCAIS PLANOS, SEM GRANDES INCLINAÇÕES, DEGRAUS OU DECLIVES (COMO CALÇADAS), E",
+  "x": 40.56,
+  "y": 414.6,
+  "w": 490.92
+ },
+ {
+  "s": "DISTANTES DE ÁREAS QUE POSSAM APRESENTAR RISCO ÀS CRIANÇAS OU AO PRÓPRIO EQUIPAMENTO. NÃO REALIZAMOS A MONTAGEM EM LOCAIS DE DIFÍCIL",
+  "x": 30.36,
+  "y": 425.28,
+  "w": 527.34
+ },
+ {
+  "s": "ACESSO, TAIS COMO MORROS E LADEIRAS, QUE IMPEÇAM OU DIFICULTEM A PASSAGEM E O TRANSPORTE DO MATERIAL. LOCAIS COM ESCADAS DEPENDEM DE",
+  "x": 30.36,
+  "y": 435.96,
+  "w": 529.59
+ },
+ {
+  "s": "NOSSA CONFIRMAÇÃO PRÉVIA À RESERVA, VISTO QUE ALGUNS BRINQUEDOS MAIS PESADOS NÃO PODEM SER TRANSPORTADOS POR ESSA VIA. EM CASO DE",
+  "x": 30.36,
+  "y": 446.64,
+  "w": 519.59
+ },
+ {
+  "s": "AUSÊNCIA DE CONFIRMAÇÃO, NÃO NOS RESPONSABILIZAMOS PELA IMPOSSIBILIDADE DA PRESTAÇÃO DO SERVIÇO.",
+  "x": 30.36,
+  "y": 457.32,
+  "w": 383.09
+ },
+ {
+  "s": "3 - FICA COMO RESPONSABILIDADE DO CLIENTE GARANTIR UM LOCAL CORRETO PARA A INSTALAÇÃO DO BRINQUEDO, COM ESPAÇO ADEQUADO PARA O",
+  "x": 30.36,
+  "y": 363.96,
+  "w": 519.34
+ },
+ {
+  "s": "MESMO (LONGE DE PAREDE, CALHAS, TETO E OUTROS OBJETOS).",
+  "x": 30.36,
+  "y": 374.64,
+  "w": 222.07
+ },
+ {
+  "s": "NÃO FAZEMOS MONTAGENS EM ESPAÇO DE AREIA E BARRO. É TAMBÉM RESPONSABILIDADE",
+  "x": 254.16,
+  "y": 374.64,
+  "w": 308.26
+ },
+ {
+  "s": "DO CONTRATANTE FORNECER PONTO DE ENERGIA ESTÁVEL PARA OS BRINQUEDOS INFLÁVEIS E TORNEIRA TIPO COMUM (BICO COM ROSCA DE 3/4 DE",
+  "x": 30.36,
+  "y": 385.32,
+  "w": 498.84
+ },
+ {
+  "s": "POLEGADA) COM ÁGUA PRÓXIMO AOS BRINQUEDOS DE ÁGUA (FUTEBOL DE SABÃO).",
+  "x": 30.36,
+  "y": 396,
+  "w": 283.21
+ },
+ {
+  "s": "2 - EM CASO DE AVARIA GRAVE, EXTRAVIO, DANO GRAVE OU FURTO DO MATERIAL LOCADO, A LOCADORA SE RESERVA O DIREITO DE EMITIR COBRANÇA",
+  "x": 30.36,
+  "y": 325.32,
+  "w": 505.37
+ },
+ {
+  "s": "BANCÁRIA AO CONTRATANTE NO VALOR CORRESPONDENTE AO REPARO OU À SUBSTITUIÇÃO DO BEM, A QUAL DEVERÁ SER PAGA NO MESMO DIA. DANOS",
+  "x": 30.36,
+  "y": 336,
+  "w": 515.22
+ },
+ {
+  "s": "DECORRENTES DO USO NORMAL DOS BRINQUEDOS NÃO SÃO COBRADOS, APENAS AQUELES RESULTANTES DE MAU USO PROPOSITAL ETC.",
+  "x": 30.36,
+  "y": 346.68,
+  "w": 459.98
+ },
+ {
+  "s": "1 - O VALOR RESTANTE ACORDADO DEVERÁ SER PAGO NO MOMENTO DA NOSSA CHEGADA, ANTES DA MONTAGEM DOS BRINQUEDOS, E NÃO AO FINAL DA",
+  "x": 30.36,
+  "y": 270.48,
+  "w": 528.48
+ },
+ {
+  "s": "FESTA. O PAGAMENTO PODE SER FEITO VIA DINHEIRO, PIX OU CARTÃO (COM ACRÉSCIMO DA TAXA DA MÁQUINA). CASO O PAGAMENTO NÃO SEJA",
+  "x": 30.36,
+  "y": 281.16,
+  "w": 499.87
+ },
+ {
+  "s": "REALIZADO, A PRESTAÇÃO DO SERVIÇO SERÁ CANCELADA. GARANTIMOS QUE TODOS OS NOSSOS BRINQUEDOS SE ENCONTRAM EM ÓTIMAS CONDIÇÕES DE",
+  "x": 30.36,
+  "y": 291.84,
+  "w": 530.32
+ },
+ {
+  "s": "USO; CASO CONTRÁRIO, ASSEGURAMOS A DEVOLUÇÃO INTEGRAL DO VALOR PAGO PELO CLIENTE E O CANCELAMENTO DO SERVIÇO.\"",
+  "x": 30.36,
+  "y": 302.52,
+  "w": 453
+ }
+];
+
+/** [y, x1, x2] — traços grossos (1.5pt) da grade do contrato. */
+export const LINHAS_H: [number, number, number][] = [[6.2, 28, 567], [93.0, 28, 567], [105.2, 28, 567], [117.8, 28, 567], [130.5, 28, 567], [256.5, 28, 567], [312.0, 28, 567], [355.5, 28, 567], [400.0, 28, 567], [467.5, 28, 567], [502.2, 28, 567], [534.8, 28, 567], [717.2, 28, 567], [760.8, 28, 567], [773.2, 462.5, 567], [785.5, 462.5, 567], [798.0, 462.5, 567], [810.2, 462.5, 567], [822.8, 462.5, 567], [835.0, 28, 567]];
+/** [x, y1, y2] */
+export const LINHAS_V: [number, number, number][] = [[28.8, 5.5, 835.5], [566.5, 5.5, 835.5], [462.7, 92.2, 131], [462.7, 760, 823.2]];
+/** Sublinhados finos: [y, x1, x2, espessura, cor] */
+export const SUBLINHADOS: [number, number, number, number, string][] = [[769.2,30.5,208.2,0.5,"#000"],[375.9,254.2,453.8,0.4,"#000"],[793.4,30.4,191,0.5,"#FF0000"]];

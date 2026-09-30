@@ -102,7 +102,9 @@ export default function AssinarPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-4 bg-slate-100 p-3 pb-16">
-      <ContratoDocumento c={contrato} />
+      <div className="shadow-lg">
+        <ContratoDocumento c={contrato} />
+      </div>
 
       {assinado ? (
         <section className="rounded-2xl bg-white p-5 text-center shadow">
