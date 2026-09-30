@@ -1,0 +1,47 @@
+name: Painel Operacional — publica no Firebase Hosting (zimba-festa.web.app)
+
+on:
+  push:
+    branches:
+      - claude/new-session-uzro2l
+    paths:
+      - 'painel-operacional/**'
+      - '.github/workflows/painel-operacional-firebase.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: firebase-hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Só roda depois que o segredo FIREBASE_SERVICE_ACCOUNT for cadastrado no GitHub.
+    env:
+      TEM_SEGREDO: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.TEM_SEGREDO == 'true'
+
+      - uses: actions/setup-node@v4
+        if: env.TEM_SEGREDO == 'true'
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: painel-operacional/package-lock.json
+
+      - name: Build (export estático na raiz do domínio, sem /claude)
+        if: env.TEM_SEGREDO == 'true'
+        working-directory: painel-operacional
+        run: |
+          npm ci
+          npm run build
+
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.TEM_SEGREDO == 'true'
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: zimba-festa
+          channelId: live
+          entryPoint: painel-operacional

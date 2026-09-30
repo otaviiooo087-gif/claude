@@ -86,8 +86,10 @@ export function ouvirAssinaturas(callback: (assinados: Record<string, number>) =
   });
 }
 
-/** Link absoluto da página pública de assinatura (funciona local e no GitHub Pages). */
+/** Link absoluto da página pública de assinatura. Usa o domínio oficial (se configurado) em vez do endereço em que o admin abriu o app. */
 export function linkAssinatura(token: string): string {
+  const oficial = process.env.NEXT_PUBLIC_DOMINIO_PUBLICO?.replace(/\/$/, '');
+  if (oficial) return `${oficial}/assinar/?t=${token}`;
   const base = window.location.pathname.split('/admin')[0].replace(/\/$/, '');
   return `${window.location.origin}${base}/assinar/?t=${token}`;
 }

@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "public": "out",
+    "cleanUrls": false,
+    "trailingSlash": true,
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ]
+  }
+}
