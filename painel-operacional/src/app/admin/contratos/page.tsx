@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
 import CobrancaPixModal from '@/components/CobrancaPixModal';
 import AtribuirOperadorBotao from '@/components/AtribuirOperadorBotao';
+import ClimaBadge from '@/components/ClimaBadge';
 import { formatCurrency, whatsappUrl } from '@/lib/format';
 import {
   Contrato,
@@ -207,8 +208,11 @@ export default function ContratosPage() {
                 </span>
               </div>
               <p className="mt-1 text-sm text-slate-300">{c.brinquedo}</p>
-              <div className="mt-2 flex justify-between text-xs text-slate-400">
-                <span>{c.dataEvento}</span>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-slate-400">{c.dataEvento}</span>
+                <ClimaBadge endereco={c.endereco} data={c.dataEvento} />
+              </div>
+              <div className="mt-1 flex justify-end text-xs text-slate-400">
                 <span>
                   Sinal {formatCurrency(c.valorSinal)} + chegada {formatCurrency(c.valorChegada)} ={' '}
                   {formatCurrency(c.valorSinal + c.valorChegada)}

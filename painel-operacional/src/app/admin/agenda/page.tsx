@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
 import AlternarModo from '@/components/AlternarModo';
 import EditarTarefaAdminModal from '@/components/EditarTarefaAdminModal';
+import ClimaBadge from '@/components/ClimaBadge';
 import {
   ouvirTodasTarefasAtribuidas,
   TarefaComOperador,
@@ -177,7 +178,10 @@ export default function AgendaAdminPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-100">{task.horarioComparacao}</span>
-                  <span className="text-xs uppercase tracking-wide text-slate-400">{TYPE_LABELS[task.tipo]}</span>
+                  <div className="flex items-center gap-1">
+                    <ClimaBadge endereco={task.endereco} cidade={task.cidade} data={task.data} />
+                    <span className="text-xs uppercase tracking-wide text-slate-400">{TYPE_LABELS[task.tipo]}</span>
+                  </div>
                 </div>
                 <p className="text-sm text-slate-300">{task.cliente}</p>
                 {task.brinquedo && <p className="text-xs text-slate-500">{task.brinquedo}</p>}
