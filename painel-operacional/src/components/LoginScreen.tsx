@@ -34,7 +34,7 @@ export default function LoginScreen() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-900 p-6">
       <div className="w-full max-w-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={LOGO_UI} alt="Zimba Festas Locação de Brinquedos" className="mx-auto mb-3 w-56 rounded-2xl bg-white p-3" />
+        <img src={LOGO_UI} alt="Zimba Festas Locação de Brinquedos" className="mx-auto mb-3 w-40 rounded-2xl bg-white p-3" />
         <h1 className="mb-1 text-center text-xl font-bold text-slate-50">Zimba Festa</h1>
         <p className="mb-6 text-center text-sm text-slate-400">Entre com sua conta</p>
 
