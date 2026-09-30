@@ -127,6 +127,16 @@ export function useTasks() {
     [setStatus]
   );
 
+  const arquivarTask = useCallback(
+    async (taskId: string, arquivar = true) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      await putTask({ ...task, arquivada: arquivar });
+      await reload();
+    },
+    [tasks, reload]
+  );
+
   const importTasks = useCallback(
     async (novas: Task[]) => {
       await putManyTasks(novas);
@@ -135,8 +145,9 @@ export function useTasks() {
     [reload]
   );
 
-  const tasksForDate = tasks.filter((t) => t.data === selectedDate);
-  const availableDates = Array.from(new Set(tasks.map((t) => t.data))).sort();
+  const tasksForDate = tasks.filter((t) => t.data === selectedDate && !t.arquivada);
+  const arquivadas = tasks.filter((t) => t.arquivada);
+  const availableDates = Array.from(new Set(tasks.filter((t) => !t.arquivada).map((t) => t.data))).sort();
 
   return {
     tasks,
@@ -152,6 +163,8 @@ export function useTasks() {
     advanceStatus,
     completeTask,
     reopenTask,
+    arquivarTask,
+    arquivadas,
     importTasks,
   };
 }

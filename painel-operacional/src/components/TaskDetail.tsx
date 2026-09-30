@@ -20,6 +20,7 @@ interface Props {
   onSetStatus: (status: Task['status']) => void;
   onComplete: () => void;
   onReopen: () => void;
+  onArquivar: () => void;
 }
 
 export default function TaskDetail({
@@ -31,6 +32,7 @@ export default function TaskDetail({
   onSetStatus,
   onComplete,
   onReopen,
+  onArquivar,
 }: Props) {
   const [observacao, setObservacao] = useState(task.observacaoAdicional ?? '');
   const [confirmando, setConfirmando] = useState(false);
@@ -242,6 +244,9 @@ export default function TaskDetail({
               )}
             </>
           )}
+          <button onClick={onArquivar} className="rounded-xl bg-slate-800 py-2.5 text-xs font-semibold text-slate-400">
+            📦 Arquivar (some da minha agenda)
+          </button>
         </div>
       </div>
 

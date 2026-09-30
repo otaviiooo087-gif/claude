@@ -34,6 +34,7 @@ export interface Task {
   ajudanteUid?: string;
   ajudanteNome?: string;
   cancelada?: boolean;
+  arquivada?: boolean; // o operador arquivou: some da agenda dele (só local, o admin não é afetado)
 }
 
 /** Campos que o admin controla ao editar/reagendar/cancelar uma tarefa já atribuída — nunca sobrescreve o que o operador registrou em campo (checklist, status, observação, pagamento). */

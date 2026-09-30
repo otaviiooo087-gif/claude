@@ -37,10 +37,13 @@ export default function Home() {
     advanceStatus,
     completeTask,
     reopenTask,
+    arquivarTask,
+    arquivadas,
     importTasks,
   } = useTasks();
 
-  const lateTasks = useLateAlert(tasks);
+  const lateTasks = useLateAlert(useMemo(() => tasks.filter((t) => !t.arquivada), [tasks]));
+  const [verArquivadas, setVerArquivadas] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
 
@@ -99,6 +102,10 @@ export default function Home() {
         onSetStatus={(status) => setStatus(openTask_.id, status)}
         onComplete={() => completeTask(openTask_.id)}
         onReopen={() => reopenTask(openTask_.id)}
+        onArquivar={() => {
+          arquivarTask(openTask_.id);
+          closeTask();
+        }}
       />
     );
   }
@@ -166,6 +173,43 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {concluidasCount > 0 && (
+          <button
+            onClick={() => tasksForDate.filter((t) => t.status === 'CONCLUIDA').forEach((t) => arquivarTask(t.id))}
+            className="rounded-xl bg-slate-800 py-2.5 text-xs font-semibold text-slate-300"
+          >
+            📦 Arquivar as {concluidasCount} concluída{concluidasCount !== 1 ? 's' : ''} do dia
+          </button>
+        )}
+
+        {arquivadas.length > 0 && (
+          <section>
+            <button
+              onClick={() => setVerArquivadas((v) => !v)}
+              className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-500"
+            >
+              📦 Arquivadas ({arquivadas.length}) {verArquivadas ? '▲' : '▼'}
+            </button>
+            {verArquivadas && (
+              <div className="flex flex-col divide-y divide-slate-800/60 rounded-2xl bg-slate-800/20">
+                {arquivadas.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between gap-2 p-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-300">{t.cliente}</p>
+                      <p className="text-xs text-slate-500">
+                        {t.data.split('-').reverse().join('/')} · {t.horario}
+                      </p>
+                    </div>
+                    <button onClick={() => arquivarTask(t.id, false)} className="shrink-0 text-xs font-bold text-brand-500">
+                      Restaurar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <BaseIndicator />
       </div>
