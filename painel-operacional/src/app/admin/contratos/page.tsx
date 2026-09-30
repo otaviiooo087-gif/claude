@@ -243,7 +243,7 @@ export default function ContratosPage() {
       // Já assinado: não republica (sobrescreveria a assinatura), só reenvia o link.
       if (!assinados[token]) await publicarContrato(c, token);
       if (!c.tokenAssinatura) await atualizarContrato(c.id, { tokenAssinatura: token });
-      const link = c.linkCurto ?? (await encurtarLink(linkAssinatura(token)));
+      const link = c.linkCurto ?? (await encurtarLink(linkAssinatura(token), c.cliente.trim().split(/\s+/)[0]));
       if (link !== c.linkCurto && link.includes('is.gd')) await atualizarContrato(c.id, { linkCurto: link });
       const msg = `Olá, ${c.cliente.split(' ')[0]}! Segue o contrato de locação da Zimba Festas para conferir e assinar:\n${link}\n\nÉ só abrir, ler e assinar com o dedo na tela. Qualquer dúvida, é só chamar! 🎈`;
       window.open(whatsappUrl(c.telefone, msg), '_blank');

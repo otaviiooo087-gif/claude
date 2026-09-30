@@ -33,7 +33,7 @@ export interface Contrato {
   horarioInicio?: string; // HH:MM início da montagem
   horarioTermino?: string; // HH:MM término
   valorTotal?: number; // total acordado; valorChegada = total - sinal
-  linkCurto?: string; // link encurtado (zimbafestas-xxxx) enviado ao cliente
+  linkCurto?: string; // link encurtado (zimbafestas_nome_xxxx) enviado ao cliente
   tokenAssinatura?: string; // link público de assinatura (contratosPublicos/{token})
   criadoEm: number;
 }

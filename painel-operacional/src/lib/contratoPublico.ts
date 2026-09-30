@@ -95,10 +95,10 @@ export function linkAssinatura(token: string): string {
 }
 
 /**
- * Encurta o link com o is.gd (grátis, sem cadastro) usando um apelido "zimbafestas-xxxxxx", para o cliente
- * ver `is.gd/zimbafestas-xxxxxx` em vez do endereço do GitHub. Se falhar, devolve o link original.
+ * Encurta o link com o is.gd (grátis, sem cadastro) com o apelido "zimbafestas_nome_xxxx", para o cliente
+ * ver `is.gd/zimbafestas_vera_k3x9` em vez do endereço do GitHub. Se falhar, devolve o link original.
  */
-export async function encurtarLink(linkLongo: string): Promise<string> {
+export async function encurtarLink(linkLongo: string, nomeCliente = ''): Promise<string> {
   const tentar = async (apelido?: string): Promise<string | null> => {
     const params = new URLSearchParams({ format: 'json', url: linkLongo });
     if (apelido) params.set('shorturl', apelido);
@@ -110,6 +110,14 @@ export async function encurtarLink(linkLongo: string): Promise<string> {
       return null;
     }
   };
-  const sufixo = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
-  return (await tentar(`zimbafestas-${sufixo}`)) ?? (await tentar()) ?? linkLongo;
+  // O is.gd só aceita letras, números e _ no apelido (sem hífen), até 30 caracteres.
+  const primeiroNome = nomeCliente
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .slice(0, 10);
+  const sufixo = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
+  const apelido = ['zimbafestas', primeiroNome, sufixo].filter(Boolean).join('_');
+  return (await tentar(apelido)) ?? (await tentar()) ?? linkLongo;
 }
