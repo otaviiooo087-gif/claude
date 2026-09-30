@@ -18,8 +18,9 @@ import {
   ouvirContratos,
   nomesDosItens,
 } from '@/lib/contracts';
-import { encurtarLink, gerarToken, linkAssinatura, montarPublico, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
+import { ContratoPublico, buscarContratoPublico, encurtarLink, gerarToken, linkAssinatura, montarPublico, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
 import ContratoDocumento from '@/components/ContratoDocumento';
+import SegundaViaBotoes from '@/components/SegundaViaBotoes';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
 import { ChecklistItem, Task } from '@/lib/types';
@@ -74,6 +75,20 @@ export default function ContratosPage() {
   const [enviandoContrato, setEnviandoContrato] = useState<string | null>(null);
   const [avisoContrato, setAvisoContrato] = useState<string | null>(null);
   const [previa, setPrevia] = useState<Contrato | null>(null);
+  const [segundaVia, setSegundaVia] = useState<ContratoPublico | null>(null);
+  const [abrindoVia, setAbrindoVia] = useState<string | null>(null);
+
+  /** 2ª via: usa a versão assinada (se o cliente já assinou); senão, o contrato como está agora. */
+  async function abrirSegundaVia(c: Contrato) {
+    setAbrindoVia(c.id);
+    setAvisoContrato(null);
+    try {
+      const publico = c.tokenAssinatura ? await buscarContratoPublico(c.tokenAssinatura).catch(() => null) : null;
+      setSegundaVia(publico?.assinatura ? publico : montarPublico(c));
+    } finally {
+      setAbrindoVia(null);
+    }
+  }
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -376,6 +391,13 @@ export default function ContratosPage() {
                 : c.tokenAssinatura
                 ? '⏳ Aguardando assinatura — reenviar pelo WhatsApp'
                 : '📄 Gerar contrato e enviar pelo WhatsApp'}
+            </button>
+            <button
+              onClick={() => abrirSegundaVia(c)}
+              disabled={abrindoVia === c.id}
+              className="mt-2 w-full rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200 disabled:opacity-50"
+            >
+              {abrindoVia === c.id ? 'Abrindo...' : '📑 2ª via do contrato'}
             </button>
             <button
               onClick={() => setCobrando(c)}
@@ -690,6 +712,27 @@ export default function ContratosPage() {
             >
               Está certo — gerar link e enviar
             </button>
+          </div>
+        </div>
+      )}
+
+      {segundaVia && (
+        <div className="fixed inset-0 z-30 flex flex-col bg-black/80">
+          <div className="flex items-center justify-between gap-2 bg-slate-900 p-3">
+            <p className="text-xs font-bold text-slate-200">
+              2ª via — {segundaVia.assinatura ? 'assinada pelo cliente' : 'ainda sem assinatura do cliente'}
+            </p>
+            <button onClick={() => setSegundaVia(null)} className="text-xs font-bold text-slate-400">
+              Fechar
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto bg-slate-200 p-2">
+            <div className="mx-auto max-w-3xl shadow-lg">
+              <ContratoDocumento c={segundaVia} />
+            </div>
+          </div>
+          <div className="bg-slate-900 p-3">
+            <SegundaViaBotoes c={segundaVia} />
           </div>
         </div>
       )}

@@ -47,3 +47,12 @@ body {
 .tiles-limpo {
   filter: saturate(0.75) brightness(1.05) contrast(0.95);
 }
+
+/* 2ª via do contrato: só o contrato (A4) sai na impressão / PDF */
+#via-impressao { display: none; }
+@media print {
+  @page { size: A4; margin: 0; }
+  body > *:not(#via-impressao) { display: none !important; }
+  #via-impressao { display: block !important; width: 210mm; }
+  #via-impressao svg { width: 210mm; height: 297mm; display: block; }
+}

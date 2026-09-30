@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import ContratoDocumento from '@/components/ContratoDocumento';
+import SegundaViaBotoes from '@/components/SegundaViaBotoes';
 import { ContratoPublico, assinarContrato, buscarContratoPublico } from '@/lib/contratoPublico';
 
 /** Página pública: o cliente abre o link do WhatsApp, lê e assina na tela. Sem login. */
@@ -116,12 +117,8 @@ export default function AssinarPage() {
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={assinado.imagem} alt="Assinatura" className="mx-auto mt-3 h-24 rounded border" />
-          <button
-            onClick={() => window.print()}
-            className="mt-4 rounded-xl bg-slate-800 px-5 py-2 text-sm font-bold text-white"
-          >
-            Salvar / imprimir cópia
-          </button>
+          <p className="mb-2 mt-4 text-xs font-bold uppercase text-slate-500">2ª via do contrato</p>
+          <SegundaViaBotoes c={contrato} />
         </section>
       ) : (
         <section className="rounded-2xl bg-white p-5 shadow">
