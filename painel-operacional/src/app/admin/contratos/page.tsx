@@ -24,7 +24,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
 import { STATUS_LABELS } from '@/lib/types';
-import { LogisticaContrato, excluirLogisticaCompleta, ouvirLogisticaContratos, salvarLogisticaContrato } from '@/lib/logisticaContratos';
+import { LogisticaContrato, apenasAtivas, excluirLogisticaCompleta, ouvirLogisticaContratos, salvarLogisticaContrato } from '@/lib/logisticaContratos';
 import { TarefaComOperador, ouvirTodasTarefasAtribuidas } from '@/lib/tarefasAtribuidas';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { extrairTextoContrato } from '@/lib/lerContrato';
@@ -86,13 +86,13 @@ export default function ContratosPage() {
   async function excluirContratoCompleto(c: Contrato) {
     try {
       const log = logistica[c.id];
+      if (c.tokenAssinatura) await removerContratoPublico(c.tokenAssinatura).catch(() => {});
+      await excluirContrato(c.id); // antes da logística, para a automação não recriá-la
       if (log) {
         const porTarefa: Record<string, string> = {};
         andamento.forEach((x) => (porTarefa[x.task.id] = x.uid));
-        await excluirLogisticaCompleta(log, porTarefa);
+        await excluirLogisticaCompleta(log, porTarefa, true);
       }
-      if (c.tokenAssinatura) await removerContratoPublico(c.tokenAssinatura).catch(() => {});
-      await excluirContrato(c.id);
     } catch {
       setAvisoContrato('Não consegui excluir o contrato. Confira a internet e tente de novo.');
     }
@@ -116,7 +116,7 @@ export default function ContratosPage() {
       ouvirContratos(setContratos),
       ouvirProdutos(setCatalogo),
       ouvirAssinaturas(setAssinados),
-      ouvirLogisticaContratos(setLogistica),
+      ouvirLogisticaContratos((m) => setLogistica(apenasAtivas(m))),
       ouvirTodasTarefasAtribuidas(setAndamento),
     ];
     return () => fns.forEach((f) => f());
@@ -320,7 +320,7 @@ export default function ContratosPage() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-24">
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
+      <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
         <div className="flex min-w-0 items-center gap-3">
           <MenuLateral />
           <h1 className="truncate text-base font-bold text-slate-50">Contratos</h1>
@@ -377,7 +377,7 @@ export default function ContratosPage() {
               </div>
               <p className="mt-1 text-sm text-slate-300">{nomesDosItens(c).join(' + ')}</p>
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-slate-400">{c.dataEvento}</span>
+                <span className="text-xs text-slate-400">{c.dataEvento.split('-').reverse().join('/')}</span>
                 <ClimaBadge endereco={c.endereco} data={c.dataEvento} />
               </div>
               <div className="mt-1 flex justify-end text-xs text-slate-400">

@@ -1,10 +1,10 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
 import {
   initializeFirestore,
   persistentLocalCache,
   persistentSingleTabManager,
-  getFirestore,
+  connectFirestoreEmulator,
   type Firestore,
 } from 'firebase/firestore';
 
@@ -17,11 +17,15 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Só para testes automáticos locais (emuladores do Firebase). Em produção a variável não existe.
+const emulatorHost = process.env.NEXT_PUBLIC_EMULATOR_HOST;
+
 export const firebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
 let app: FirebaseApp | undefined;
 let authInstance: Auth | undefined;
 let dbInstance: Firestore | undefined;
+let emulatorLigado = false;
 
 function getFirebaseApp(): FirebaseApp {
   if (!app) {
@@ -31,7 +35,10 @@ function getFirebaseApp(): FirebaseApp {
 }
 
 export function getFirebaseAuth(): Auth {
-  if (!authInstance) authInstance = getAuth(getFirebaseApp());
+  if (!authInstance) {
+    authInstance = getAuth(getFirebaseApp());
+    if (emulatorHost) connectAuthEmulator(authInstance, `http://${emulatorHost}:9099`, { disableWarnings: true });
+  }
   return authInstance;
 }
 
@@ -54,6 +61,10 @@ export function getFirebaseDb(): Firestore {
       // comportamento padrão, só sem cache offline.
       dbInstance = initializeFirestore(getFirebaseApp(), { ignoreUndefinedProperties: true });
     }
+  }
+  if (emulatorHost && !emulatorLigado) {
+    emulatorLigado = true;
+    connectFirestoreEmulator(dbInstance, emulatorHost, 8089);
   }
   return dbInstance;
 }

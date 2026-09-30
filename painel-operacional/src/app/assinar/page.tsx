@@ -16,6 +16,7 @@ export default function AssinarPage() {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [desenhou, setDesenhou] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const desenhando = useRef(false);
 
@@ -103,8 +104,32 @@ export default function AssinarPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col gap-4 bg-slate-100 p-3 pb-16">
-      <div className="shadow-lg">
-        <ContratoDocumento c={contrato} />
+      <div className="flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow">
+        <span>Leia o contrato completo</span>
+        <span className="flex items-center gap-2">
+          <button
+            onClick={() => setZoom((z) => Math.max(1, z - 0.5))}
+            disabled={zoom <= 1}
+            aria-label="Diminuir"
+            className="h-8 w-8 rounded-lg bg-slate-200 text-base disabled:opacity-40"
+          >
+            −
+          </button>
+          <span className="w-10 text-center">{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom((z) => Math.min(3, z + 0.5))}
+            disabled={zoom >= 3}
+            aria-label="Aumentar"
+            className="h-8 w-8 rounded-lg bg-slate-200 text-base disabled:opacity-40"
+          >
+            +
+          </button>
+        </span>
+      </div>
+      <div className="overflow-x-auto shadow-lg">
+        <div style={{ width: `${zoom * 100}%` }}>
+          <ContratoDocumento c={contrato} />
+        </div>
       </div>
 
       {assinado ? (

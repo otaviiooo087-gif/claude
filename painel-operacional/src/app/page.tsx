@@ -137,7 +137,7 @@ export default function Home() {
               onClick={() => setImportando(true)}
               className="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200"
             >
-              + Importar agenda
+              + Importar
             </button>
           </div>
         </div>

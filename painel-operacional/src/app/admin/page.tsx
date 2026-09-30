@@ -99,8 +99,8 @@ export default function AdminPage() {
       <header className="flex items-center gap-3 border-b border-slate-800 bg-slate-900/95 p-4">
         <MenuLateral />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold text-slate-50">Monitoramento de equipe</h1>
-          <p className="text-xs text-slate-400">{todayISO()}</p>
+          <h1 className="text-base font-bold leading-tight text-slate-50">Monitoramento de equipe</h1>
+          <p className="text-xs text-slate-400">{todayISO().split("-").reverse().join("/")}</p>
         </div>
         <AlternarModo />
       </header>

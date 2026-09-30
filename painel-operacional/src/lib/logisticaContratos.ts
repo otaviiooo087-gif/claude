@@ -15,6 +15,7 @@ export interface LogisticaContrato {
   tarefas: Task[]; // montagem + retirada, prontas para atribuir
   atribuidas: Record<string, { uid: string; nome: string }>; // taskId -> operador
   origem: 'assinatura' | 'manual';
+  removida?: boolean; // o admin tirou do planejamento: o documento fica só para a automação não recriar
   geradaEm: number;
 }
 
@@ -96,6 +97,7 @@ export async function salvarLogisticaContrato(
     tarefas: gerarTarefasDoContrato(c, produtos),
     atribuidas: {},
     origem,
+    removida: false,
     geradaEm: Date.now(),
   };
   await setDoc(doc(getFirebaseDb(), COLECAO, c.id), dados);
@@ -126,11 +128,26 @@ export async function desatribuirTarefaDoContrato(contratoId: string, taskId: st
   await updateDoc(doc(getFirebaseDb(), COLECAO, contratoId), { [`atribuidas.${taskId}`]: deleteField() });
 }
 
-/** Remove o contrato do planejamento, inclusive as tarefas que já estavam na agenda dos operadores. */
-export async function excluirLogisticaCompleta(l: LogisticaContrato, operadorUidPorTarefa: Record<string, string>): Promise<void> {
+/**
+ * Tira o contrato do planejamento, inclusive as tarefas que já estavam na agenda dos operadores.
+ * `definitivo` (contrato apagado) remove o documento; senão ele fica marcado como removido, para a
+ * automação não recriar a logística de um contrato assinado que o admin acabou de excluir daqui.
+ */
+export async function excluirLogisticaCompleta(
+  l: LogisticaContrato,
+  operadorUidPorTarefa: Record<string, string>,
+  definitivo = false
+): Promise<void> {
   for (const t of l.tarefas) {
     const uid = operadorUidPorTarefa[t.id] ?? l.atribuidas[t.id]?.uid;
     if (uid) await excluirTarefaAtribuida(uid, t.id).catch(() => {});
   }
-  await deleteDoc(doc(getFirebaseDb(), COLECAO, l.contratoId));
+  const ref = doc(getFirebaseDb(), COLECAO, l.contratoId);
+  if (definitivo) await deleteDoc(ref);
+  else await updateDoc(ref, { removida: true, tarefas: [], atribuidas: {} });
+}
+
+/** Só as logísticas ativas (as removidas ficam guardadas apenas como marcação). */
+export function apenasAtivas(mapa: Record<string, LogisticaContrato>): Record<string, LogisticaContrato> {
+  return Object.fromEntries(Object.entries(mapa).filter(([, v]) => !v.removida));
 }

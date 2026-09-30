@@ -8,6 +8,7 @@ import {
   atribuirTarefaDoContrato,
   atualizarTarefasPlanejadas,
   desatribuirTarefaDoContrato,
+  apenasAtivas,
   excluirLogisticaCompleta,
   ouvirLogisticaContratos,
 } from '@/lib/logisticaContratos';
@@ -30,7 +31,7 @@ export default function LogisticaDosContratos() {
 
   useEffect(() => {
     listarUsuarios().then(setOperadores);
-    const a = ouvirLogisticaContratos(setLista);
+    const a = ouvirLogisticaContratos((m) => setLista(apenasAtivas(m)));
     const b = ouvirTodasTarefasAtribuidas(setAndamento);
     return () => {
       a();

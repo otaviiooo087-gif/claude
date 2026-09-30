@@ -74,6 +74,12 @@ service cloud.firestore {
       allow write: if ehAdmin();
     }
 
+    // Consulta de todas as tarefas atribuídas de uma vez (Agenda de eventos e Planejamento do admin):
+    // consultas em grupo de coleção exigem uma regra própria com /{path=**}/.
+    match /{path=**}/itens/{id} {
+      allow read: if ehAdmin();
+    }
+
     match /configuracoes/{id} {
       // Qualquer operador logado pode ler (ex: gerar cobrança Pix em campo);
       // só o admin edita chave Pix e modelo de contrato.

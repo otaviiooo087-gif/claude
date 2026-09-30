@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+
 export default function PwaRegister() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -9,7 +11,8 @@ export default function PwaRegister() {
     let registration: ServiceWorkerRegistration | undefined;
 
     navigator.serviceWorker
-      .register('sw.js')
+      // Caminho absoluto: a partir de páginas internas (/admin/...) o relativo 'sw.js' daria 404.
+      .register(`${BASE}/sw.js`, { scope: `${BASE}/` })
       .then((reg) => {
         registration = reg;
         // O navegador só confere atualização do service worker de tempos em

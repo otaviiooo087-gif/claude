@@ -5,6 +5,7 @@ import { getAllTasks, putManyTasks, putTask, getState, setState } from './db';
 import { INITIAL_TASKS } from './seedData';
 import { Task, TaskStatus, STATUS_ORDER } from './types';
 import { todayISO } from './format';
+import { firebaseConfigured } from './firebase';
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -23,7 +24,8 @@ export function useTasks() {
       try {
         const existing = await reload();
         const existingIds = new Set(existing.map((t) => t.id));
-        const faltando = INITIAL_TASKS.filter((t) => !existingIds.has(t.id));
+        // Com login (Firebase), cada pessoa só vê o que foi atribuído a ela: não semeia a agenda de exemplo.
+        const faltando = firebaseConfigured ? [] : INITIAL_TASKS.filter((t) => !existingIds.has(t.id));
         if (faltando.length > 0) {
           const seeded: Task[] = faltando.map((t) => ({
             ...t,
