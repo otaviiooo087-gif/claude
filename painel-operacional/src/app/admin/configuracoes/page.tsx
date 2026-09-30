@@ -7,7 +7,7 @@ import MenuLateral from '@/components/MenuLateral';
 import { Configuracoes, ouvirConfiguracoes, salvarConfiguracoes } from '@/lib/configuracoes';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { UserRole, UserProfile } from '@/lib/authTypes';
-import { enviarRedefinicaoSenha, excluirUsuario, listarUsuarios } from '@/lib/usuarios';
+import { atualizarUsuario, enviarRedefinicaoSenha, excluirUsuario, listarUsuarios } from '@/lib/usuarios';
 
 const TAMANHO_MAXIMO_BYTES = 700 * 1024;
 
@@ -26,6 +26,8 @@ export default function ConfiguracoesPage() {
   const [mostrarFormEquipe, setMostrarFormEquipe] = useState(false);
   const [salvandoEquipe, setSalvandoEquipe] = useState(false);
   const [mensagemEquipe, setMensagemEquipe] = useState<string | null>(null);
+  const [editandoUid, setEditandoUid] = useState<string | null>(null);
+  const [formEdicao, setFormEdicao] = useState({ nome: '', cpf: '', telefone: '', endereco: '', role: 'operador' as UserRole });
 
   const [config, setConfig] = useState<Configuracoes>({});
   const [chavePix, setChavePix] = useState('');
@@ -136,6 +138,33 @@ export default function ConfiguracoesPage() {
     setModeloNome(undefined);
   }
 
+  function abrirEdicaoPessoa(u: UserProfile) {
+    setFormEdicao({ nome: u.nome, cpf: u.cpf ?? '', telefone: u.telefone ?? '', endereco: u.endereco ?? '', role: u.role });
+    setEditandoUid(u.uid);
+    setConfirmandoExclusao(null);
+  }
+
+  async function salvarEdicaoPessoa(u: UserProfile) {
+    setAcaoEmAndamento(u.uid);
+    setMensagemEquipe(null);
+    try {
+      await atualizarUsuario(u.uid, {
+        nome: formEdicao.nome.trim() || u.nome,
+        cpf: formEdicao.cpf.trim(),
+        telefone: formEdicao.telefone.trim(),
+        endereco: formEdicao.endereco.trim(),
+        role: u.uid === profile?.uid ? u.role : formEdicao.role, // ninguém tira o próprio acesso de admin
+      });
+      setEditandoUid(null);
+      setMensagemEquipe(`Dados de ${formEdicao.nome.trim() || u.nome} atualizados.`);
+      recarregarEquipe();
+    } catch (e) {
+      setMensagemEquipe(e instanceof Error ? e.message : 'Não consegui salvar.');
+    } finally {
+      setAcaoEmAndamento(null);
+    }
+  }
+
   async function criarLoginEquipe() {
     setMensagemEquipe(null);
     setSalvandoEquipe(true);
@@ -215,7 +244,46 @@ export default function ConfiguracoesPage() {
                 </p>
               )}
 
-              {confirmandoExclusao === u.uid ? (
+              {editandoUid === u.uid ? (
+                <div className="mt-3 flex flex-col gap-2 rounded-lg bg-slate-800 p-3">
+                  {(['nome', 'cpf', 'telefone', 'endereco'] as const).map((campo) => (
+                    <input
+                      key={campo}
+                      value={formEdicao[campo]}
+                      onChange={(e) => setFormEdicao({ ...formEdicao, [campo]: e.target.value })}
+                      placeholder={campo === 'cpf' ? 'CPF' : campo.charAt(0).toUpperCase() + campo.slice(1)}
+                      className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+                    />
+                  ))}
+                  {u.uid !== profile?.uid && (
+                    <div className="flex gap-1">
+                      {(['operador', 'admin'] as const).map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setFormEdicao({ ...formEdicao, role: r })}
+                          className={`flex-1 rounded-lg py-2 text-xs font-semibold ${
+                            formEdicao.role === r ? 'bg-brand-500 text-white' : 'bg-slate-900 text-slate-400'
+                          }`}
+                        >
+                          {r === 'admin' ? 'Admin' : 'Operador'}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditandoUid(null)} className="flex-1 rounded-lg bg-slate-900 py-2 text-xs font-bold text-slate-200">
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => salvarEdicaoPessoa(u)}
+                      disabled={acaoEmAndamento === u.uid}
+                      className="flex-1 rounded-lg bg-brand-500 py-2 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                </div>
+              ) : confirmandoExclusao === u.uid ? (
                 <div className="mt-3 flex flex-col gap-2 rounded-lg bg-red-500/10 p-3">
                   <p className="text-xs text-red-300">
                     Excluir {u.nome}? Ele perde o acesso ao app na hora. Essa ação não dá pra desfazer.
@@ -238,6 +306,12 @@ export default function ConfiguracoesPage() {
                 </div>
               ) : (
                 <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => abrirEdicaoPessoa(u)}
+                    className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200"
+                  >
+                    Editar
+                  </button>
                   <button
                     onClick={() => redefinirSenha(u)}
                     disabled={acaoEmAndamento === u.uid}

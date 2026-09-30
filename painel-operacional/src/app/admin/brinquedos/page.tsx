@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/useAuth';
 import { Produto, ProdutoDraft, atualizarProduto, criarProduto, excluirProduto, ouvirProdutos } from '@/lib/produtos';
 import { comprimirImagem } from '@/lib/imagem';
 import MenuLateral from '@/components/MenuLateral';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { ResultadoDisponibilidade, verificarDisponibilidade } from '@/lib/disponibilidade';
 import { todayISO } from '@/lib/format';
 
@@ -25,6 +26,7 @@ export default function BrinquedosPage() {
   const [form, setForm] = useState<ProdutoDraft>(VAZIO);
   const [novoItem, setNovoItem] = useState('');
   const [mostrarForm, setMostrarForm] = useState(false);
+  const [confirmandoExcluir, setConfirmandoExcluir] = useState(false);
   const [processandoImagem, setProcessandoImagem] = useState(false);
   const [erroImagem, setErroImagem] = useState<string | null>(null);
   const inputArquivoRef = useRef<HTMLInputElement>(null);
@@ -333,10 +335,7 @@ export default function BrinquedosPage() {
               )}
               {editando && (
                 <button
-                  onClick={async () => {
-                    await excluirProduto(editando);
-                    setMostrarForm(false);
-                  }}
+                  onClick={() => setConfirmandoExcluir(true)}
                   className="rounded-xl bg-slate-800 py-3 text-sm font-bold text-red-400"
                 >
                   Excluir brinquedo
@@ -345,6 +344,19 @@ export default function BrinquedosPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmandoExcluir && editando && (
+        <ConfirmDialog
+          message="Excluir este brinquedo do catálogo? Contratos já feitos não são apagados."
+          confirmLabel="EXCLUIR"
+          onCancel={() => setConfirmandoExcluir(false)}
+          onConfirm={async () => {
+            await excluirProduto(editando);
+            setConfirmandoExcluir(false);
+            setMostrarForm(false);
+          }}
+        />
       )}
     </main>
   );

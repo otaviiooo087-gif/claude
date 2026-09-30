@@ -17,13 +17,14 @@ import {
   ouvirContratos,
   nomesDosItens,
 } from '@/lib/contracts';
-import { ContratoPublico, buscarContratoPublico, encurtarLink, gerarToken, linkAssinatura, montarPublico, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
+import { ContratoPublico, buscarContratoPublico, removerContratoPublico, encurtarLink, gerarToken, linkAssinatura, montarPublico, ouvirAssinaturas, publicarContrato } from '@/lib/contratoPublico';
 import ContratoDocumento from '@/components/ContratoDocumento';
 import SegundaViaBotoes from '@/components/SegundaViaBotoes';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
 import { STATUS_LABELS } from '@/lib/types';
-import { LogisticaContrato, ouvirLogisticaContratos, salvarLogisticaContrato } from '@/lib/logisticaContratos';
+import { LogisticaContrato, excluirLogisticaCompleta, ouvirLogisticaContratos, salvarLogisticaContrato } from '@/lib/logisticaContratos';
 import { TarefaComOperador, ouvirTodasTarefasAtribuidas } from '@/lib/tarefasAtribuidas';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { extrairTextoContrato } from '@/lib/lerContrato';
@@ -77,8 +78,25 @@ export default function ContratosPage() {
   const [enviandoContrato, setEnviandoContrato] = useState<string | null>(null);
   const [avisoContrato, setAvisoContrato] = useState<string | null>(null);
   const [previa, setPrevia] = useState<Contrato | null>(null);
+  const [excluindoContrato, setExcluindoContrato] = useState<Contrato | null>(null);
   const [segundaVia, setSegundaVia] = useState<ContratoPublico | null>(null);
   const [abrindoVia, setAbrindoVia] = useState<string | null>(null);
+
+  /** Apaga o contrato e tudo que nasceu dele: link público, logística planejada e as tarefas dos operadores. */
+  async function excluirContratoCompleto(c: Contrato) {
+    try {
+      const log = logistica[c.id];
+      if (log) {
+        const porTarefa: Record<string, string> = {};
+        andamento.forEach((x) => (porTarefa[x.task.id] = x.uid));
+        await excluirLogisticaCompleta(log, porTarefa);
+      }
+      if (c.tokenAssinatura) await removerContratoPublico(c.tokenAssinatura).catch(() => {});
+      await excluirContrato(c.id);
+    } catch {
+      setAvisoContrato('Não consegui excluir o contrato. Confira a internet e tente de novo.');
+    }
+  }
 
   /** 2ª via: usa a versão assinada (se o cliente já assinou); senão, o contrato como está agora. */
   async function abrirSegundaVia(c: Contrato) {
@@ -386,6 +404,17 @@ export default function ContratosPage() {
                 ? '⏳ Aguardando assinatura — reenviar pelo WhatsApp'
                 : '📄 Gerar contrato e enviar pelo WhatsApp'}
             </button>
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => abrirEdicao(c)} className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200">
+                ✏️ Editar
+              </button>
+              <button
+                onClick={() => setExcluindoContrato(c)}
+                className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-red-400"
+              >
+                🗑️ Excluir
+              </button>
+            </div>
             <button
               onClick={() => abrirSegundaVia(c)}
               disabled={abrindoVia === c.id}
@@ -658,9 +687,9 @@ export default function ContratosPage() {
               </button>
               {editando && (
                 <button
-                  onClick={async () => {
-                    await excluirContrato(editando);
-                    setMostrarForm(false);
+                  onClick={() => {
+                    const c = contratos.find((x) => x.id === editando);
+                    if (c) setExcluindoContrato(c);
                   }}
                   className="rounded-xl bg-slate-800 py-3 text-sm font-bold text-red-400"
                 >
@@ -729,6 +758,20 @@ export default function ContratosPage() {
             <SegundaViaBotoes c={segundaVia} />
           </div>
         </div>
+      )}
+
+      {excluindoContrato && (
+        <ConfirmDialog
+          message={`Excluir o contrato de ${excluindoContrato.cliente}? Some também o link de assinatura e a logística. Não dá pra desfazer.`}
+          confirmLabel="EXCLUIR"
+          onCancel={() => setExcluindoContrato(null)}
+          onConfirm={async () => {
+            const c = excluindoContrato;
+            setExcluindoContrato(null);
+            setMostrarForm(false);
+            await excluirContratoCompleto(c);
+          }}
+        />
       )}
 
       {cobrando && <CobrancaPixModal contrato={cobrando} onFechar={() => setCobrando(null)} />}

@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { UserProfile } from '@/lib/authTypes';
 import { listarUsuarios } from '@/lib/usuarios';
-import { LogisticaContrato, atribuirTarefaDoContrato, excluirLogisticaContrato, ouvirLogisticaContratos } from '@/lib/logisticaContratos';
+import {
+  LogisticaContrato,
+  atribuirTarefaDoContrato,
+  atualizarTarefasPlanejadas,
+  desatribuirTarefaDoContrato,
+  excluirLogisticaCompleta,
+  ouvirLogisticaContratos,
+} from '@/lib/logisticaContratos';
+import EditarTarefaAdminModal from './EditarTarefaAdminModal';
+import ConfirmDialog from './ConfirmDialog';
 import { TarefaComOperador, ouvirTodasTarefasAtribuidas } from '@/lib/tarefasAtribuidas';
 import { STATUS_LABELS, TYPE_LABELS, Task } from '@/lib/types';
 
@@ -15,6 +24,9 @@ export default function LogisticaDosContratos() {
   const [escolha, setEscolha] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [editandoPlano, setEditandoPlano] = useState<{ l: LogisticaContrato; t: Task } | null>(null);
+  const [editandoReal, setEditandoReal] = useState<TarefaComOperador | null>(null);
+  const [excluindo, setExcluindo] = useState<LogisticaContrato | null>(null);
 
   useEffect(() => {
     listarUsuarios().then(setOperadores);
@@ -70,11 +82,8 @@ export default function LogisticaDosContratos() {
                 {l.dataEvento.split('-').reverse().join('/')} · {l.tarefas[0]?.brinquedo}
               </p>
             </div>
-            <button
-              onClick={() => excluirLogisticaContrato(l.contratoId)}
-              className="shrink-0 text-[10px] font-bold uppercase text-slate-500"
-            >
-              Remover
+            <button onClick={() => setExcluindo(l)} className="shrink-0 text-[10px] font-bold uppercase text-red-400">
+              Excluir
             </button>
           </div>
 
@@ -91,10 +100,25 @@ export default function LogisticaDosContratos() {
                     <span className="text-[10px] text-slate-500">{t.checklist.length} peças</span>
                   </div>
                   {atrib ? (
-                    <p className="mt-1 text-xs font-semibold text-emerald-400">
-                      ✔ {operadores.find((o) => o.uid === (real?.uid ?? atrib.uid))?.nome ?? atrib.nome}
-                      {real ? ` · ${STATUS_LABELS[real.task.status]}` : ''}
-                    </p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold text-emerald-400">
+                        ✔ {operadores.find((o) => o.uid === (real?.uid ?? atrib.uid))?.nome ?? atrib.nome}
+                        {real ? ` · ${STATUS_LABELS[real.task.status]}` : ''}
+                      </p>
+                      <div className="flex shrink-0 gap-3 text-[11px] font-bold">
+                        {real && (
+                          <button onClick={() => setEditandoReal(real)} className="text-slate-300">
+                            Editar
+                          </button>
+                        )}
+                        <button
+                          onClick={() => desatribuirTarefaDoContrato(l.contratoId, t.id, real?.uid ?? atrib.uid).catch(() => setErro('Não consegui tirar o operador.'))}
+                          className="text-amber-400"
+                        >
+                          Tirar operador
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="mt-2 flex gap-2">
                       <select
@@ -115,6 +139,12 @@ export default function LogisticaDosContratos() {
                         className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-bold text-white disabled:opacity-40"
                       >
                         {enviando === t.id ? '...' : 'Atribuir'}
+                      </button>
+                      <button
+                        onClick={() => setEditandoPlano({ l, t })}
+                        className="rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-200"
+                      >
+                        Editar
                       </button>
                     </div>
                   )}
@@ -139,6 +169,101 @@ export default function LogisticaDosContratos() {
           )}
         </div>
       ))}
+
+      {editandoPlano && (
+        <EditarPlanejada
+          tarefa={editandoPlano.t}
+          onFechar={() => setEditandoPlano(null)}
+          onSalvar={async (nova) => {
+            await atualizarTarefasPlanejadas(
+              editandoPlano.l.contratoId,
+              editandoPlano.l.tarefas.map((x) => (x.id === nova.id ? nova : x))
+            );
+            setEditandoPlano(null);
+          }}
+          onExcluir={async () => {
+            await atualizarTarefasPlanejadas(
+              editandoPlano.l.contratoId,
+              editandoPlano.l.tarefas.filter((x) => x.id !== editandoPlano.t.id)
+            );
+            setEditandoPlano(null);
+          }}
+        />
+      )}
+
+      {editandoReal && (
+        <EditarTarefaAdminModal
+          uid={editandoReal.uid}
+          task={editandoReal.task}
+          operadores={operadores}
+          onFechar={() => setEditandoReal(null)}
+        />
+      )}
+
+      {excluindo && (
+        <ConfirmDialog
+          message={`Excluir a logística de ${excluindo.cliente}? As tarefas também saem da agenda dos operadores.`}
+          confirmLabel="EXCLUIR"
+          onCancel={() => setExcluindo(null)}
+          onConfirm={async () => {
+            const alvo = excluindo;
+            setExcluindo(null);
+            const porTarefa: Record<string, string> = {};
+            andamento.forEach((x) => (porTarefa[x.task.id] = x.uid));
+            await excluirLogisticaCompleta(alvo, porTarefa).catch(() => setErro('Não consegui excluir.'));
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function EditarPlanejada({
+  tarefa,
+  onSalvar,
+  onExcluir,
+  onFechar,
+}: {
+  tarefa: Task;
+  onSalvar: (t: Task) => Promise<void>;
+  onExcluir: () => Promise<void>;
+  onFechar: () => void;
+}) {
+  const [f, setF] = useState<Task>(tarefa);
+  const [salvando, setSalvando] = useState(false);
+  const campo = 'w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700';
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end bg-black/60" onClick={onFechar}>
+      <div className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-slate-900 p-5" onClick={(e) => e.stopPropagation()}>
+        <h3 className="mb-3 text-base font-bold text-slate-50">
+          Editar {TYPE_LABELS[tarefa.tipo].toLowerCase()} — {tarefa.cliente}
+        </h3>
+        <div className="flex flex-col gap-2">
+          <input type="date" value={f.data} onChange={(e) => setF({ ...f, data: e.target.value })} className={campo} />
+          <input
+            type="time"
+            value={/^\d{2}:\d{2}$/.test(f.horarioComparacao) ? f.horarioComparacao : ''}
+            onChange={(e) => setF({ ...f, horarioComparacao: e.target.value, horario: e.target.value })}
+            className={campo}
+          />
+          <input value={f.endereco ?? ''} onChange={(e) => setF({ ...f, endereco: e.target.value })} placeholder="Endereço" className={campo} />
+          <input value={f.telefone ?? ''} onChange={(e) => setF({ ...f, telefone: e.target.value })} placeholder="Telefone" className={campo} />
+          <textarea value={f.observacoes ?? ''} onChange={(e) => setF({ ...f, observacoes: e.target.value })} rows={3} placeholder="Observações" className={campo} />
+          <button
+            onClick={async () => {
+              setSalvando(true);
+              await onSalvar(f).finally(() => setSalvando(false));
+            }}
+            disabled={salvando}
+            className="rounded-xl bg-brand-500 py-3 text-sm font-bold text-white disabled:opacity-50"
+          >
+            Salvar
+          </button>
+          <button onClick={() => onExcluir()} disabled={salvando} className="rounded-xl bg-slate-800 py-3 text-sm font-bold text-red-400">
+            Excluir esta tarefa do planejamento
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

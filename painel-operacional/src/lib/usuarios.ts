@@ -1,7 +1,15 @@
-import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { getFirebaseAuth, getFirebaseDb } from './firebase';
 import { UserProfile } from './authTypes';
+
+/** Edita os dados da pessoa (o e-mail é o login e só muda pelo Firebase Authentication). */
+export async function atualizarUsuario(
+  uid: string,
+  dados: Partial<Pick<UserProfile, 'nome' | 'cpf' | 'telefone' | 'endereco' | 'role'>>
+): Promise<void> {
+  await updateDoc(doc(getFirebaseDb(), 'usuarios', uid), dados);
+}
 
 export async function listarUsuarios(): Promise<UserProfile[]> {
   const snap = await getDocs(collection(getFirebaseDb(), 'usuarios'));

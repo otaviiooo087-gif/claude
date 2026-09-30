@@ -1,10 +1,10 @@
-import { collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, deleteField, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { getFirebaseDb } from './firebase';
 import { Contrato, nomesDosItens } from './contracts';
 import { Produto } from './produtos';
 import { ChecklistItem, Task } from './types';
 import { formatCurrency } from './format';
-import { atribuirTarefas } from './tarefasAtribuidas';
+import { atribuirTarefas, excluirTarefaAtribuida } from './tarefasAtribuidas';
 
 const COLECAO = 'logisticaContratos';
 
@@ -113,4 +113,24 @@ export async function atribuirTarefaDoContrato(
 ): Promise<void> {
   await atribuirTarefas(operador.uid, [tarefa]);
   await updateDoc(doc(getFirebaseDb(), COLECAO, contratoId), { [`atribuidas.${tarefa.id}`]: operador });
+}
+
+/** Guarda a lista de tarefas editada (data, horário, endereço...) enquanto ainda não foram atribuídas. */
+export async function atualizarTarefasPlanejadas(contratoId: string, tarefas: Task[]): Promise<void> {
+  await updateDoc(doc(getFirebaseDb(), COLECAO, contratoId), { tarefas });
+}
+
+/** Tira o operador de uma tarefa: some da agenda dele e volta a ficar "sem operador" no planejamento. */
+export async function desatribuirTarefaDoContrato(contratoId: string, taskId: string, operadorUid: string): Promise<void> {
+  await excluirTarefaAtribuida(operadorUid, taskId);
+  await updateDoc(doc(getFirebaseDb(), COLECAO, contratoId), { [`atribuidas.${taskId}`]: deleteField() });
+}
+
+/** Remove o contrato do planejamento, inclusive as tarefas que já estavam na agenda dos operadores. */
+export async function excluirLogisticaCompleta(l: LogisticaContrato, operadorUidPorTarefa: Record<string, string>): Promise<void> {
+  for (const t of l.tarefas) {
+    const uid = operadorUidPorTarefa[t.id] ?? l.atribuidas[t.id]?.uid;
+    if (uid) await excluirTarefaAtribuida(uid, t.id).catch(() => {});
+  }
+  await deleteDoc(doc(getFirebaseDb(), COLECAO, l.contratoId));
 }
