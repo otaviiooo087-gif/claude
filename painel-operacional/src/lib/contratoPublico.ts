@@ -93,3 +93,23 @@ export function linkAssinatura(token: string): string {
   const base = window.location.pathname.split('/admin')[0].replace(/\/$/, '');
   return `${window.location.origin}${base}/assinar/?t=${token}`;
 }
+
+/**
+ * Encurta o link com o is.gd (grátis, sem cadastro) usando um apelido "zimbafestas-xxxxxx", para o cliente
+ * ver `is.gd/zimbafestas-xxxxxx` em vez do endereço do GitHub. Se falhar, devolve o link original.
+ */
+export async function encurtarLink(linkLongo: string): Promise<string> {
+  const tentar = async (apelido?: string): Promise<string | null> => {
+    const params = new URLSearchParams({ format: 'json', url: linkLongo });
+    if (apelido) params.set('shorturl', apelido);
+    try {
+      const resp = await fetch(`https://is.gd/create.php?${params}`);
+      const json = (await resp.json()) as { shorturl?: string };
+      return json.shorturl ?? null;
+    } catch {
+      return null;
+    }
+  };
+  const sufixo = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => 'abcdefghjkmnpqrstuvwxyz23456789'[b % 31]).join('');
+  return (await tentar(`zimbafestas-${sufixo}`)) ?? (await tentar()) ?? linkLongo;
+}
