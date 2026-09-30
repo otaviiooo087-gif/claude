@@ -21,6 +21,8 @@ import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembret
 import { buscarProdutos } from '@/lib/produtos';
 import { ChecklistItem, Task } from '@/lib/types';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
+import { extrairTextoContrato } from '@/lib/lerContrato';
+import { parseContrato } from '@/lib/parseContrato';
 
 const TAMANHO_MAXIMO_ANEXO = 700 * 1024;
 
@@ -58,6 +60,8 @@ export default function ContratosPage() {
   const [gerandoLogistica, setGerandoLogistica] = useState<string | null>(null);
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const [processandoAnexo, setProcessandoAnexo] = useState(false);
+  const [lendoContrato, setLendoContrato] = useState(false);
+  const [erroLeitura, setErroLeitura] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -81,6 +85,43 @@ export default function ContratosPage() {
     setForm(VAZIO);
     setEditando(null);
     setMostrarForm(true);
+  }
+
+  async function anexarELer(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0];
+    e.target.value = '';
+    if (!arquivo) return;
+
+    setErroLeitura(null);
+    setLendoContrato(true);
+    try {
+      const [dataUrl, texto, catalogo] = await Promise.all([
+        lerArquivoComoDataUrl(arquivo),
+        extrairTextoContrato(arquivo),
+        buscarProdutos(),
+      ]);
+      const extraido = parseContrato(texto, catalogo);
+
+      setForm({
+        ...VAZIO,
+        cliente: extraido.cliente,
+        cpf: extraido.cpf,
+        telefone: extraido.telefone,
+        endereco: extraido.endereco,
+        brinquedo: extraido.brinquedo,
+        dataEvento: extraido.dataEvento,
+        valorSinal: extraido.valorSinal,
+        valorChegada: extraido.valorChegada,
+        contratoAssinadoBase64: dataUrl,
+        contratoAssinadoNome: arquivo.name,
+      });
+      setEditando(null);
+      setMostrarForm(true);
+    } catch (err) {
+      setErroLeitura(err instanceof Error ? err.message : 'Não consegui ler esse contrato.');
+    } finally {
+      setLendoContrato(false);
+    }
   }
 
   function abrirEdicao(c: Contrato) {
@@ -175,15 +216,35 @@ export default function ContratosPage() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl bg-slate-900 pb-24">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-slate-800 bg-slate-900/95 p-4 backdrop-blur">
+        <div className="flex min-w-0 items-center gap-3">
           <MenuLateral />
-          <h1 className="text-base font-bold text-slate-50">Contratos</h1>
+          <h1 className="truncate text-base font-bold text-slate-50">Contratos</h1>
         </div>
-        <button onClick={abrirNovo} className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-bold text-white">
-          + Novo
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <label
+            className={`cursor-pointer rounded-xl bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 ${
+              lendoContrato ? 'opacity-50' : ''
+            }`}
+          >
+            {lendoContrato ? 'Lendo...' : '📄 Ler contrato'}
+            <input
+              type="file"
+              accept=".pdf,image/*"
+              onChange={anexarELer}
+              disabled={lendoContrato}
+              className="hidden"
+            />
+          </label>
+          <button onClick={abrirNovo} className="rounded-xl bg-brand-500 px-3 py-2 text-xs font-bold text-white">
+            + Novo
+          </button>
+        </div>
       </header>
+
+      {erroLeitura && (
+        <p className="border-b border-slate-800 bg-amber-500/10 px-4 py-2 text-xs text-amber-400">{erroLeitura}</p>
+      )}
 
       <LembretesProximos contratos={contratos} />
 
@@ -252,10 +313,15 @@ export default function ContratosPage() {
             className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-slate-900 p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="mb-4 text-base font-bold text-slate-50">
+            <h2 className="mb-1 text-base font-bold text-slate-50">
               {editando ? 'Editar contrato' : 'Novo contrato'}
             </h2>
-            <div className="flex flex-col gap-3">
+            {!editando && form.contratoAssinadoNome && (
+              <p className="mb-4 text-xs text-amber-400">
+                Preenchido automaticamente a partir do contrato anexado — confira os dados antes de salvar.
+              </p>
+            )}
+            <div className={`flex flex-col gap-3 ${!editando && form.contratoAssinadoNome ? '' : 'mt-4'}`}>
               <Campo label="Nome completo">
                 <input
                   value={form.cliente}

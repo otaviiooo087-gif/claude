@@ -17,6 +17,8 @@ import { TYPE_LABELS, BASE_LOCATION } from '@/lib/types';
 import { todayISO, formatDateFull, formatCurrency } from '@/lib/format';
 import { chaveEndereco, geocodar } from '@/lib/geocode';
 import { distanciaMetros, estimarMinutos } from '@/lib/geo';
+import { buscarFechamentoDia, salvarFechamentoDia } from '@/lib/fechamentoDia';
+import { useConfiguracoes } from '@/lib/useConfiguracoes';
 
 const DURACAO_PADRAO_MIN: Record<string, number> = {
   MONTAGEM: 45,
@@ -32,6 +34,13 @@ function formatarHoras(minutos: number): string {
   return `${h}h${m > 0 ? ` ${m}min` : ''}`;
 }
 
+function somarMinutosAoHorario(hhmm: string, minutos: number): string {
+  const [h, m] = hhmm.split(':').map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return '';
+  const total = Math.round(h * 60 + m + minutos) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
 export default function AgendaAdminPage() {
   const { profile } = useAuth();
   const ehAdmin = profile?.role === 'admin';
@@ -41,6 +50,8 @@ export default function AgendaAdminPage() {
   const [trajetoMin, setTrajetoMin] = useState<Record<string, number | null>>({});
   const [editando, setEditando] = useState<TarefaComOperador | null>(null);
   const [verCanceladas, setVerCanceladas] = useState(false);
+  const [fechamento, setFechamento] = useState('');
+  const config = useConfiguracoes();
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -51,6 +62,16 @@ export default function AgendaAdminPage() {
     if (!ehAdmin) return;
     listarUsuarios().then(setOperadores);
   }, [ehAdmin]);
+
+  useEffect(() => {
+    if (!ehAdmin) return;
+    buscarFechamentoDia(data).then((h) => setFechamento(h ?? ''));
+  }, [ehAdmin, data]);
+
+  async function alterarFechamento(horario: string) {
+    setFechamento(horario);
+    await salvarFechamentoDia(data, horario);
+  }
 
   const nomeOperador = (uid: string) => operadores.find((o) => o.uid === uid)?.nome || 'Operador';
 
@@ -72,9 +93,15 @@ export default function AgendaAdminPage() {
       lista.push(t);
       mapa.set(t.uid, lista);
     });
-    mapa.forEach((lista) => lista.sort((a, b) => a.task.horarioComparacao.localeCompare(b.task.horarioComparacao)));
+    mapa.forEach((lista) => {
+      lista.sort((a, b) => a.task.horarioComparacao.localeCompare(b.task.horarioComparacao));
+      if (config.ajudanteBuscaPrimeiro) {
+        // Ordenação estável: dentro de "tem ajudante" e "não tem", mantém a ordem por horário já aplicada.
+        lista.sort((a, b) => (a.task.ajudanteNome ? 0 : 1) - (b.task.ajudanteNome ? 0 : 1));
+      }
+    });
     return mapa;
-  }, [doDia]);
+  }, [doDia, config.ajudanteBuscaPrimeiro]);
 
   useEffect(() => {
     let cancelado = false;
@@ -140,6 +167,16 @@ export default function AgendaAdminPage() {
           <p className="text-sm text-slate-400">{formatDateFull(data)}</p>
         </div>
 
+        <label className="flex items-center gap-2 text-xs text-slate-400">
+          Horário de fechamento da agenda nesse dia
+          <input
+            type="time"
+            value={fechamento}
+            onChange={(e) => alterarFechamento(e.target.value)}
+            className="rounded-lg bg-slate-800 px-2 py-1.5 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+          />
+        </label>
+
         <div className="flex gap-1 rounded-full bg-slate-800 p-0.5 text-xs font-bold">
           <button
             onClick={() => setVerCanceladas(false)}
@@ -159,14 +196,24 @@ export default function AgendaAdminPage() {
           <p className="text-sm text-slate-500">Nenhuma montagem ou logística nessa data.</p>
         )}
 
-        {[...porOperador.entries()].map(([uid, lista]) => (
+        {[...porOperador.entries()].map(([uid, lista]) => {
+          const previsaoFim =
+            lista.length > 0 ? somarMinutosAoHorario(lista[0].task.horarioComparacao, previsaoTotalOperador(lista)) : '';
+          const passaDoFechamento = fechamento && previsaoFim && previsaoFim > fechamento;
+          return (
           <section key={uid} className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-100">{nomeOperador(uid)}</h2>
               <span className="text-xs text-slate-400">
                 Previsão do dia: {formatarHoras(previsaoTotalOperador(lista))}
+                {previsaoFim && ` · termina ~${previsaoFim}`}
               </span>
             </div>
+            {passaDoFechamento && (
+              <p className="text-xs font-semibold text-red-400">
+                ⚠️ Pode terminar depois do fechamento ({fechamento}) — considere reagendar ou tirar alguma parada.
+              </p>
+            )}
 
             {lista.map(({ task }) => (
               <button
@@ -195,7 +242,8 @@ export default function AgendaAdminPage() {
               </button>
             ))}
           </section>
-        ))}
+          );
+        })}
       </div>
 
       {editando && (

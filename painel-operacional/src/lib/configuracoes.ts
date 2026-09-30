@@ -11,6 +11,7 @@ export interface Configuracoes {
   avisoCuidadosPosMontagem?: string;
   avisoAtraso?: string;
   avisosPersonalizados?: AvisoPersonalizado[];
+  ajudanteBuscaPrimeiro?: boolean;
   atualizadoEm?: number;
 }
 

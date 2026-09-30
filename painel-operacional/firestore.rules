@@ -76,5 +76,12 @@ service cloud.firestore {
       allow read, update: if ehAdmin();
       allow create: if estaLogado() && request.resource.data.operadorUid == request.auth.uid;
     }
+
+    match /fechamentosDia/{data} {
+      // Horário de fechamento da agenda por dia — qualquer logado lê, só o
+      // admin define.
+      allow read: if estaLogado();
+      allow write: if ehAdmin();
+    }
   }
 }

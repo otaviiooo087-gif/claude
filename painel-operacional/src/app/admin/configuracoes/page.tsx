@@ -37,6 +37,7 @@ export default function ConfiguracoesPage() {
   const [erroArquivo, setErroArquivo] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
+  const [ajudanteBuscaPrimeiro, setAjudanteBuscaPrimeiro] = useState(false);
   const inputArquivoRef = useRef<HTMLInputElement>(null);
 
   function recarregarEquipe() {
@@ -57,6 +58,7 @@ export default function ConfiguracoesPage() {
       setCidadeRecebedor(dados.cidadeRecebedorPix ?? '');
       setModeloBase64(dados.modeloContratoBase64);
       setModeloNome(dados.modeloContratoNome);
+      setAjudanteBuscaPrimeiro(dados.ajudanteBuscaPrimeiro ?? false);
     });
   }, [ehAdmin]);
 
@@ -137,6 +139,7 @@ export default function ConfiguracoesPage() {
         cidadeRecebedorPix: cidadeRecebedor.trim(),
         modeloContratoBase64: modeloBase64 ?? '',
         modeloContratoNome: modeloNome ?? '',
+        ajudanteBuscaPrimeiro,
       });
       setMensagem('Configurações salvas.');
     } catch (e) {
@@ -250,6 +253,25 @@ export default function ConfiguracoesPage() {
             </div>
           )}
           {mensagemEquipe && <p className="text-sm text-emerald-400">{mensagemEquipe}</p>}
+        </section>
+
+        <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Regras da Agenda de eventos</h2>
+          <p className="text-sm text-slate-400">
+            Dentro do dia, as tarefas sempre aparecem ordenadas por horário (a mais cedo primeiro). Essa opção
+            muda só o caso de tarefa com ajudante.
+          </p>
+          <label className="flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-4 py-3 ring-1 ring-slate-700">
+            <span className="text-sm text-slate-200">
+              Tarefa com ajudante sempre aparece primeiro no dia (pra lembrar de buscar o ajudante antes)
+            </span>
+            <input
+              type="checkbox"
+              checked={ajudanteBuscaPrimeiro}
+              onChange={(e) => setAjudanteBuscaPrimeiro(e.target.checked)}
+              className="h-5 w-5 shrink-0 accent-brand-500"
+            />
+          </label>
         </section>
 
         <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
