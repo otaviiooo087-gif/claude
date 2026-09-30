@@ -4,6 +4,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/lib/useAuth';
 import AuthGate from '@/components/AuthGate';
 import EmergenciaWatcher from '@/components/EmergenciaWatcher';
+import AutomacaoContratos from '@/components/AutomacaoContratos';
 import './globals.css';
 
 const BASE = process.env.GITHUB_PAGES === 'true' ? '/claude' : '';
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <AuthProvider>
             <EmergenciaWatcher />
+            <AutomacaoContratos />
             <AuthGate>{children}</AuthGate>
           </AuthProvider>
         </ErrorBoundary>

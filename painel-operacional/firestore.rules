@@ -56,6 +56,11 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assinatura', 'assinadoEm']));
     }
 
+    match /logisticaContratos/{id} {
+      // Logística gerada automaticamente dos contratos assinados — só o admin.
+      allow read, write: if ehAdmin();
+    }
+
     match /brinquedos/{id} {
       // Qualquer operador logado precisa ver o catálogo pra saber o que
       // carregar; só o admin cadastra/edita/apaga um brinquedo.

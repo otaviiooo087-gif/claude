@@ -9,6 +9,7 @@ import { listarUsuarios } from '@/lib/usuarios';
 import { UserProfile } from '@/lib/authTypes';
 import { atribuirTarefas } from '@/lib/tarefasAtribuidas';
 import MenuLateral from '@/components/MenuLateral';
+import LogisticaDosContratos from '@/components/LogisticaDosContratos';
 import { extrairTextoContrato } from '@/lib/lerContrato';
 
 const TIPOS: TaskType[] = ['MONTAGEM', 'RETIRADA', 'EVENTO', 'LOGISTICA'];
@@ -151,6 +152,7 @@ export default function AtribuirLogisticaPage() {
       </header>
 
       <div className="flex flex-col gap-4 p-4">
+        {!drafts && <LogisticaDosContratos />}
         {operadores.length === 0 && (
           <p className="text-sm text-amber-400">
             Nenhum operador cadastrado ainda — vá em &quot;+ Adicionar pessoa&quot; no Monitoramento de equipe

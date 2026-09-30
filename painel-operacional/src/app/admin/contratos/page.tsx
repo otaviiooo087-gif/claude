@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
 import CobrancaPixModal from '@/components/CobrancaPixModal';
-import AtribuirOperadorBotao from '@/components/AtribuirOperadorBotao';
 import ClimaBadge from '@/components/ClimaBadge';
 import { formatCurrency, whatsappUrl } from '@/lib/format';
 import {
@@ -23,7 +22,9 @@ import ContratoDocumento from '@/components/ContratoDocumento';
 import SegundaViaBotoes from '@/components/SegundaViaBotoes';
 import { lembretesProximos, formatDiaMes, mensagemLembrete } from '@/lib/lembretes';
 import { Produto, buscarProdutos, ouvirProdutos } from '@/lib/produtos';
-import { ChecklistItem, Task } from '@/lib/types';
+import { STATUS_LABELS } from '@/lib/types';
+import { LogisticaContrato, ouvirLogisticaContratos, salvarLogisticaContrato } from '@/lib/logisticaContratos';
+import { TarefaComOperador, ouvirTodasTarefasAtribuidas } from '@/lib/tarefasAtribuidas';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { extrairTextoContrato } from '@/lib/lerContrato';
 import { parseContrato } from '@/lib/parseContrato';
@@ -64,7 +65,8 @@ export default function ContratosPage() {
   const [form, setForm] = useState<ContratoDraft>(VAZIO);
   const [mostrarForm, setMostrarForm] = useState(false);
   const [cobrando, setCobrando] = useState<Contrato | null>(null);
-  const [logisticaGerada, setLogisticaGerada] = useState<Record<string, Task>>({});
+  const [logistica, setLogistica] = useState<Record<string, LogisticaContrato>>({});
+  const [andamento, setAndamento] = useState<TarefaComOperador[]>([]);
   const [gerandoLogistica, setGerandoLogistica] = useState<string | null>(null);
   const [erroAnexo, setErroAnexo] = useState<string | null>(null);
   const [processandoAnexo, setProcessandoAnexo] = useState(false);
@@ -92,7 +94,13 @@ export default function ContratosPage() {
 
   useEffect(() => {
     if (!ehAdmin) return;
-    const fns = [ouvirContratos(setContratos), ouvirProdutos(setCatalogo), ouvirAssinaturas(setAssinados)];
+    const fns = [
+      ouvirContratos(setContratos),
+      ouvirProdutos(setCatalogo),
+      ouvirAssinaturas(setAssinados),
+      ouvirLogisticaContratos(setLogistica),
+      ouvirTodasTarefasAtribuidas(setAndamento),
+    ];
     return () => fns.forEach((f) => f());
   }, [ehAdmin]);
 
@@ -268,43 +276,13 @@ export default function ContratosPage() {
     }
   }
 
-  async function gerarLogistica(c: Contrato) {
+  async function gerarLogisticaManual(c: Contrato) {
     setGerandoLogistica(c.id);
+    setAvisoContrato(null);
     try {
-      const produtos = await buscarProdutos();
-      const checklist: ChecklistItem[] = [];
-      const varios = nomesDosItens(c).length > 1;
-      nomesDosItens(c).forEach((nome) => {
-        const produto = produtos.find((p) => p.nome.trim().toLowerCase() === nome.trim().toLowerCase());
-        produto?.itens.forEach((item) =>
-          checklist.push({ id: `item-${checklist.length}`, texto: varios ? `${nome}: ${item}` : item, marcado: false })
-        );
-      });
-
-      const observacoesPartes = [
-        `Sinal já pago: ${formatCurrency(c.valorSinal)}.`,
-        `Cobrar na chegada: ${formatCurrency(c.valorChegada)}.`,
-      ];
-      if (c.observacoes) observacoesPartes.push(c.observacoes);
-
-      const tarefa: Task = {
-        id: `contrato-${c.id}`,
-        data: c.dataEvento,
-        horario: c.horarioInicio || 'A combinar',
-        horarioComparacao: c.horarioInicio || '00:00',
-        tipo: 'MONTAGEM',
-        cliente: c.cliente,
-        telefone: c.telefone,
-        endereco: c.endereco,
-        brinquedo: c.brinquedo,
-        valor: c.valorChegada,
-        observacoes: observacoesPartes.join(' '),
-        checklist,
-        status: 'PENDENTE',
-        ordem: 0,
-        createdAt: Date.now(),
-      };
-      setLogisticaGerada((atual) => ({ ...atual, [c.id]: tarefa }));
+      await salvarLogisticaContrato(c, await buscarProdutos(), 'manual');
+    } catch {
+      setAvisoContrato('Não consegui gerar a logística. Confira a internet e as regras do Firestore.');
     } finally {
       setGerandoLogistica(null);
     }
@@ -379,6 +357,10 @@ export default function ContratosPage() {
                 </span>
               </div>
             </button>
+            <Etapas
+              etapas={etapasDoContrato(c, assinados, logistica[c.id], andamento)}
+              resumo={resumoEtapas(logistica[c.id], andamento)}
+            />
             <button
               onClick={() => setPrevia(c)}
               disabled={enviandoContrato === c.id}
@@ -406,20 +388,20 @@ export default function ContratosPage() {
               Cobrar via Pix
             </button>
 
-            {logisticaGerada[c.id] ? (
-              <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-900 px-3 py-2 ring-1 ring-slate-700">
-                <span className="text-xs text-slate-400">
-                  Logística pronta{logisticaGerada[c.id].checklist.length > 0 ? ` (${logisticaGerada[c.id].checklist.length} itens)` : ''} — atribuir a:
-                </span>
-                <AtribuirOperadorBotao task={logisticaGerada[c.id]} />
-              </div>
+            {logistica[c.id] ? (
+              <Link
+                href="/admin/atribuir"
+                className="mt-2 block w-full rounded-lg bg-slate-800 py-2 text-center text-xs font-bold text-emerald-400"
+              >
+                📦 Ver logística no Planejamento
+              </Link>
             ) : (
               <button
-                onClick={() => gerarLogistica(c)}
+                onClick={() => gerarLogisticaManual(c)}
                 disabled={gerandoLogistica === c.id}
-                className="mt-2 w-full rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200 disabled:opacity-50"
+                className="mt-2 w-full rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-400 disabled:opacity-50"
               >
-                {gerandoLogistica === c.id ? 'Gerando...' : 'Gerar logística (checklist do brinquedo)'}
+                {gerandoLogistica === c.id ? 'Gerando...' : 'Gerar logística agora (sem esperar a assinatura)'}
               </button>
             )}
           </div>
@@ -781,6 +763,62 @@ function LembretesProximos({ contratos }: { contratos: Contrato[] }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+interface Etapa {
+  rotulo: string;
+  ok: boolean;
+}
+
+function etapasDoContrato(
+  c: Contrato,
+  assinados: Record<string, number>,
+  log: LogisticaContrato | undefined,
+  andamento: TarefaComOperador[]
+): Etapa[] {
+  const ids = log?.tarefas.map((t) => t.id) ?? [];
+  const reais = andamento.filter((x) => ids.includes(x.task.id));
+  return [
+    { rotulo: 'Contrato criado', ok: true },
+    { rotulo: 'Enviado ao cliente', ok: !!c.tokenAssinatura },
+    { rotulo: 'Assinado', ok: !!(c.tokenAssinatura && assinados[c.tokenAssinatura]) },
+    { rotulo: 'Pago', ok: c.status === 'PAGO' },
+    { rotulo: 'Logística gerada', ok: !!log },
+    { rotulo: 'Equipe definida', ok: !!log && log.tarefas.every((t) => log.atribuidas[t.id]) },
+    { rotulo: 'Concluído', ok: ids.length > 0 && reais.length === ids.length && reais.every((x) => x.task.status === 'CONCLUIDA') },
+  ];
+}
+
+function resumoEtapas(log: LogisticaContrato | undefined, andamento: TarefaComOperador[]): string {
+  if (!log) return '';
+  return log.tarefas
+    .map((t) => {
+      const real = andamento.find((x) => x.task.id === t.id);
+      const quem = log.atribuidas[t.id]?.nome;
+      const tipo = t.tipo === 'MONTAGEM' ? 'Montagem' : 'Retirada';
+      return quem ? `${tipo}: ${quem} (${real ? STATUS_LABELS[real.task.status] : 'enviada'})` : `${tipo}: sem operador`;
+    })
+    .join(' · ');
+}
+
+function Etapas({ etapas, resumo }: { etapas: Etapa[]; resumo: string }) {
+  return (
+    <div className="mt-3 rounded-xl bg-slate-900/60 p-2.5">
+      <div className="flex flex-wrap gap-1">
+        {etapas.map((e) => (
+          <span
+            key={e.rotulo}
+            className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+              e.ok ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+            }`}
+          >
+            {e.ok ? '✓' : '○'} {e.rotulo}
+          </span>
+        ))}
+      </div>
+      {resumo && <p className="mt-1.5 text-[11px] text-slate-400">{resumo}</p>}
     </div>
   );
 }
