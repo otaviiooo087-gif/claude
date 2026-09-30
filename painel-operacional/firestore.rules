@@ -30,6 +30,8 @@ service cloud.firestore {
       allow read: if ehAdmin() || (estaLogado() && request.auth.uid == uid);
       // Cada operador só escreve a própria localização.
       allow write: if estaLogado() && request.auth.uid == uid;
+      // O admin pode limpar do mapa quem foi removido da equipe.
+      allow delete: if ehAdmin();
 
       match /rota/{id} {
         // Rastro (histórico de posições) do dia — só o admin acompanha o

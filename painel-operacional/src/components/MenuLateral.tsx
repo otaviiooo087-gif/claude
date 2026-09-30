@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
+import TrocarSenhaModal from './TrocarSenhaModal';
 
 interface ItemMenu {
   href: string;
@@ -26,6 +27,7 @@ const ITENS_OPERADOR: ItemMenu[] = [{ href: '/admin/brinquedos', label: 'Brinque
 
 export default function MenuLateral() {
   const [aberto, setAberto] = useState(false);
+  const [trocandoSenha, setTrocandoSenha] = useState(false);
   const pathname = usePathname();
   const { profile, configured, logout } = useAuth();
 
@@ -77,6 +79,15 @@ export default function MenuLateral() {
                   <button
                     onClick={() => {
                       setAberto(false);
+                      setTrocandoSenha(true);
+                    }}
+                    className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-200 active:bg-slate-800"
+                  >
+                    Trocar minha senha
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAberto(false);
                       logout();
                     }}
                     className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-red-400"
@@ -90,6 +101,8 @@ export default function MenuLateral() {
           </div>,
           document.body
         )}
+
+      {trocandoSenha && createPortal(<TrocarSenhaModal onFechar={() => setTrocandoSenha(false)} />, document.body)}
     </>
   );
 }

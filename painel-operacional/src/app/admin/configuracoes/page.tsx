@@ -7,7 +7,7 @@ import MenuLateral from '@/components/MenuLateral';
 import { Configuracoes, ouvirConfiguracoes, salvarConfiguracoes } from '@/lib/configuracoes';
 import { lerArquivoComoDataUrl } from '@/lib/arquivo';
 import { UserRole, UserProfile } from '@/lib/authTypes';
-import { listarUsuarios } from '@/lib/usuarios';
+import { enviarRedefinicaoSenha, excluirUsuario, listarUsuarios } from '@/lib/usuarios';
 
 const TAMANHO_MAXIMO_BYTES = 700 * 1024;
 
@@ -42,6 +42,37 @@ export default function ConfiguracoesPage() {
 
   function recarregarEquipe() {
     listarUsuarios().then(setEquipe);
+  }
+
+  const [confirmandoExclusao, setConfirmandoExclusao] = useState<string | null>(null);
+  const [acaoEmAndamento, setAcaoEmAndamento] = useState<string | null>(null);
+
+  async function excluirPessoa(u: UserProfile) {
+    setAcaoEmAndamento(u.uid);
+    setMensagemEquipe(null);
+    try {
+      await excluirUsuario(u.uid);
+      setMensagemEquipe(`${u.nome} foi removido e não acessa mais o app.`);
+      setConfirmandoExclusao(null);
+      recarregarEquipe();
+    } catch (e) {
+      setMensagemEquipe(e instanceof Error ? e.message : 'Erro ao excluir.');
+    } finally {
+      setAcaoEmAndamento(null);
+    }
+  }
+
+  async function redefinirSenha(u: UserProfile) {
+    setAcaoEmAndamento(u.uid);
+    setMensagemEquipe(null);
+    try {
+      await enviarRedefinicaoSenha(u.email);
+      setMensagemEquipe(`Link pra criar senha nova enviado para ${u.email}. Peça pra ${u.nome} olhar a caixa de entrada e o spam.`);
+    } catch (e) {
+      setMensagemEquipe(e instanceof Error ? e.message : 'Erro ao enviar o e-mail.');
+    } finally {
+      setAcaoEmAndamento(null);
+    }
   }
 
   useEffect(() => {
@@ -182,6 +213,47 @@ export default function ConfiguracoesPage() {
                 <p className="mt-1 text-xs text-slate-500">
                   {[u.cpf, u.telefone, u.endereco].filter(Boolean).join(' · ')}
                 </p>
+              )}
+
+              {confirmandoExclusao === u.uid ? (
+                <div className="mt-3 flex flex-col gap-2 rounded-lg bg-red-500/10 p-3">
+                  <p className="text-xs text-red-300">
+                    Excluir {u.nome}? Ele perde o acesso ao app na hora. Essa ação não dá pra desfazer.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmandoExclusao(null)}
+                      className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => excluirPessoa(u)}
+                      disabled={acaoEmAndamento === u.uid}
+                      className="flex-1 rounded-lg bg-red-600 py-2 text-xs font-bold text-white disabled:opacity-50"
+                    >
+                      {acaoEmAndamento === u.uid ? 'Excluindo...' : 'Confirmar exclusão'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => redefinirSenha(u)}
+                    disabled={acaoEmAndamento === u.uid}
+                    className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-slate-200 disabled:opacity-50"
+                  >
+                    Redefinir senha
+                  </button>
+                  {u.uid !== profile?.uid && (
+                    <button
+                      onClick={() => setConfirmandoExclusao(u.uid)}
+                      className="flex-1 rounded-lg bg-slate-800 py-2 text-xs font-bold text-red-400"
+                    >
+                      Excluir
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))}
