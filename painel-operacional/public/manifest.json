@@ -1,6 +1,6 @@
 {
-  "name": "Zimba Festa",
-  "short_name": "Zimba Festa",
+  "name": "Zimba Festas App",
+  "short_name": "Zimba Festas",
   "description": "Painel offline para controle de montagens e retiradas.",
   "start_url": ".",
   "scope": ".",

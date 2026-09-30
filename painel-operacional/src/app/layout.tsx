@@ -7,7 +7,7 @@ import EmergenciaWatcher from '@/components/EmergenciaWatcher';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Zimba Festa',
+  title: 'Zimba Festas App',
   description: 'Painel offline para controle de montagens e retiradas.',
   manifest: 'manifest.json',
   icons: {

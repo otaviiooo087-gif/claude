@@ -57,7 +57,7 @@ export default function MenuLateral() {
                 <span className="flex items-center gap-2 text-base font-bold text-slate-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={LOGO_UI} alt="" className="h-9 w-auto rounded-lg bg-white p-1" />
-                  Zimba Festa
+                  Zimba Festas App
                 </span>
                 <button onClick={() => setAberto(false)} aria-label="Fechar menu" className="p-1 text-xl text-slate-400">
                   ×

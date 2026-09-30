@@ -120,7 +120,7 @@ export default function Home() {
           <div className="flex min-w-0 items-center gap-3">
             {configured && user && <MenuLateral />}
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold text-slate-50">Zimba Festa</h1>
+              <h1 className="truncate text-lg font-bold text-slate-50">Zimba Festas App</h1>
               <p className="truncate text-sm text-slate-400">{formatDateFull(selectedDate)}</p>
             </div>
           </div>
