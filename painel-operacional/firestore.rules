@@ -52,7 +52,7 @@ service cloud.firestore {
       allow list, create, delete: if ehAdmin();
       // Cliente (sem login) só pode assinar UMA vez, mexendo só na assinatura.
       allow update: if ehAdmin() ||
-        (resource.data.assinadoEm == null &&
+        (!('assinadoEm' in resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assinatura', 'assinadoEm']));
     }
 
