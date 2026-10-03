@@ -29,7 +29,10 @@ export function useTasks() {
         const vistos = new Map<string, Task>();
         const sobrando: string[] = [];
         for (const t of existing) {
-          const chave = [t.data, t.horarioComparacao, t.tipo, t.cliente.trim().toUpperCase()].join('|');
+          // Mesmo dia + mesmo tipo + as duas primeiras palavras do cliente (pega cópias com horário
+          // ou nome ligeiramente diferente, ex: nome com CPF colado).
+          const nome = t.cliente.trim().toUpperCase().split(/\s+/).slice(0, 2).join(' ');
+          const chave = [t.data, t.tipo, nome].join('|');
           const outro = vistos.get(chave);
           if (!outro) vistos.set(chave, t);
           else if (peso(t) > peso(outro)) {
