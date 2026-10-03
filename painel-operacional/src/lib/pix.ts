@@ -53,8 +53,8 @@ export function normalizarChavePix(chave: string): string {
 }
 
 export function montarPayloadPix({ chave, nomeRecebedor, cidadeRecebedor, valor, identificador }: DadosCobrancaPix): string {
-  const nome = normalizar(nomeRecebedor).slice(0, 25) || 'ZIMBA FESTA';
-  const cidade = normalizar(cidadeRecebedor).slice(0, 15) || 'VALINHOS';
+  const nome = normalizar(nomeRecebedor).toUpperCase().slice(0, 25) || 'ZIMBA FESTA';
+  const cidade = normalizar(cidadeRecebedor).toUpperCase().slice(0, 15) || 'VALINHOS';
   const txid = (identificador ? normalizar(identificador).replace(/ /g, '') : '') || '***';
 
   const merchantAccount = tlv('26', tlv('00', 'br.gov.bcb.pix') + tlv('01', normalizarChavePix(chave)));
@@ -62,6 +62,7 @@ export function montarPayloadPix({ chave, nomeRecebedor, cidadeRecebedor, valor,
 
   const semCrc =
     tlv('00', '01') +
+    tlv('01', '11') + // QR estático (reutilizável); sem esse campo alguns bancos acusam "inválido"
     merchantAccount +
     tlv('52', '0000') +
     tlv('53', '986') +
