@@ -1,4 +1,4 @@
-const CACHE_NAME = 'painel-operacional-v3';
+const CACHE_NAME = 'painel-operacional-v4';
 
 function scopeUrl(path) {
   return new URL(path, self.registration.scope).toString();
@@ -35,7 +35,8 @@ self.addEventListener('fetch', (event) => {
     // arquivos JS/CSS a cada deploy, então um HTML antigo em cache aponta para
     // arquivos que já não existem. Só cai para o cache quando não há rede.
     event.respondWith(
-      fetch(request)
+      // cache: 'reload' ignora o cache HTTP (o GitHub Pages deixa o HTML em cache por 10 min).
+      fetch(request, { cache: 'reload' })
         .then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
