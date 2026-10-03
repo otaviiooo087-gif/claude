@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { getAllTasks, putManyTasks, putTask, getState, setState } from './db';
+import { getAllTasks, putManyTasks, putTask, deleteTask, getState, setState } from './db';
 import { INITIAL_TASKS } from './seedData';
 import { Task, TaskStatus, STATUS_ORDER } from './types';
 import { todayISO } from './format';
@@ -129,6 +129,14 @@ export function useTasks() {
     [setStatus]
   );
 
+  const excluirTasks = useCallback(
+    async (ids: string[]) => {
+      for (const id of ids) await deleteTask(id);
+      await reload();
+    },
+    [reload]
+  );
+
   const arquivarTask = useCallback(
     async (taskId: string, arquivar = true) => {
       const task = tasks.find((t) => t.id === taskId);
@@ -166,6 +174,7 @@ export function useTasks() {
     completeTask,
     reopenTask,
     arquivarTask,
+    excluirTasks,
     arquivadas,
     importTasks,
   };

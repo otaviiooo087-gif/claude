@@ -13,6 +13,7 @@ import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
 import ImportarAgenda from '@/components/ImportarAgenda';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import MenuLateral from '@/components/MenuLateral';
 import AlternarModo from '@/components/AlternarModo';
 import { useAuth } from '@/lib/useAuth';
@@ -38,12 +39,14 @@ export default function Home() {
     completeTask,
     reopenTask,
     arquivarTask,
+    excluirTasks,
     arquivadas,
     importTasks,
   } = useTasks();
 
   const lateTasks = useLateAlert(useMemo(() => tasks.filter((t) => !t.arquivada), [tasks]));
   const [verArquivadas, setVerArquivadas] = useState(false);
+  const [apagando, setApagando] = useState<{ msg: string; ids: string[] } | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
 
@@ -183,6 +186,35 @@ export default function Home() {
           </button>
         )}
 
+        <div className="flex flex-col gap-2">
+          {tasks.some((t) => t.id.startsWith('seed-')) && (
+            <button
+              onClick={() =>
+                setApagando({
+                  msg: 'Excluir as tarefas de exemplo antigas deste aparelho?',
+                  ids: tasks.filter((t) => t.id.startsWith('seed-')).map((t) => t.id),
+                })
+              }
+              className="rounded-xl bg-slate-800 py-2.5 text-xs font-semibold text-red-400"
+            >
+              🗑️ Excluir tarefas de exemplo antigas
+            </button>
+          )}
+          {tasksForDate.length > 0 && (
+            <button
+              onClick={() =>
+                setApagando({
+                  msg: `Excluir as ${tasksForDate.length} tarefa(s) deste dia da sua agenda? Elas somem só daqui; o admin continua vendo.`,
+                  ids: tasksForDate.map((t) => t.id),
+                })
+              }
+              className="rounded-xl bg-slate-800 py-2.5 text-xs font-semibold text-red-400"
+            >
+              🗑️ Excluir todas as tarefas deste dia
+            </button>
+          )}
+        </div>
+
         {arquivadas.length > 0 && (
           <section>
             <button
@@ -213,6 +245,19 @@ export default function Home() {
 
         <BaseIndicator />
       </div>
+
+      {apagando && (
+        <ConfirmDialog
+          message={apagando.msg}
+          confirmLabel="EXCLUIR"
+          onCancel={() => setApagando(null)}
+          onConfirm={async () => {
+            const ids = apagando.ids;
+            setApagando(null);
+            await excluirTasks(ids);
+          }}
+        />
+      )}
 
       {configured && user && <BotaoEmergencia />}
     </main>
