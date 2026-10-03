@@ -74,7 +74,8 @@ function minutos(hhmm: string): number {
   return h * 60 + m;
 }
 
-function normalizarTelefone(linha: string): string | undefined {
+function normalizarTelefone(linhaOriginal: string): string | undefined {
+  const linha = linhaOriginal.replace(/(\d{2})\s9\s(\d{4})/g, '$1 9$2');
   const m = linha.match(/(\d{2})\D{0,3}(\d{4,5})[\s-]?(\d{4})/);
   if (!m) return undefined;
   return `${m[1]} ${m[2]}-${m[3]}`;
@@ -100,6 +101,22 @@ function detectarData(linha: string, anoPadrao: number): string | null {
   return null;
 }
 
+const DIAS_SEMANA: Record<string, number> = {
+  DOMINGO: 0, SEGUNDA: 1, TERÇA: 2, TERCA: 2, QUARTA: 3, QUINTA: 4, SEXTA: 5, SÁBADO: 6, SABADO: 6,
+};
+
+/** "DOMINGO" sozinho numa linha: é o próximo dia com esse nome depois da data atual do texto. */
+function dataDoDiaDaSemana(linha: string, dataAtual: string): string | null {
+  const alvo = DIAS_SEMANA[linha.toUpperCase().replace(/[-:\s]+$/g, '').replace(/-FEIRA$/, '')];
+  if (alvo === undefined || !dataAtual) return null;
+  const [y, m, d] = dataAtual.split('-').map(Number);
+  const base = new Date(y, m - 1, d);
+  let dif = (alvo - base.getDay() + 7) % 7;
+  if (dif === 0) dif = 7;
+  base.setDate(base.getDate() + dif);
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+}
+
 function ehLinhaDeAtividadeSolta(linha: string): boolean {
   if (!/^[A-ZÀ-Ú ]{2,30}$/.test(linha)) return false;
   const palavras = linha.split(/\s+/);
@@ -122,6 +139,7 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
   let dataAtual = '';
   let isRetirada = false;
   let entradaAtual: string[] | null = null;
+  let novoDia = false; // logo depois de um cabeçalho de dia, a 1ª linha abre uma tarefa mesmo sem horário
 
   function fechaEntrada() {
     if (entradaAtual && entradaAtual.length > 0 && dataAtual) {
@@ -140,6 +158,15 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
       continue;
     }
 
+    const dataSemana = dataDoDiaDaSemana(linha, dataAtual);
+    if (dataSemana) {
+      fechaEntrada();
+      dataAtual = dataSemana;
+      isRetirada = false;
+      novoDia = true;
+      continue;
+    }
+
     if (/^RETIRADAS:?$/i.test(linha)) {
       fechaEntrada();
       isRetirada = true;
@@ -154,9 +181,10 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
     const primeiroToken = linha.split(/\s+/)[0] || '';
     const comecaComHorario = isTimeToken(primeiroToken);
 
-    if (comecaComHorario) {
+    if (comecaComHorario || (novoDia && !entradaAtual)) {
       fechaEntrada();
       entradaAtual = [linha];
+      novoDia = false;
     } else if (ehLinhaDeAtividadeSolta(linha)) {
       // Ex: "COMER" sozinho numa linha, sem horário — é uma tarefa nova,
       // não continuação da anterior.
@@ -179,7 +207,16 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
     while (fimCabecalho < entrada.linhas.length && !ehLinhaRotulada(entrada.linhas[fimCabecalho])) {
       fimCabecalho++;
     }
-    const primeiraLinha = normalizarConectores(entrada.linhas.slice(0, fimCabecalho).join(' '));
+    const textoBrutoEntrada = entrada.linhas.join(' ');
+    const valorMatch = textoBrutoEntrada.match(/VALOR\s+A\s+RECEBER\s*:?\s*(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?)/i);
+    const valorExtraido = valorMatch ? valorMatch[1].replace(/\./g, '') : undefined;
+    const cpfMatch = textoBrutoEntrada.match(/CPF\/?(?:CNPJ)?\s*:?\s*(\d{11,14})/i);
+    const primeiraLinha = normalizarConectores(
+      entrada.linhas
+        .slice(0, fimCabecalho)
+        .join(' ')
+        .replace(/CPF\/?(?:CNPJ)?\s*:?\s*\d{11,14}/gi, '')
+    );
     const outrasLinhas = entrada.linhas.slice(fimCabecalho);
 
     const tokens = primeiraLinha.split(/\s+/);
@@ -288,12 +325,19 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
       cliente = segmentos[segmentos.length - 1];
       brinquedo = segmentos.slice(0, -1).join(' - ');
     }
-    cliente = cliente.replace(/^(NOME DO CONTRATANTE|CONTRATANTE|NOME)\s*:\s*/i, '').trim();
+    cliente = cliente
+      .replace(/^(NOME DO CONTRATANTE|CONTRATANTE|NOME)\s*:\s*/i, '')
+      .replace(/\s*\d{2}\s?9?\s?\d{4}-\d{4},?\s*$/, '')
+      .trim();
     if (!cliente) cliente = rest || '(revisar)';
 
     let endereco: string | undefined;
     let telefone: string | undefined;
-    const obsExtra: string[] = [...notasHorario, ...parenteses];
+    const obsExtra: string[] = [
+      ...notasHorario,
+      ...parenteses.filter((p) => !/^VALOR\s+A\s+RECEBER/i.test(p)),
+      ...(cpfMatch ? [`CPF/CNPJ: ${cpfMatch[1]}.`] : []),
+    ];
     let esperandoContinuacaoEndereco = false;
 
     for (const linhaOutra of outrasLinhas) {
@@ -341,7 +385,8 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
     );
 
     let tipo: TaskType;
-    if (!endereco && !telefone && temPalavraLogistica) {
+    const comecaComAtividade = PALAVRAS_LOGISTICA.includes((primeiraLinha.replace(/^[\d:/\s\-–]+/, '').split(/\s+/)[0] || '').toUpperCase());
+    if ((!endereco && !telefone && temPalavraLogistica) || comecaComAtividade) {
       tipo = 'LOGISTICA';
     } else if (entrada.isRetirada) {
       tipo = 'RETIRADA';
@@ -364,6 +409,7 @@ export function parseLogistica(textoOriginal: string, anoPadrao = new Date().get
       telefone,
       endereco,
       brinquedo,
+      valor: valorExtraido,
       observacoes,
       precisaRevisao:
         !horarioComparacao ||
