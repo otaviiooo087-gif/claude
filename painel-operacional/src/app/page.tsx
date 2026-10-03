@@ -192,7 +192,6 @@ export default function Home() {
 
         {tasksForDate.length > 0 && (
         <section>
-          <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Linha do tempo</h2>
           <div className="flex flex-col divide-y divide-slate-800/60 rounded-2xl bg-slate-800/30">
             {tasksForDate.map((task) => (
               <TimelineItem key={task.id} task={task} onOpen={() => openTask(task.id)} />
