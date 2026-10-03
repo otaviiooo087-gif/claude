@@ -14,6 +14,7 @@ import TaskDetail from '@/components/TaskDetail';
 import BaseIndicator from '@/components/BaseIndicator';
 import LateAlertBanner from '@/components/LateAlertBanner';
 import ImportarAgenda from '@/components/ImportarAgenda';
+import NovaTarefaModal from '@/components/NovaTarefaModal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import MenuLateral from '@/components/MenuLateral';
 import AlternarModo from '@/components/AlternarModo';
@@ -47,6 +48,7 @@ export default function Home() {
 
   const lateTasks = useLateAlert(useMemo(() => tasks.filter((t) => !t.arquivada), [tasks]));
   const [verArquivadas, setVerArquivadas] = useState(false);
+  const [novaTarefa, setNovaTarefa] = useState(false);
   const [atribuindo, setAtribuindo] = useState<string | null>(null);
   const [apagando, setApagando] = useState<{ msg: string; ids: string[] } | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -211,6 +213,12 @@ export default function Home() {
         )}
 
         <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setNovaTarefa(true)}
+            className="rounded-xl bg-slate-800 py-2.5 text-xs font-bold text-slate-200"
+          >
+            ➕ Adicionar tarefa neste dia
+          </button>
           {profile?.role === 'admin' && user && tasks.some((t) => !t.arquivada && !t.id.startsWith('seed-')) && (
             <button
               disabled={atribuindo === 'todas'}
@@ -293,6 +301,17 @@ export default function Home() {
 
         <BaseIndicator />
       </div>
+
+      {novaTarefa && (
+        <NovaTarefaModal
+          dataInicial={selectedDate}
+          onFechar={() => setNovaTarefa(false)}
+          onSalvar={async (t) => {
+            await importTasks([{ ...t, ordem: tasks.length + 1 }]);
+            setNovaTarefa(false);
+          }}
+        />
+      )}
 
       {apagando && (
         <ConfirmDialog
