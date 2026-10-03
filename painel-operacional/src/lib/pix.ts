@@ -39,12 +39,25 @@ export interface DadosCobrancaPix {
   identificador?: string; // ex: id do contrato, só letras/números
 }
 
+/** CPF/CNPJ/telefone vão só com números (sem pontos, barra, traço); e-mail e chave aleatória ficam como estão. */
+export function normalizarChavePix(chave: string): string {
+  let c = chave.trim().replace(/\s*\(.*\)\s*$/, ''); // tira "(CNPJ)" no fim
+  if (c.includes('@') || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c)) return c;
+  if (/^[\d.\-\/\s()+]+$/.test(c)) {
+    const d = c.replace(/\D/g, '');
+    if ((d.length === 10 || d.length === 11) && !/^\d{11}$/.test(d.replace(/^0+/, '')) === false && c.includes('(')) return `+55${d}`;
+    if (c.startsWith('+')) return `+${d}`;
+    return d;
+  }
+  return c;
+}
+
 export function montarPayloadPix({ chave, nomeRecebedor, cidadeRecebedor, valor, identificador }: DadosCobrancaPix): string {
   const nome = normalizar(nomeRecebedor).slice(0, 25) || 'ZIMBA FESTA';
   const cidade = normalizar(cidadeRecebedor).slice(0, 15) || 'VALINHOS';
   const txid = (identificador ? normalizar(identificador).replace(/ /g, '') : '') || '***';
 
-  const merchantAccount = tlv('26', tlv('00', 'br.gov.bcb.pix') + tlv('01', chave.trim()));
+  const merchantAccount = tlv('26', tlv('00', 'br.gov.bcb.pix') + tlv('01', normalizarChavePix(chave)));
   const dadosAdicionais = tlv('62', tlv('05', txid.slice(0, 25)));
 
   const semCrc =
