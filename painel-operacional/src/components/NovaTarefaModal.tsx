@@ -22,6 +22,8 @@ export default function NovaTarefaModal({
   const [endereco, setEndereco] = useState('');
   const [telefone, setTelefone] = useState('');
   const [obs, setObs] = useState('');
+  const [brinquedo, setBrinquedo] = useState('');
+  const [valor, setValor] = useState('');
   const [salvando, setSalvando] = useState(false);
   const campo = 'w-full rounded-lg bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700';
 
@@ -37,6 +39,8 @@ export default function NovaTarefaModal({
         cliente: titulo.trim(),
         endereco: endereco.trim() || undefined,
         telefone: telefone.trim() || undefined,
+        brinquedo: brinquedo.trim() || undefined,
+        valor: valor ? Number(valor.replace(',', '.')) || undefined : undefined,
         observacoes: obs.trim() || undefined,
         checklist: [],
         status: 'PENDENTE',
@@ -64,6 +68,10 @@ export default function NovaTarefaModal({
           <div className="grid grid-cols-2 gap-2">
             <input type="date" value={data} onChange={(e) => setData(e.target.value)} className={campo} />
             <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className={campo} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input value={brinquedo} onChange={(e) => setBrinquedo(e.target.value)} placeholder="Brinquedo (opcional)" className={campo} />
+            <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="Valor a receber (R$)" className={campo} />
           </div>
           <input value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Endereço (opcional)" className={campo} />
           <input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="Telefone (opcional)" className={campo} />
