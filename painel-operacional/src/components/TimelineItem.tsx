@@ -2,6 +2,8 @@
 
 import { Task, TYPE_LABELS } from '@/lib/types';
 import { isAtrasada } from '@/lib/format';
+import { useAuth } from '@/lib/useAuth';
+import AtribuirOperadorBotao from './AtribuirOperadorBotao';
 
 interface Props {
   task: Task;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function TimelineItem({ task, onOpen }: Props) {
+  const { profile } = useAuth();
   const atrasada = isAtrasada(task);
   const emAndamento = task.status !== 'PENDENTE' && task.status !== 'CONCLUIDA';
   const concluida = task.status === 'CONCLUIDA';
@@ -36,6 +39,7 @@ export default function TimelineItem({ task, onOpen }: Props) {
           {task.brinquedo && <span className="block text-xs text-slate-500">{task.brinquedo}</span>}
         </span>
       </button>
+      {profile?.role === 'admin' && <AtribuirOperadorBotao task={task} />}
     </div>
   );
 }
