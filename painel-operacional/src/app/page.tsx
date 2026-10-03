@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTasks } from '@/lib/useTasks';
 import { useLateAlert } from '@/lib/useLateAlert';
-import { formatDateFull } from '@/lib/format';
+import { formatDateFull, todayISO } from '@/lib/format';
 import { getState, setState } from '@/lib/db';
 import DateSelector from '@/components/DateSelector';
 import AgoraCard from '@/components/AgoraCard';
@@ -84,6 +84,17 @@ export default function Home() {
 
   const openTask_ = openTaskId ? tasks.find((t) => t.id === openTaskId) : undefined;
 
+  // Dia sem tarefas (ex: o app abriu em um dia vazio): pula sozinho para hoje, o próximo dia com
+  // tarefas ou o último — só uma vez por carregamento, para não brigar com a escolha manual.
+  const [pulou, setPulou] = useState(false);
+  useEffect(() => {
+    if (loading || pulou || availableDates.length === 0) return;
+    setPulou(true);
+    if (availableDates.includes(selectedDate)) return;
+    const hoje = todayISO();
+    selectDate(availableDates.find((d) => d >= hoje) ?? availableDates[availableDates.length - 1]);
+  }, [loading, pulou, availableDates, selectedDate, selectDate]);
+
   useSyncTarefaAtual(user?.uid ?? null, rastreamentoAtivo, agora);
 
   if (loading) {
@@ -158,7 +169,16 @@ export default function Home() {
 
         {!agora && (
           <div className="rounded-2xl border border-slate-800 bg-slate-800/60 p-6 text-center text-slate-300">
-            Todas as tarefas do dia foram concluídas.
+            {tasksForDate.length === 0 ? (
+              <>
+                <p>Nenhuma tarefa neste dia.</p>
+                {availableDates.length > 0 && (
+                  <p className="mt-2 text-xs text-slate-400">Escolha outro dia nos botões de data acima.</p>
+                )}
+              </>
+            ) : (
+              'Todas as tarefas do dia foram concluídas.'
+            )}
           </div>
         )}
 
@@ -168,6 +188,7 @@ export default function Home() {
 
         {proxima && <ProximaCard task={proxima} onOpen={() => openTask(proxima.id)} />}
 
+        {tasksForDate.length > 0 && (
         <section>
           <h2 className="mb-2 text-xs font-bold uppercase tracking-widest text-slate-400">Linha do tempo</h2>
           <div className="flex flex-col divide-y divide-slate-800/60 rounded-2xl bg-slate-800/30">
@@ -176,6 +197,7 @@ export default function Home() {
             ))}
           </div>
         </section>
+        )}
 
         {concluidasCount > 0 && (
           <button
