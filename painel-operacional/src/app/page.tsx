@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTasks } from '@/lib/useTasks';
 import { useLateAlert } from '@/lib/useLateAlert';
-import { atribuirTarefas } from '@/lib/tarefasAtribuidas';
 import { formatDateFull, todayISO } from '@/lib/format';
 import { getState, setState } from '@/lib/db';
 import DateSelector from '@/components/DateSelector';
@@ -49,7 +48,6 @@ export default function Home() {
   const lateTasks = useLateAlert(useMemo(() => tasks.filter((t) => !t.arquivada), [tasks]));
   const [verArquivadas, setVerArquivadas] = useState(false);
   const [novaTarefa, setNovaTarefa] = useState(false);
-  const [atribuindo, setAtribuindo] = useState<string | null>(null);
   const [apagando, setApagando] = useState<{ msg: string; ids: string[] } | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [importando, setImportando] = useState(false);
@@ -219,30 +217,6 @@ export default function Home() {
           >
             ➕ Adicionar tarefa neste dia
           </button>
-          {profile?.role === 'admin' && user && tasks.some((t) => !t.arquivada && !t.id.startsWith('seed-')) && (
-            <button
-              disabled={atribuindo === 'todas'}
-              onClick={async () => {
-                const lista = tasks.filter((t) => !t.arquivada && !t.id.startsWith('seed-') && t.data >= todayISO());
-                setAtribuindo('todas');
-                try {
-                  await atribuirTarefas(user.uid, lista);
-                  setAtribuindo(`ok:${lista.length}`);
-                } catch {
-                  setAtribuindo('erro');
-                }
-              }}
-              className="rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white disabled:opacity-50"
-            >
-              {atribuindo === 'todas'
-                ? 'Atribuindo...'
-                : atribuindo?.startsWith('ok:')
-                ? `✅ ${atribuindo.slice(3)} tarefas atribuídas a você`
-                : atribuindo === 'erro'
-                ? 'Não consegui atribuir. Tente de novo.'
-                : '👤 Atribuir todas as tarefas (de hoje em diante) a mim'}
-            </button>
-          )}
           {tasks.some((t) => t.id.startsWith('seed-')) && (
             <button
               onClick={() =>

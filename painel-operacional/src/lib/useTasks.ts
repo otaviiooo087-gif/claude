@@ -22,7 +22,25 @@ export function useTasks() {
   useEffect(() => {
     (async () => {
       try {
-        const existing = await reload();
+        let existing = await reload();
+        // Remove cópias idênticas (mesmo dia, horário, tipo e cliente) criadas por importações repetidas,
+        // mantendo a que tem mais andamento.
+        const peso = (t: Task) => STATUS_ORDER.indexOf(t.status) * 10 + t.checklist.filter((c) => c.marcado).length;
+        const vistos = new Map<string, Task>();
+        const sobrando: string[] = [];
+        for (const t of existing) {
+          const chave = [t.data, t.horarioComparacao, t.tipo, t.cliente.trim().toUpperCase()].join('|');
+          const outro = vistos.get(chave);
+          if (!outro) vistos.set(chave, t);
+          else if (peso(t) > peso(outro)) {
+            sobrando.push(outro.id);
+            vistos.set(chave, t);
+          } else sobrando.push(t.id);
+        }
+        if (sobrando.length > 0) {
+          for (const id of sobrando) await deleteTask(id);
+          existing = await reload();
+        }
         const existingIds = new Set(existing.map((t) => t.id));
         // Com login (Firebase), cada pessoa só vê o que foi atribuído a ela: não semeia a agenda de exemplo.
         const faltando = firebaseConfigured ? [] : INITIAL_TASKS.filter((t) => !existingIds.has(t.id));
