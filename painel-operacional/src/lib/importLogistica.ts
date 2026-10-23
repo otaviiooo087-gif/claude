@@ -20,6 +20,7 @@ export interface TaskDraft {
   telefone?: string;
   endereco?: string;
   brinquedo?: string;
+  wazeQuery?: string;
   valor?: string;
   observacoes?: string;
   precisaRevisao: boolean;
@@ -464,6 +465,7 @@ export function draftsParaTasks(drafts: TaskDraft[], existentes: Task[]): Task[]
       telefone: d.telefone || undefined,
       endereco: d.endereco || undefined,
       brinquedo: d.brinquedo || undefined,
+      wazeQuery: d.wazeQuery || undefined,
       valor: d.valor ? parseFloat(d.valor.replace(',', '.')) || undefined : undefined,
       observacoes: d.observacoes || undefined,
       checklist: [],

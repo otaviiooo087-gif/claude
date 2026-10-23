@@ -12,6 +12,9 @@ export function chaveEndereco(endereco?: string | null, cidade?: string | null):
 }
 
 export async function geocodar(endereco: string): Promise<Coord | null> {
+  // Coordenadas escritas no endereço (ex: "... [GPS -22.936306,-46.980167]") valem direto, sem consultar o mapa.
+  const gps = endereco.match(/(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})/);
+  if (gps) return { lat: parseFloat(gps[1]), lng: parseFloat(gps[2]) };
   if (cache.has(endereco)) return cache.get(endereco) ?? null;
   const emCurso = emAndamento.get(endereco);
   if (emCurso) return emCurso;
