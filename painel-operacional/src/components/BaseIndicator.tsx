@@ -21,6 +21,14 @@ export default function BaseIndicator() {
           <p>{BASE_LOCATION.linha1}</p>
           <p>{BASE_LOCATION.endereco}</p>
           <p>{BASE_LOCATION.complemento}</p>
+          <a
+            href={`https://waze.com/ul?q=${encodeURIComponent(`${BASE_LOCATION.linha1}, ${BASE_LOCATION.endereco}`)}&navigate=yes`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 block rounded-xl bg-blue-600 py-3 text-center text-sm font-bold text-white"
+          >
+            🧭 Navegar até a base com Waze
+          </a>
         </div>
       )}
     </div>
