@@ -1,0 +1,17 @@
+node_modules/
+server/node_modules/
+client/node_modules/
+client/dist/
+
+# WhatsApp session credentials — NEVER commit these
+server/auth_info/
+
+# Runtime data (JSON persistence)
+server/data/
+
+# Secrets
+.env
+
+# Logs
+*.log
+npm-debug.log*
