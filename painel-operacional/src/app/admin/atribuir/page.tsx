@@ -10,6 +10,7 @@ import { UserProfile } from '@/lib/authTypes';
 import { atribuirTarefas } from '@/lib/tarefasAtribuidas';
 import MenuLateral from '@/components/MenuLateral';
 import { LOGISTICA_3_E_4_OUTUBRO } from '@/lib/logistica3e4Outubro';
+import { LOGISTICA_24_E_25_OUTUBRO } from '@/lib/logistica24e25Outubro';
 import LogisticaDosContratos from '@/components/LogisticaDosContratos';
 import { extrairTextoContrato } from '@/lib/lerContrato';
 
@@ -175,6 +176,15 @@ export default function AtribuirLogisticaPage() {
               placeholder="Cole aqui o texto da logística..."
               className="w-full rounded-xl bg-slate-800 px-4 py-3 text-sm text-slate-100 outline-none ring-1 ring-slate-700 focus:ring-brand-500"
             />
+            <button
+              onClick={() => {
+                setDrafts(LOGISTICA_24_E_25_OUTUBRO.map((d) => ({ ...d })));
+                setAtribuicoes({});
+              }}
+              className="rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white"
+            >
+              ⚡ Carregar logística de 24 e 25 de outubro (já revisada)
+            </button>
             <button
               onClick={() => {
                 setDrafts(LOGISTICA_3_E_4_OUTUBRO.map((d) => ({ ...d })));
