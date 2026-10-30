@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { audit } from './domain.js';
+import { tx } from './db.js';
 
 // Parser CSV (RFC 4180): aspas, vírgulas e quebras de linha dentro de campos; remove BOM.
 export function parseCsv(text) {
@@ -53,32 +54,29 @@ export const MAPPERS = {
 };
 
 // Importa linhas já parseadas, deduplicando por (empresa, tipo, chave natural). Reimportar é idempotente.
-export function importRows(db, p, company, kind, rows, source = {}) {
+export async function importRows(db, p, company, kind, rows, source = {}) {
   const map = MAPPERS[kind]; if (!map) throw new Error(`Tipo desconhecido: ${kind}`);
   let inserted = 0; let merged = 0; let skipped = 0;
-  const ins = db.prepare(`INSERT INTO market_items(id,company_id,kind,nature,natural_key,title,source,url,published_at,collected_at,relevance,data,source_id,imported_at)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-  db.exec('BEGIN');
-  try {
+  await tx(db, async () => {
     for (const r of rows) {
       const m = map(r);
       if (!m.natural_key || !m.title) { skipped++; continue; }
-      const ex = db.prepare('SELECT id,data FROM market_items WHERE company_id=? AND kind=? AND natural_key=?').get(company, kind, m.natural_key);
+      const ex = await db.prepare('SELECT id,data FROM market_items WHERE company_id=? AND kind=? AND natural_key=?').get(company, kind, m.natural_key);
       const origin = r.origem || source.name || null;
       if (ex) {
         const d = JSON.parse(ex.data); const seen = new Set(d.vista_em ?? []); if (origin) seen.add(origin);
         d.vista_em = [...seen];
-        db.prepare('UPDATE market_items SET data=? WHERE id=?').run(JSON.stringify(d), ex.id); merged++;
+        await db.prepare('UPDATE market_items SET data=? WHERE id=?').run(JSON.stringify(d), ex.id); merged++;
       } else {
         m.data.vista_em = origin ? [origin] : [];
-        ins.run(`mi_${randomUUID().slice(0, 8)}`, company, kind, m.nature, m.natural_key, m.title, m.source ?? null, m.url ?? null, m.published_at, m.collected_at,
+        await db.prepare(`INSERT INTO market_items(id,company_id,kind,nature,natural_key,title,source,url,published_at,collected_at,relevance,data,source_id,imported_at)
+          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(`mi_${randomUUID().slice(0, 8)}`, company, kind, m.nature, m.natural_key, m.title, m.source ?? null, m.url ?? null, m.published_at, m.collected_at,
           m.relevance, JSON.stringify(m.data), source.id ?? null, new Date().toISOString()); inserted++;
       }
     }
-    if (source.id) db.prepare('UPDATE market_sources SET last_import_at=?, rows_imported=(SELECT COUNT(*) FROM market_items WHERE source_id=?) WHERE id=?')
+    if (source.id) await db.prepare('UPDATE market_sources SET last_import_at=?, rows_imported=(SELECT COUNT(*) FROM market_items WHERE source_id=?) WHERE id=?')
       .run(new Date().toISOString(), source.id, source.id);
-    audit(db, company, 'market_source', source.id ?? kind, 'IMPORTADO', p, { kind, inserted, merged, skipped });
-    db.exec('COMMIT');
-  } catch (e) { db.exec('ROLLBACK'); throw e; }
+    await audit(db, company, 'market_source', source.id ?? kind, 'IMPORTADO', p, { kind, inserted, merged, skipped });
+  });
   return { inserted, merged, skipped };
 }

@@ -46,11 +46,11 @@ const VIDEOS = [
     roteiro: ['1rO_OOH1s6GMVe5CuGAuqSByIkglMpwWA', 2687], entrega: null, capa: null, mp4: {}, folder: '1t2bDpi1FQoPWqF23rkqyW392g1ZRJy7c', igWindow: '2026-11-01T10:00:00-03:00', delivered: null },
 ];
 
-export function seedRdz(db, { adminToken, agentTokens = {} } = {}) {
+export async function seedRdz(db, { adminToken, agentTokens = {} } = {}) {
   const th = (t) => (t ? D.sha256(t) : null);
-  db.prepare('INSERT INTO companies(id,name,created_at) VALUES(?,?,?)').run('rdz', 'RDZ Consultoria Financeira', new Date().toISOString());
-  db.prepare('INSERT INTO users(id,name,role,token_hash) VALUES(?,?,?,?)').run('admin-rdz', 'Administrador RDZ', 'admin', th(adminToken) ?? th(randomBytes(24).toString('hex')));
-  db.prepare('INSERT INTO user_companies VALUES(?,?)').run('admin-rdz', 'rdz');
+  (await db.prepare('INSERT INTO companies(id,name,created_at) VALUES(?,?,?)').run('rdz', 'RDZ Consultoria Financeira', new Date().toISOString()));
+  (await db.prepare('INSERT INTO users(id,name,role,token_hash) VALUES(?,?,?,?)').run('admin-rdz', 'Administrador RDZ', 'admin', th(adminToken) ?? th(randomBytes(24).toString('hex'))));
+  (await db.prepare('INSERT INTO user_companies VALUES(?,?)').run('admin-rdz', 'rdz'));
 
   const agents = [
     ['rdz-chatgpt', 'ChatGPT Cowork', 'Criação de conteúdo: estratégia, planejamento, textos, imagens e roteiros para Instagram, TikTok e WhatsApp', ['planejamento', 'textos', 'imagens', 'roteiros', 'verificar_arquivos'], 'ChatGPT Cowork (externo; Metricool via ChatGPT)', null, null],
@@ -59,16 +59,16 @@ export function seedRdz(db, { adminToken, agentTokens = {} } = {}) {
     ['rdz-claude-tec', 'Claude · Técnico', 'Claude Cowork: produção de vídeos e distribuição autorizada (por ora WhatsApp)', ['producao_video', 'exportar_mp4', 'distribuicao_whatsapp_autorizada'], 'Claude Cowork + ElevenLabs + Google Drive', '2026-10-30T14:50:52Z', 'Evidência: RDZ_VIDEO_003_v01_ENTREGA.txt no Drive (id 1XwasK-h_N3Us4asqEyRZtANSy09DuSdE)'],
   ];
   for (const [id, name, role, caps, integ, last, sum] of agents) {
-    db.prepare('INSERT INTO agents(id,company_id,name,role,capabilities,integration,config,state,last_activity_at,last_run_summary,token_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?)')
+    (await db.prepare('INSERT INTO agents(id,company_id,name,role,capabilities,integration,config,state,last_activity_at,last_run_summary,token_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?)')
       .run(id, 'rdz', name, role, JSON.stringify(caps), integ, JSON.stringify({ observacao: 'Configuração real do agente fora da central; não verificada aqui.' }),
-        'NAO_VERIFICADO', last, sum, th(agentTokens[id]));
+        'NAO_VERIFICADO', last, sum, th(agentTokens[id])));
   }
 
   const accounts = [['rdz-ig', 'INSTAGRAM', 'Instagram @rdz_consultoria (via Metricool, marca RDZ)'], ['rdz-tt', 'TIKTOK', 'TikTok RDZ'], ['rdz-wa', 'WHATSAPP', 'WhatsApp RDZ'], ['rdz-li', 'LINKEDIN', 'LinkedIn RDZ']];
   for (const [id, ch, label] of accounts) {
-    db.prepare('INSERT INTO accounts(id,company_id,channel,label,provider,external_ref,status,note) VALUES(?,?,?,?,?,?,?,?)')
+    (await db.prepare('INSERT INTO accounts(id,company_id,channel,label,provider,external_ref,status,note) VALUES(?,?,?,?,?,?,?,?)')
       .run(id, 'rdz', ch, label, ch === 'WHATSAPP' ? null : 'metricool', ch === 'WHATSAPP' ? null : 'brandId 7678759',
-        'NAO_VERIFICADA', 'Identidade e conexão ainda não conferidas. brandId 7678759 informado pelo usuário; sem acesso ao Metricool nesta instância.');
+        'NAO_VERIFICADA', 'Identidade e conexão ainda não conferidas. brandId 7678759 informado pelo usuário; sem acesso ao Metricool nesta instância.'));
   }
 
   const integ = [
@@ -77,57 +77,58 @@ export function seedRdz(db, { adminToken, agentTokens = {} } = {}) {
     ['metricool', 'Metricool (marca RDZ, brandId 7678759)', 'NAO_CONFIGURADO', 'PENDENTE: nenhuma ferramenta nem token Metricool disponível nesta instância. Identidade da marca e contas conectadas NÃO conferidas. Nenhum agendamento é feito por esta integração.'],
     ['central-web-anterior', 'Central web existente (rdz-central-marketing.redseal36.chatgpt.site)', 'NAO_VERIFICADO', 'Código-fonte não disponível neste repositório e URL inacessível do ambiente (403 do proxy). Nada reaproveitado; esta aplicação é nova e não altera a anterior.'],
   ];
-  for (const [id, name, st, detail] of integ) db.prepare('INSERT INTO integrations(id,company_id,name,status,detail,checked_at,checked_by) VALUES(?,?,?,?,?,?,?)').run(id, 'rdz', name, st, detail, new Date().toISOString(), BY);
+  for (const [id, name, st, detail] of integ) (await db.prepare('INSERT INTO integrations(id,company_id,name,status,detail,checked_at,checked_by) VALUES(?,?,?,?,?,?,?)').run(id, 'rdz', name, st, detail, new Date().toISOString(), BY));
 
   const sheets = [
     ['src-noticias', 'noticia', 'RDZ_BD_Noticias', '1FnVQXVhxDJyORrgZRhTjVtEN3VRsPL_BSBP5WSMm-bI'], ['src-concorrentes', 'concorrente', 'RDZ_BD_Concorrentes', '1uA1IPbbLHLjBnNh4pvuBhSI48Rtsg3RTHFgM2ouoMaU'],
     ['src-posts', 'post', 'RDZ_BD_Posts_Instagram', '1EnoHD2MSJDguFtqe6APpZ5lNlEEXxSVegL-e_ozY0OY'], ['src-pautas', 'pauta', 'RDZ_BD_Pautas', '1PmUsgDsqMA_lIQ3GOXPWiuSKCcNE1SWFMOdsurYNW1U'],
   ];
-  for (const [id, kind, name, drive] of sheets) db.prepare('INSERT INTO market_sources(id,company_id,kind,name,drive_id,drive_url) VALUES(?,?,?,?,?,?)')
-    .run(id, 'rdz', kind, name, drive, `https://docs.google.com/spreadsheets/d/${drive}/edit`);
+  for (const [id, kind, name, drive] of sheets) (await db.prepare('INSERT INTO market_sources(id,company_id,kind,name,drive_id,drive_url) VALUES(?,?,?,?,?,?)')
+    .run(id, 'rdz', kind, name, drive, `https://docs.google.com/spreadsheets/d/${drive}/edit`));
 
   const fileBase = (cid, kind, ch, name, [id, size], mime) => ({ content_id: cid, kind, channel: ch, name, drive_id: id, drive_url: furl(id), size, mime,
     verification_level: 'EXISTE_NO_DRIVE', verified_by: BY, verified_at: new Date().toISOString(), verification_note: NOTE });
 
   for (const v of VIDEOS) {
-    D.createContent(db, SYS, 'rdz', { id: v.id, title: v.title, kind: 'VIDEO', service: v.service, objective: 'Geração de leads', audience: v.audience, owner: 'Administrador RDZ',
+    (await D.createContent(db, SYS, 'rdz', { id: v.id, title: v.title, kind: 'VIDEO', service: v.service, objective: 'Geração de leads', audience: v.audience, owner: 'Administrador RDZ',
       origin_ref: `Drive 02_Roteiros_Pendentes / ${v.id}_v01_ROTEIRO.txt`, text: v.text, declared_sha256: v.declared ?? null,
       brief: [v.brief, v.warn, v.declared ? `SHA-256 declarado na ordem (${v.declared}) NÃO reproduzido pela extração de texto (quebras/espaços exatos desconhecidos); texto exibido é a transcrição do Drive.` : null, ORDER_AUTH].filter(Boolean).join('\n'),
-      channels: ['WHATSAPP', 'INSTAGRAM', 'TIKTOK'], planned_for: v.igWindow });
+      channels: ['WHATSAPP', 'INSTAGRAM', 'TIKTOK'], planned_for: v.igWindow }));
     const ids = {};
-    if (v.roteiro) ids.roteiro = D.addFile(db, SYS, 'rdz', fileBase(v.id, 'ROTEIRO', null, `${v.id}_v01_ROTEIRO.txt`, v.roteiro, 'text/plain'));
-    for (const [ch, meta] of Object.entries(v.mp4)) ids[ch] = D.addFile(db, SYS, 'rdz', { ...fileBase(v.id, 'VIDEO', ch, `${v.id}_v01_${ch[0] + ch.slice(1).toLowerCase().replace('tiktok', 'TikTok').replace('whatsapp', 'WhatsApp')}.mp4`, meta, 'video/mp4'),
-      verification_note: `${NOTE} Produtor relatou decodificação completa e CTA "${CTA(v.kw)[ch]}" (não reverificado).` });
-    if (v.capa) ids.capa = D.addFile(db, SYS, 'rdz', fileBase(v.id, 'CAPA', null, `${v.id}_v01_CAPA.png`, v.capa, 'image/png'));
-    if (v.entrega) ids.entrega = D.addFile(db, SYS, 'rdz', fileBase(v.id, 'RELATORIO_PRODUCAO', null, `${v.id}_v01_ENTREGA.txt`, v.entrega, 'text/plain'));
+    if (v.roteiro) ids.roteiro = (await D.addFile(db, SYS, 'rdz', fileBase(v.id, 'ROTEIRO', null, `${v.id}_v01_ROTEIRO.txt`, v.roteiro, 'text/plain')));
+    for (const [ch, meta] of Object.entries(v.mp4)) ids[ch] = (await D.addFile(db, SYS, 'rdz', { ...fileBase(v.id, 'VIDEO', ch, `${v.id}_v01_${ch[0] + ch.slice(1).toLowerCase().replace('tiktok', 'TikTok').replace('whatsapp', 'WhatsApp')}.mp4`, meta, 'video/mp4'),
+      verification_note: `${NOTE} Produtor relatou decodificação completa e CTA "${CTA(v.kw)[ch]}" (não reverificado).` }));
+    if (v.capa) ids.capa = (await D.addFile(db, SYS, 'rdz', fileBase(v.id, 'CAPA', null, `${v.id}_v01_CAPA.png`, v.capa, 'image/png')));
+    if (v.entrega) ids.entrega = (await D.addFile(db, SYS, 'rdz', fileBase(v.id, 'RELATORIO_PRODUCAO', null, `${v.id}_v01_ENTREGA.txt`, v.entrega, 'text/plain')));
     if (v.igWindow && ids.INSTAGRAM) {
-      D.upsertTarget(db, SYS, 'rdz', { content_id: v.id, channel: 'INSTAGRAM', account_id: 'rdz-ig', destination: 'Instagram RDZ (feed/Reels a confirmar)', audience: v.audience,
-        window_start: v.igWindow, window_end: v.igWindow, file_ids: [ids.INSTAGRAM, ids.capa].filter(Boolean) });
+      (await D.upsertTarget(db, SYS, 'rdz', { content_id: v.id, channel: 'INSTAGRAM', account_id: 'rdz-ig', destination: 'Instagram RDZ (feed/Reels a confirmar)', audience: v.audience,
+        window_start: v.igWindow, window_end: v.igWindow, file_ids: [ids.INSTAGRAM, ids.capa].filter(Boolean) }));
     }
     // tarefas
-    const prod = D.createTask(db, SYS, 'rdz', { id: `T_${v.id}_PRODUCAO`, content_id: v.id, agent_id: 'rdz-claude-tec', title: `Produzir 3 versões MP4 + capa + relatório (${v.id} v01)`,
+    const prod = (await D.createTask(db, SYS, 'rdz', { id: `T_${v.id}_PRODUCAO`, content_id: v.id, agent_id: 'rdz-claude-tec', title: `Produzir 3 versões MP4 + capa + relatório (${v.id} v01)`,
       input: `Ordem de produção ${v.id}_v01_ROTEIRO.txt`, expected_output: 'WhatsApp.mp4, Instagram.mp4, TikTok.mp4, capa e ENTREGA.txt na subpasta de saída',
-      completion_criteria: 'Três MP4 reproduzíveis, tamanho > 0, texto literal, CTA correto por canal, ENTREGA.txt com links', owner: 'Claude · Técnico', priority: 'ALTA' });
-    if (v.entrega) D.updateTask(db, SYS, 'rdz', prod, { status: 'EM_ANDAMENTO' }), D.updateTask(db, SYS, 'rdz', prod, { evidence: { type: 'drive', url: furl(v.entrega[0]), note: `ENTREGA.txt (${v.delivered})` }, status: 'CONCLUIDA' });
-    if (v.igWindow) D.createTask(db, SYS, 'rdz', { id: `T_${v.id}_AGENDAR_IG`, content_id: v.id, agent_id: 'rdz-chatgpt', title: `Conferir arquivo e agendar Instagram (${v.id})`, depends_on: [prod],
+      completion_criteria: 'Três MP4 reproduzíveis, tamanho > 0, texto literal, CTA correto por canal, ENTREGA.txt com links', owner: 'Claude · Técnico', priority: 'ALTA' }));
+    if (v.entrega) (await D.updateTask(db, SYS, 'rdz', prod, { status: 'EM_ANDAMENTO' })), (await D.updateTask(db, SYS, 'rdz', prod, { evidence: { type: 'drive', url: furl(v.entrega[0]), note: `ENTREGA.txt (${v.delivered})` }, status: 'CONCLUIDA' }));
+    if (v.igWindow) (await D.createTask(db, SYS, 'rdz', { id: `T_${v.id}_AGENDAR_IG`, content_id: v.id, agent_id: 'rdz-chatgpt', title: `Conferir arquivo e agendar Instagram (${v.id})`, depends_on: [prod],
       input: `Janela solicitada ${v.igWindow}`, expected_output: 'Agendamento com ID do Metricool, data/hora e link; ou bloqueio justificado',
-      completion_criteria: 'Só executar com autorização de DISTRIBUIÇÃO válida na central cobrindo este destino', owner: 'ChatGPT', priority: 'ALTA', due_at: new Date(v.igWindow).toISOString() });
+      completion_criteria: 'Só executar com autorização de DISTRIBUIÇÃO válida na central cobrindo este destino', owner: 'ChatGPT', priority: 'ALTA', due_at: new Date(v.igWindow).toISOString() }));
   }
-  D.createTask(db, SYS, 'rdz', { id: 'T_RADAR_20261030', agent_id: 'rdz-claude-pesq', title: 'Radar RDZ 30/10/2026 + bancos de dados de mercado', expected_output: 'Documento Radar, planilhas Noticias/Concorrentes/Posts/Pautas',
-    completion_criteria: 'Fontes com link e data; fatos separados de interpretações', owner: 'Claude · Pesquisador' });
-  D.updateTask(db, SYS, 'rdz', 'T_RADAR_20261030', { status: 'EM_ANDAMENTO' });
-  D.updateTask(db, SYS, 'rdz', 'T_RADAR_20261030', { evidence: { type: 'drive', url: 'https://docs.google.com/document/d/1rsX-89mW_rOyV7et5aDMvZiU1_0IXjFB0oMO1mQMHWU/edit', note: 'Radar RDZ - 2026-10-30' }, status: 'CONCLUIDA' });
+  (await D.createTask(db, SYS, 'rdz', { id: 'T_RADAR_20261030', agent_id: 'rdz-claude-pesq', title: 'Radar RDZ 30/10/2026 + bancos de dados de mercado', expected_output: 'Documento Radar, planilhas Noticias/Concorrentes/Posts/Pautas',
+    completion_criteria: 'Fontes com link e data; fatos separados de interpretações', owner: 'Claude · Pesquisador' }));
+  (await D.updateTask(db, SYS, 'rdz', 'T_RADAR_20261030', { status: 'EM_ANDAMENTO' }));
+  (await D.updateTask(db, SYS, 'rdz', 'T_RADAR_20261030', { evidence: { type: 'drive', url: 'https://docs.google.com/document/d/1rsX-89mW_rOyV7et5aDMvZiU1_0IXjFB0oMO1mQMHWU/edit', note: 'Radar RDZ - 2026-10-30' }, status: 'CONCLUIDA' }));
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const path = process.env.RDZ_DB || 'data/rdz.sqlite';
-  const db = openDb(path);
-  if (db.prepare('SELECT 1 FROM companies LIMIT 1').get()) { console.error('Banco já populado; apague data/ para recomeçar.'); process.exit(1); }
+  const url = process.env.DATABASE_URL || 'pglite:data/pglite';
+  const db = await openDb(url);
+  if (await db.prepare('SELECT 1 AS x FROM companies LIMIT 1').get()) { console.error('Banco já populado; apague-o para recomeçar.'); process.exit(1); }
   const tok = () => randomBytes(24).toString('hex');
   const adminToken = process.env.RDZ_ADMIN_TOKEN || tok();
   const agentTokens = Object.fromEntries(['rdz-chatgpt', 'rdz-linkedin', 'rdz-claude-pesq', 'rdz-claude-tec'].map((a) => [a, tok()]));
-  seedRdz(db, { adminToken, agentTokens });
+  await seedRdz(db, { adminToken, agentTokens });
   mkdirSync('data', { recursive: true });
   writeFileSync('data/tokens.json', JSON.stringify({ admin: adminToken, agents: agentTokens }, null, 2), { mode: 0o600 });
   console.log('Seed concluído. Tokens gravados em data/tokens.json (não versionado).');
+  await db.close();
 }

@@ -4,11 +4,17 @@
   "private": true,
   "type": "module",
   "description": "Central de Marketing e Orquestrador de Agentes (multiempresa; primeira empresa: RDZ)",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning src/server.js",
     "seed": "node --disable-warning=ExperimentalWarning seed/seed.js",
     "import-sheet": "node --disable-warning=ExperimentalWarning scripts/import-sheet.js",
     "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.16",
+    "pg": "^8.23.1"
   }
 }

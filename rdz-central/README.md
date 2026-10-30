@@ -1,23 +1,35 @@
 # RDZ Central de Marketing e Orquestrador de Agentes
 
-Aplicação nova, sem dependências (Node ≥ 22.13, SQLite embutido), multiempresa. Primeira empresa: **RDZ**.
+Aplicação nova (Node ≥ 22.13), multiempresa, com banco **PostgreSQL** (Supabase em produção; PGlite local para testes e desenvolvimento). Primeira empresa: **RDZ**.
 Koreon Brasil e Koreon em inglês **não estão configuradas**; a arquitetura as comporta (todo registro tem `company_id`,
 toda consulta filtra por ele, e o acesso é por empresa e por token).
 
 ## Operação atual e papel desta central
 - **ChatGPT Cowork**: cria conteúdo, imagens e roteiros (Instagram, TikTok, WhatsApp). **Claude Cowork**: pesquisa, gera vídeos e distribui (WhatsApp, por ora).
 - **O Google Drive é hoje o banco de dados** (arquivos e planilhas). A central lê dele e **não o substitui**: guarda só o estado novo
-  (versões, aprovações, publicações, tarefas, auditoria) em `data/rdz.sqlite`. IDs e links do Drive são preservados.
+  (versões, aprovações, publicações, tarefas, auditoria) no Postgres. IDs e links do Drive são preservados.
 - A central web anterior (`rdz-central-marketing.redseal36.chatgpt.site`) não tem código neste repositório e a URL não é acessível do ambiente
   de desenvolvimento: **nada foi reaproveitado nem alterado**.
 
 ## Rodar
 ```bash
-cd rdz-central
-npm run seed     # cria data/rdz.sqlite e data/tokens.json (tokens; não versionado)
+cd rdz-central && npm install
+npm run seed     # popula o banco e grava data/tokens.json (tokens; não versionado)
 npm start        # http://127.0.0.1:8787 — informe o token admin ao abrir
-npm test         # 15 testes das regras de negócio
+npm test         # 15 testes das regras (PGlite em memória)
 ```
+Sem `DATABASE_URL`, usa PGlite em `data/pglite` (um usuário, só desenvolvimento).
+
+## Banco no Supabase
+1. Crie o projeto em supabase.com (plano gratuito basta). Em *Project Settings → Database → Connection string*, copie a URI do **Session pooler** (porta 5432).
+2. Rode com a variável (o schema de `migrations/001_schema.sql` é aplicado sozinho, é idempotente):
+```bash
+DATABASE_URL='postgresql://postgres.<ref>:<senha>@<host>:5432/postgres' npm run seed
+DATABASE_URL='...' npm start
+```
+3. **RLS ligado em todas as tabelas, sem políticas**: a API pública do Supabase (chave anon) não lê nem grava nada. Só a central acessa, pela conexão direta.
+4. A string de conexão é segredo: não vai para o git nem para o chat; use variável de ambiente do servidor onde a central rodar.
+5. Verificado: os 15 testes passam em PostgreSQL 16 real (driver `pg`) e em PGlite. **Ainda não verificado contra o seu projeto Supabase** (o ambiente de desenvolvimento não alcança supabase.com).
 
 ## Regras garantidas pelo código (com testes)
 - Duas autorizações independentes: **CRIAÇÃO** e **DISTRIBUIÇÃO**. Só o administrador decide; agentes não aprovam.
