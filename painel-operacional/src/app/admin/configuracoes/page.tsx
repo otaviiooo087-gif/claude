@@ -40,6 +40,7 @@ export default function ConfiguracoesPage() {
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [ajudanteBuscaPrimeiro, setAjudanteBuscaPrimeiro] = useState(false);
+  const [linkGoogle, setLinkGoogle] = useState('');
   const inputArquivoRef = useRef<HTMLInputElement>(null);
 
   function recarregarEquipe() {
@@ -92,6 +93,7 @@ export default function ConfiguracoesPage() {
       setModeloBase64(dados.modeloContratoBase64);
       setModeloNome(dados.modeloContratoNome);
       setAjudanteBuscaPrimeiro(dados.ajudanteBuscaPrimeiro ?? false);
+      setLinkGoogle(dados.linkAvaliacaoGoogle ?? '');
     });
   }, [ehAdmin]);
 
@@ -200,6 +202,7 @@ export default function ConfiguracoesPage() {
         modeloContratoBase64: modeloBase64 ?? '',
         modeloContratoNome: modeloNome ?? '',
         ajudanteBuscaPrimeiro,
+        linkAvaliacaoGoogle: linkGoogle.trim(),
       });
       setMensagem('Configurações salvas.');
     } catch (e) {
@@ -418,6 +421,23 @@ export default function ConfiguracoesPage() {
               className="h-5 w-5 shrink-0 accent-brand-500"
             />
           </label>
+        </section>
+
+        <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Pós-serviço</h2>
+          <p className="text-sm text-slate-400">
+            Ao concluir uma <strong>montagem</strong>, o operador é lembrado de postar um story. Ao concluir uma{' '}
+            <strong>retirada</strong>, o WhatsApp abre para pedir a avaliação no Google, com este link.
+          </p>
+          <input
+            value={linkGoogle}
+            onChange={(e) => setLinkGoogle(e.target.value)}
+            placeholder="Link de avaliação do Google (ex: https://g.page/r/.../review)"
+            className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
+          />
+          <p className="text-xs text-slate-500">
+            Para achar: Google Meu Negócio → &quot;Pedir avaliações&quot; → copiar o link. Lembre de tocar em Salvar no fim da página.
+          </p>
         </section>
 
         <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">

@@ -12,6 +12,7 @@ export interface Configuracoes {
   avisoAtraso?: string;
   avisosPersonalizados?: AvisoPersonalizado[];
   ajudanteBuscaPrimeiro?: boolean;
+  linkAvaliacaoGoogle?: string; // link de avaliação do Google Meu Negócio, mandado ao cliente depois da retirada
   atualizadoEm?: number;
 }
 

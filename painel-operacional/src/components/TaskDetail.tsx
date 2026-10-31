@@ -10,6 +10,7 @@ import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
 import PromptMinutosDialog from './PromptMinutosDialog';
 import CobrarTarefaModal from './CobrarTarefaModal';
+import PosServicoModal from './PosServicoModal';
 
 interface Props {
   task: Task;
@@ -40,6 +41,7 @@ export default function TaskDetail({
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
   const [calculandoEta, setCalculandoEta] = useState(false);
   const [cobrando, setCobrando] = useState(false);
+  const [posServico, setPosServico] = useState(false);
   const config = useConfiguracoes();
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
@@ -257,9 +259,12 @@ export default function TaskDetail({
           onConfirm={() => {
             onComplete();
             setConfirmando(false);
+            setPosServico(true);
           }}
         />
       )}
+
+      {posServico && <PosServicoModal task={task} onFechar={() => setPosServico(false)} />}
 
       {cobrando && task.valor !== undefined && (
         <CobrarTarefaModal
