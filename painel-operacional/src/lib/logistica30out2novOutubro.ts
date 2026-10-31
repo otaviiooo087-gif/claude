@@ -1,0 +1,16 @@
+import { TaskDraft } from './importLogistica';
+
+const base = { precisaRevisao: false };
+const MOSTRAR = 'Mostrar o brinquedo para a cliente e depois tirar da tomada; orientar ela a colocar quando forem iniciar o uso.';
+
+/** Logística de 31/10 a 02/11/2026 (PDF "LOGÍSTICA 30 DE OUTUBRO A 02 DE NOVEMBRO"), revisada à mão. A retirada de cada uma está no horário final informado no PDF. */
+export const LOGISTICA_31OUT_A_02NOV: TaskDraft[] = [
+  { ...base, data: '2026-10-31', horario: '09:00', horarioComparacao: '09:00', tipo: 'MONTAGEM', cliente: 'JAMILY CRISTIANE ANTUNES ALMEIDA', brinquedo: 'FUTEBOL DE SABÃO AZUL E LARANJA 10 X 5 METROS', telefone: '19 99603-2129', endereco: 'CHÁCARA DAS PEDRAS - RUA HORIZONTE 285, PARQUE AEROPORTO DE VIRACOPOS, CAMPINAS - SP', observacoes: 'Deixar 10 detergentes e bola. Horário do PDF: 09:00 – 17:00.' },
+  { ...base, data: '2026-10-31', horario: '17:00', horarioComparacao: '17:00', tipo: 'RETIRADA', cliente: 'JAMILY CRISTIANE ANTUNES ALMEIDA', brinquedo: 'FUTEBOL DE SABÃO AZUL E LARANJA 10 X 5 METROS', telefone: '19 99603-2129', endereco: 'CHÁCARA DAS PEDRAS - RUA HORIZONTE 285, PARQUE AEROPORTO DE VIRACOPOS, CAMPINAS - SP' },
+  { ...base, data: '2026-11-01', horario: '08:00', horarioComparacao: '08:00', tipo: 'MONTAGEM', cliente: 'CARLA CRISTINA DA SILVA ACCORSI', brinquedo: 'FUTEBOL AZUL E LARANJA', telefone: '19 98312-5445', endereco: 'SABRILOMA - PROFESSORA - R. PROFA. RUTH OLIVEIRA SILVEIRA BELO, 725 - JARDIM DO LAGO CONTINUAÇÃO, CAMPINAS - SP', observacoes: `${MOSTRAR} Deixar 10 detergentes e bola. Horário do PDF: 08:00 – 18:00.` },
+  { ...base, data: '2026-11-01', horario: '09:30', horarioComparacao: '09:30', tipo: 'MONTAGEM', cliente: 'DOROTÉA LOURDES DE SOUZA SPANHOLETO', brinquedo: 'MINI TOBOGÃ COM PISCINA DE BOLINHAS', telefone: '19 99328-3199', endereco: 'RECANTO TORTELA - ALAMEDA ITAHIM, 61 - JOAPIRANGA, VALINHOS - SP', observacoes: `${MOSTRAR} Lembrar de amarrar o brinquedo com as hastes e passar produto para escorregar. Horário do PDF: 09:30 – 17:00.` },
+  { ...base, data: '2026-11-01', horario: '17:00', horarioComparacao: '17:00', tipo: 'RETIRADA', cliente: 'DOROTÉA LOURDES DE SOUZA SPANHOLETO', brinquedo: 'MINI TOBOGÃ COM PISCINA DE BOLINHAS', telefone: '19 99328-3199', endereco: 'RECANTO TORTELA - ALAMEDA ITAHIM, 61 - JOAPIRANGA, VALINHOS - SP' },
+  { ...base, data: '2026-11-01', horario: '18:00', horarioComparacao: '18:00', tipo: 'RETIRADA', cliente: 'CARLA CRISTINA DA SILVA ACCORSI', brinquedo: 'FUTEBOL AZUL E LARANJA', telefone: '19 98312-5445', endereco: 'SABRILOMA - PROFESSORA - R. PROFA. RUTH OLIVEIRA SILVEIRA BELO, 725 - JARDIM DO LAGO CONTINUAÇÃO, CAMPINAS - SP' },
+  { ...base, data: '2026-11-02', horario: '09:30', horarioComparacao: '09:30', tipo: 'MONTAGEM', cliente: 'DEBORAH', brinquedo: 'FUTEBOL AZUL E LARANJA', telefone: '19 98721-0863', endereco: 'CHÁCARA RECREIO LEBLON - R. DOIS, 777 - PARQUE VALENÇA II, CAMPINAS - SP', observacoes: `${MOSTRAR} Deixar 10 detergentes e bola. Telefone sem DDD no PDF (assumido 19). Horário do PDF: 09:30 – 17:00.` },
+  { ...base, data: '2026-11-02', horario: '17:00', horarioComparacao: '17:00', tipo: 'RETIRADA', cliente: 'DEBORAH', brinquedo: 'FUTEBOL AZUL E LARANJA', telefone: '19 98721-0863', endereco: 'CHÁCARA RECREIO LEBLON - R. DOIS, 777 - PARQUE VALENÇA II, CAMPINAS - SP' },
+];
