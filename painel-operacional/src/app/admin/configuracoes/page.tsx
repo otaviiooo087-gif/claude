@@ -432,7 +432,7 @@ export default function ConfiguracoesPage() {
           <input
             value={linkGoogle}
             onChange={(e) => setLinkGoogle(e.target.value)}
-            placeholder="Link de avaliação do Google (ex: https://g.page/r/.../review)"
+            placeholder="Link de avaliação do Google (vazio = usa https://share.google/P5FMG6iJdPmuxmrKm)"
             className="rounded-lg bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-slate-700"
           />
           <p className="text-xs text-slate-500">

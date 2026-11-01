@@ -148,21 +148,16 @@ export default function TaskDetail({
                 📸 PÓS-MONTAGEM: PEDIR STORY AO CLIENTE
               </a>
             )}
-            {task.tipo === 'RETIRADA' &&
-              (config.linkAvaliacaoGoogle?.trim() ? (
-                <a
-                  href={whatsappUrl(task.telefone, textoAvaliacaoGoogle(config, task.cliente))}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl bg-yellow-600 px-4 py-3 text-center text-sm font-semibold text-white"
-                >
-                  ⭐ PÓS-RETIRADA: PEDIR AVALIAÇÃO NO GOOGLE
-                </a>
-              ) : (
-                <p className="rounded-xl bg-amber-500/10 p-3 text-xs text-amber-400">
-                  ⭐ Pedir avaliação no Google: o admin ainda não cadastrou o link (Configurações → Pós-serviço).
-                </p>
-              ))}
+            {task.tipo === 'RETIRADA' && (
+              <a
+                href={whatsappUrl(task.telefone, textoAvaliacaoGoogle(config, task.cliente))}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl bg-yellow-600 px-4 py-3 text-center text-sm font-semibold text-white"
+              >
+                ⭐ PÓS-RETIRADA: PEDIR AVALIAÇÃO NO GOOGLE
+              </a>
+            )}
             {(config.avisosPersonalizados ?? []).map((aviso) => (
               <a
                 key={aviso.id}
