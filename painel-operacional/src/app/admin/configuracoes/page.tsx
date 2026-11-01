@@ -426,8 +426,8 @@ export default function ConfiguracoesPage() {
         <section className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-800/40 p-4">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Pós-serviço</h2>
           <p className="text-sm text-slate-400">
-            Ao concluir uma <strong>montagem</strong>, o operador é lembrado de postar um story. Ao concluir uma{' '}
-            <strong>retirada</strong>, o WhatsApp abre para pedir a avaliação no Google, com este link.
+            Link usado no botão <strong>&quot;Pós-retirada: pedir avaliação no Google&quot;</strong> da tarefa de retirada
+            (a mensagem de WhatsApp para o cliente). O texto das mensagens de story e de avaliação você edita em Avisos.
           </p>
           <input
             value={linkGoogle}

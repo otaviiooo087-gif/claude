@@ -3,14 +3,13 @@
 import { useState } from 'react';
 import { Task, TYPE_LABELS, STATUS_LABELS, STATUS_ORDER } from '@/lib/types';
 import { formatCurrency, isAtrasada, whatsappUrl } from '@/lib/format';
-import { textoEstouIndo, textoCuidadosPosMontagem, substituirPlaceholders } from '@/lib/avisos';
+import { textoEstouIndo, textoCuidadosPosMontagem, textoPedirStory, textoAvaliacaoGoogle, substituirPlaceholders } from '@/lib/avisos';
 import { useConfiguracoes } from '@/lib/useConfiguracoes';
 import { calcularMinutosAteTarefa } from '@/lib/etaAutomatico';
 import NavButtons from './NavButtons';
 import ConfirmDialog from './ConfirmDialog';
 import PromptMinutosDialog from './PromptMinutosDialog';
 import CobrarTarefaModal from './CobrarTarefaModal';
-import PosServicoModal from './PosServicoModal';
 
 interface Props {
   task: Task;
@@ -41,7 +40,6 @@ export default function TaskDetail({
   const [perguntandoMinutos, setPerguntandoMinutos] = useState(false);
   const [calculandoEta, setCalculandoEta] = useState(false);
   const [cobrando, setCobrando] = useState(false);
-  const [posServico, setPosServico] = useState(false);
   const config = useConfiguracoes();
   const atrasada = isAtrasada(task);
   const concluida = task.status === 'CONCLUIDA';
@@ -140,6 +138,31 @@ export default function TaskDetail({
                 ENVIAR CUIDADOS PÓS-MONTAGEM
               </a>
             )}
+            {task.tipo === 'MONTAGEM' && (
+              <a
+                href={whatsappUrl(task.telefone, textoPedirStory(config, task.cliente))}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl bg-pink-600 px-4 py-3 text-center text-sm font-semibold text-white"
+              >
+                📸 PÓS-MONTAGEM: PEDIR STORY AO CLIENTE
+              </a>
+            )}
+            {task.tipo === 'RETIRADA' &&
+              (config.linkAvaliacaoGoogle?.trim() ? (
+                <a
+                  href={whatsappUrl(task.telefone, textoAvaliacaoGoogle(config, task.cliente))}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl bg-yellow-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                >
+                  ⭐ PÓS-RETIRADA: PEDIR AVALIAÇÃO NO GOOGLE
+                </a>
+              ) : (
+                <p className="rounded-xl bg-amber-500/10 p-3 text-xs text-amber-400">
+                  ⭐ Pedir avaliação no Google: o admin ainda não cadastrou o link (Configurações → Pós-serviço).
+                </p>
+              ))}
             {(config.avisosPersonalizados ?? []).map((aviso) => (
               <a
                 key={aviso.id}
@@ -259,12 +282,9 @@ export default function TaskDetail({
           onConfirm={() => {
             onComplete();
             setConfirmando(false);
-            setPosServico(true);
           }}
         />
       )}
-
-      {posServico && <PosServicoModal task={task} onFechar={() => setPosServico(false)} />}
 
       {cobrando && task.valor !== undefined && (
         <CobrarTarefaModal

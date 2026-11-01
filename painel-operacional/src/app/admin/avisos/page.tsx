@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import MenuLateral from '@/components/MenuLateral';
 import { AvisoPersonalizado, Configuracoes, ouvirConfiguracoes, salvarConfiguracoes } from '@/lib/configuracoes';
 import { MENSAGEM_ATRASO, MENSAGEM_CUIDADOS_POS_MONTAGEM } from '@/lib/format';
+import { MENSAGEM_AVALIACAO_GOOGLE, MENSAGEM_PEDIR_STORY } from '@/lib/avisos';
 
 const PADRAO_ESTOU_INDO = 'Oi! Estou a caminho, {cliente}. Devo chegar em aproximadamente {minutos} minutos!';
 
@@ -16,6 +17,8 @@ export default function AvisosPage() {
   const [avisoEstouIndo, setAvisoEstouIndo] = useState('');
   const [avisoCuidadosPosMontagem, setAvisoCuidadosPosMontagem] = useState('');
   const [avisoAtraso, setAvisoAtraso] = useState('');
+  const [avisoPedirStory, setAvisoPedirStory] = useState('');
+  const [avisoAvaliacao, setAvisoAvaliacao] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [config, setConfig] = useState<Configuracoes>({});
@@ -30,6 +33,8 @@ export default function AvisosPage() {
       setAvisoEstouIndo(dados.avisoEstouIndo ?? '');
       setAvisoCuidadosPosMontagem(dados.avisoCuidadosPosMontagem ?? '');
       setAvisoAtraso(dados.avisoAtraso ?? '');
+      setAvisoPedirStory(dados.avisoPedirStory ?? '');
+      setAvisoAvaliacao(dados.avisoAvaliacaoGoogle ?? '');
       setPersonalizados(dados.avisosPersonalizados ?? []);
     });
   }, [ehAdmin]);
@@ -51,7 +56,13 @@ export default function AvisosPage() {
     setMensagem(null);
     setSalvando(true);
     try {
-      await salvarConfiguracoes({ avisoEstouIndo, avisoCuidadosPosMontagem, avisoAtraso });
+      await salvarConfiguracoes({
+        avisoEstouIndo,
+        avisoCuidadosPosMontagem,
+        avisoAtraso,
+        avisoPedirStory,
+        avisoAvaliacaoGoogle: avisoAvaliacao,
+      });
       setMensagem('Avisos salvos.');
     } catch (e) {
       setMensagem(e instanceof Error ? e.message : 'Erro ao salvar.');
@@ -104,6 +115,22 @@ export default function AvisosPage() {
           placeholder={config.avisoCuidadosPosMontagem ? undefined : MENSAGEM_CUIDADOS_POS_MONTAGEM}
           value={avisoCuidadosPosMontagem}
           onChange={setAvisoCuidadosPosMontagem}
+        />
+
+        <BlocoAviso
+          titulo="Pós-montagem: pedir story"
+          descricao="Botão &quot;Pós-montagem&quot; na tarefa de montagem. Use {cliente} para o nome."
+          placeholder={config.avisoPedirStory ? undefined : MENSAGEM_PEDIR_STORY}
+          value={avisoPedirStory}
+          onChange={setAvisoPedirStory}
+        />
+
+        <BlocoAviso
+          titulo="Pós-retirada: avaliação no Google"
+          descricao="Botão &quot;Pós-retirada&quot; na tarefa de retirada. Use {cliente} e {link} (o link é cadastrado em Configurações → Pós-serviço)."
+          placeholder={config.avisoAvaliacaoGoogle ? undefined : MENSAGEM_AVALIACAO_GOOGLE}
+          value={avisoAvaliacao}
+          onChange={setAvisoAvaliacao}
         />
 
         <BlocoAviso
